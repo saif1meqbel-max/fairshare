@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Platform owner — private</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#0a0d12;--surface:#151c2a;--border:rgba(255,255,255,.08);
+      --txt:#f0f4ff;--muted:#8896b3;--teal:#00d4aa;--red:#ff5c7a;--amber:#ffb347;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:var(--ink);color:var(--txt);min-height:100vh;padding:28px 20px 60px}
+    h1{font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+    .sub{font-size:13px;color:var(--muted);max-width:640px;line-height:1.5;margin-bottom:22px}
+    .warn{font-size:12px;color:var(--amber);background:rgba(255,179,71,.08);border:1px solid rgba(255,179,71,.25);padding:12px 14px;border-radius:10px;margin-bottom:20px;max-width:720px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;max-width:900px}
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+    label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    input[type=password],input[type=text]{
+      width:min(100%,420px);padding:10px 14px;background:#1c2333;border:1px solid var(--border);border-radius:10px;color:var(--txt);font-size:14px;outline:none
+    }
+    input:focus{border-color:var(--teal)}
+    button{
+      padding:10px 18px;border-radius:10px;border:none;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;
+      background:linear-gradient(135deg,var(--teal),#00b894);color:var(--ink)
+    }
+    button.secondary{background:#252f42;color:var(--txt);border:1px solid var(--border)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px}
+    .stat{padding:14px 16px;background:#1a2236;border-radius:12px;border:1px solid var(--border)}
+    .stat-v{font-family:Syne,sans-serif;font-size:26px;font-weight:800;color:var(--teal);letter-spacing:-1px}
+    .stat-l{font-size:11px;color:var(--muted);margin-top:4px}
+    .err{color:var(--red);font-size:13px;margin-top:10px}
+    pre{font-size:11px;background:#11161f;padding:14px;border-radius:10px;overflow:auto;max-height:360px;border:1px solid var(--border);color:var(--muted)}
+    code{color:var(--teal);font-size:12px}
+  </style>
+</head>
+<body>
+  <h1>Owner console</h1>
+  <p class="sub">This page is <strong>not</strong> linked from the public FairShare app. Access is enforced by a secret only you store in <code>.env</code> on the server. Use <code>npm start</code> and open this file from the same origin (e.g. <code>http://localhost:3840/fs-owner-console.html</code>).</p>
+  <div class="warn">Anyone with this URL <em>and</em> your <code>ADMIN_PANEL_SECRET</code> can see these numbers. Do not bookmark the secret in a shared machine; prefer entering it each time or use a private browser profile.</div>
+
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:200px">
+        <label for="secret">Owner secret</label>
+        <input type="password" id="secret" autocomplete="off" placeholder="Same value as ADMIN_PANEL_SECRET">
+      </div>
+      <button type="button" id="btn-load">Load dashboard</button>
+      <button type="button" class="secondary" id="btn-clear">Forget secret</button>
+    </div>
+    <label style="margin-top:8px"><input type="checkbox" id="remember"> Remember secret in this browser (sessionStorage only)</label>
+    <p id="msg" class="err" style="display:none"></p>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div class="card">
+      <div style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;margin-bottom:4px">Users &amp; activity</div>
+      <div class="grid" id="grid-users"></div>
+    </div>
+    <div class="card">
+      <div style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;margin-bottom:4px">Revenue (Stripe)</div>
+      <div class="grid" id="grid-stripe"></div>
+    </div>
+    <div class="card">
+      <button type="button" class="secondary" id="btn-raw">Toggle raw JSON</button>
+      <pre id="raw" style="display:none;margin-top:12px"></pre>
+    </div>
+  </div>
+
+  <script>
+(function(){
+  const KEY='fs_owner_secret_v1';
+  const secretEl=document.getElementById('secret');
+  const msg=document.getElementById('msg');
+  const dash=document.getElementById('dash');
+  const raw=document.getElementById('raw');
+  if(sessionStorage.getItem(KEY)){
+    secretEl.value=sessionStorage.getItem(KEY);
+    document.getElementById('remember').checked=true;
+  }
+  document.getElementById('btn-clear').onclick=function(){
+    sessionStorage.removeItem(KEY);
+    secretEl.value='';
+    dash.style.display='none';
+    msg.style.display='none';
+  };
+  function showErr(t){
+    msg.textContent=t;
+    msg.style.display=t?'block':'none';
+  }
+  async function load(){
+    const secret=secretEl.value.trim();
+    if(secret.length<24){showErr('Secret too short — use at least 24 characters (see .env).');return}
+    showErr('');
+    document.getElementById('btn-load').disabled=true;
+    try{
+      if(document.getElementById('remember').checked)sessionStorage.setItem(KEY,secret);
+      else sessionStorage.removeItem(KEY);
+      const r=await fetch('/api/owner/dashboard',{
+        headers:{'X-FairShare-Owner-Secret':secret}
+      });
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok){showErr(j.error||('HTTP '+r.status));return}
+      dash.style.display='block';
+      raw.textContent=JSON.stringify(j,null,2);
+      const su=j.supabase||{};
+      const st=j.stripe||{};
+      let usersHtml=[
+        stat('Profiles (DB)',su.profilesTotal,''),
+        stat('Auth users (total)',su.authUsersTotal,''),
+        stat('Active (signed in, 7d)',su.activeUsersLast7Days,''),
+        stat('Active (signed in, 30d)',su.activeUsersLast30Days,''),
+        stat('New profiles (7d)',su.signupsLast7Days,''),
+        stat('New profiles (30d)',su.signupsLast30Days,''),
+        stat('Projects',su.projectsTotal,''),
+      ].filter(x=>x).join('');
+      if(!usersHtml && su.message){
+        usersHtml='<div class="stat"><div class="stat-l">Supabase</div><div style="font-size:13px;color:var(--muted)">'+su.message+'</div></div>';
+      }
+      if(su.error||su.authUsersNote){
+        usersHtml+='<div class="stat"><div class="stat-l">Note</div><div style="font-size:12px;color:var(--muted)">'+(su.error||su.authUsersNote)+'</div></div>';
+      }
+      document.getElementById('grid-users').innerHTML=usersHtml||'<div class="stat"><div class="stat-l">No data</div></div>';
+      let stripeHtml=[
+        stat('Stripe mode',st.mode,''),
+        stat('Active subscriptions',st.activeSubscriptions,''),
+        stat('Seats (line qty sum)',st.seatsSold,''),
+        stat('Est. MRR (USD)',st.estimatedMrrFormatted!=null?'$'+st.estimatedMrrFormatted:'—','Recurring only, estimate'),
+        stat('Gross charges (30d)',st.chargesLast30Days?('$'+(Number(st.chargesLast30Days.grossAmountFormatted)||0)):'—',st.chargesLast30Days?.note||''),
+        stat('Succeeded charges (30d)',st.chargesLast30Days?.succeededCount,''),
+      ].join('');
+      if(!stripeHtml && st.message){
+        stripeHtml='<div class="stat"><div class="stat-l">Stripe</div><div style="font-size:13px;color:var(--muted)">'+st.message+'</div></div>';
+      }
+      if(st.balance?.available?.length){
+        stripeHtml+='<div class="stat"><div class="stat-l">Available balance</div><div style="font-size:12px;color:var(--muted)">'+
+          st.balance.available.map(function(x){return (x.amount/100).toFixed(2)+' '+x.currency.toUpperCase()}).join(' · ')+'</div></div>';
+      }
+      if(st.balance?.error){
+        stripeHtml+='<div class="stat"><div class="stat-l">Balance error</div><div style="font-size:12px;color:var(--red)">'+st.balance.error+'</div></div>';
+      }
+      document.getElementById('grid-stripe').innerHTML=stripeHtml||'<div class="stat"><div class="stat-l">No data</div></div>';
+    }catch(e){
+      showErr('Request failed — are you on the same host as the API (npm start)?');
+    }
+    document.getElementById('btn-load').disabled=false;
+  }
+  function stat(label,val,sub){
+    if(val===undefined||val===null)return '';
+    return '<div class="stat"><div class="stat-l">'+label+'</div><div class="stat-v">'+(val===''?'—':String(val))+'</div>'+(sub?'<div class="stat-l">'+sub+'</div>':'')+'</div>';
+  }
+  document.getElementById('btn-load').onclick=load;
+  document.getElementById('btn-raw').onclick=function(){
+    raw.style.display=raw.style.display==='none'?'block':'none';
+  };
+})();
+  </script>
+</body>
+</html>

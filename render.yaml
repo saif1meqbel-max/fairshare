@@ -1,0 +1,13 @@
+# Optional: deploy on Render.com — connect this GitHub repo in the Render dashboard
+# (New → Blueprint → select repo). Each push to the tracked branch redeploys.
+# Set env vars in Render: SUPABASE_*, STRIPE_*, ANTHROPIC_*, PUBLIC_APP_URL, etc.
+
+services:
+  - type: web
+    name: fairshare
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
