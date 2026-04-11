@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.mjs",
-    "dev": "node --watch server/index.mjs"
+    "dev": "node --watch server/index.mjs",
+    "sync": "bash .cursor/hooks/git-sync.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
