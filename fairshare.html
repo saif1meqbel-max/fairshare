@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FairShare — Fair Group Work Platform</title>
 <script>
-/* Part 7 — Supabase: Dashboard → Project Settings (gear) → API */
+/* Supabase: Dashboard → Project Settings (gear) → API
+   Google sign-in: Dashboard → Authentication → Providers → Google (Client ID + Secret from Google Cloud Console).
+   Add Site URL + Redirect URLs (e.g. http://localhost:3840/fairshare.html and your production URL). */
 window.__FAIRSHARE__ = {
   supabaseUrl: 'https://qhsnlsioqcdwjlycqsrs.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoc25sc2lvcWNkd2pseWNxc3JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTg2MjUsImV4cCI6MjA5MDM3NDYyNX0.fVMXB3lcf2rMoXSJn_NzPOyjn_aBL1QXf_dtj06lXtI',
@@ -199,6 +201,19 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 .auth-switch{margin-top:20px;font-size:13px;color:var(--txt2);text-align:center}
 .auth-switch a{color:var(--teal);cursor:pointer;font-weight:500;text-decoration:none}
 .auth-switch a:hover{text-decoration:underline}
+.auth-remember{display:flex;align-items:center;gap:10px;margin:12px 0 16px;font-size:13px;color:var(--txt2);cursor:pointer;user-select:none}
+.auth-remember input{width:auto;accent-color:var(--teal)}
+.btn-google{
+  display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  background:#fff;color:#1f1f1f;border:1px solid var(--border2);font-weight:600;
+}
+.btn-google:hover{background:#f8f8f8;border-color:var(--border3);color:#1f1f1f}
+.btn-google-icon{
+  width:20px;height:20px;border-radius:4px;
+  background:linear-gradient(135deg,#4285f4 0%,#ea4335 50%,#fbbc05 75%,#34a853 100%);
+  color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);
+}
 
 /* ════════════════════════════════════════════════
    APP SHELL
@@ -1157,7 +1172,13 @@ textarea{resize:vertical;min-height:72px}
         <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleForgotPassword()">Forgot password?</button>
         <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleResendFromLogin()">Resend confirmation email</button>
       </div>
+      <label class="auth-remember"><input type="checkbox" id="login-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
       <button class="btn btn-primary" onclick="handleLogin()">Sign in</button>
+
+      <div class="divider">or</div>
+      <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-login">
+        <span class="btn-google-icon">G</span> Continue with Google
+      </button>
 
       <div class="divider">or</div>
       <button class="btn btn-demo" onclick="demoLogin()">✨ &nbsp;Try Demo — no signup needed</button>
@@ -1191,7 +1212,13 @@ textarea{resize:vertical;min-height:72px}
         <input type="password" id="su-password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignup()">
         <div class="help-text">Use at least 8 characters. A mix of letters and numbers is stronger.</div>
       </div>
+      <label class="auth-remember"><input type="checkbox" id="su-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
       <button class="btn btn-primary" onclick="handleSignup()">Create account</button>
+
+      <div class="divider">or</div>
+      <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-signup">
+        <span class="btn-google-icon">G</span> Sign up with Google
+      </button>
       <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
     </div>
   </div>
@@ -1972,11 +1999,39 @@ function showLogin(){
   if(window.FSB)window.FSB.localDemo=false;
   document.getElementById('login-panel').classList.add('active');
   document.getElementById('signup-panel').classList.remove('active');
+  if(window.FSB&&typeof window.FSB.syncRememberCheckboxes==='function')window.FSB.syncRememberCheckboxes();
 }
 function showSignup(){
   if(window.FSB)window.FSB.localDemo=false;
   document.getElementById('login-panel').classList.remove('active');
   document.getElementById('signup-panel').classList.add('active');
+  if(window.FSB&&typeof window.FSB.syncRememberCheckboxes==='function')window.FSB.syncRememberCheckboxes();
+}
+
+function syncRememberPair(el){
+  const c=el.checked;
+  const a=document.getElementById('login-remember');
+  const b=document.getElementById('su-remember');
+  if(a)a.checked=c;
+  if(b)b.checked=c;
+}
+
+async function handleGoogleSignIn(){
+  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){
+    toast('Connect Supabase and use cloud mode (not Demo) for Google sign-in','error');
+    return;
+  }
+  if(typeof location!=='undefined'&&(location.protocol==='file:'||!location.origin)){
+    toast('Open this app over http://localhost or https (not file://) for Google sign-in','error');
+    return;
+  }
+  if(typeof window.FSB.applyRememberPreferenceFromForm==='function'&&window.FSB.applyRememberPreferenceFromForm())return;
+  try{
+    toast('Redirecting to Google…','default');
+    await window.FSB.signInWithGoogle();
+  }catch(e){
+    toast(e.message||'Google sign-in failed','error');
+  }
 }
 
 function isValidEmailFormat(email){
@@ -2004,6 +2059,7 @@ async function handleResendFromLogin(){
 }
 
 async function handleLogin(){
+  if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function'&&window.FSB.applyRememberPreferenceFromForm())return;
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
   if(!email||!pass){toast('Please fill all fields','error');return}
@@ -2035,6 +2091,7 @@ function demoLogin(){
 }
 
 async function handleSignup(){
+  if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function'&&window.FSB.applyRememberPreferenceFromForm())return;
   const name=document.getElementById('su-name').value.trim();
   const email=document.getElementById('su-email').value.trim().toLowerCase();
   const role=document.getElementById('su-role').value;
@@ -3562,6 +3619,7 @@ document.addEventListener('click',function(ev){
 
 (async function init(){
   await(window.FSB&&window.FSB.init&&window.FSB.init());
+  if(window.FSB&&typeof window.FSB.syncRememberCheckboxes==='function')window.FSB.syncRememberCheckboxes();
   if(window.FSB&&window.FSB.lastUser){
     loginAs(window.FSB.lastUser);
     return;

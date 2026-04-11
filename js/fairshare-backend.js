@@ -4,6 +4,7 @@
  * Falls back to localStorage when Supabase URL/key are not set.
  */
 (function () {
+  const REMEMBER_KEY = 'fairshare_remember_me';
   const PREFIX = 'fs4_';
   const mem = Object.create(null);
   let sb = null;
@@ -15,6 +16,28 @@
 
   function cfg() {
     return window.__FAIRSHARE__ || {};
+  }
+
+  /** localStorage key '1' = keep signed in (survives browser restart). '0' = this browser session only. */
+  function getRememberPreference() {
+    return localStorage.getItem(REMEMBER_KEY) !== '0';
+  }
+
+  function getAuthStorage() {
+    return getRememberPreference() ? window.localStorage : window.sessionStorage;
+  }
+
+  function buildSupabaseClient(createClient) {
+    const c = cfg();
+    const storage = getAuthStorage();
+    return createClient(c.supabaseUrl, c.supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage,
+      },
+    });
   }
 
   function apiBase() {
@@ -445,10 +468,9 @@
         this.hasCloud = false;
         return;
       }
-      sb = createClient(c.supabaseUrl, c.supabaseAnonKey, {
-        auth: { persistSession: true, storage: localStorage, detectSessionInUrl: true },
-      });
+      sb = buildSupabaseClient(createClient);
       this.client = sb;
+      this.authUsesSessionStorageOnly = !getRememberPreference();
       this.hasCloud = true;
       remote = true;
       this.enabled = true;
@@ -475,6 +497,47 @@
         await hydrateSession(session.user.id);
         this.lastUser = await mapSessionUser(session);
       }
+    },
+
+    async signInWithGoogle() {
+      if (!sb) throw new Error('Supabase not configured');
+      this.localDemo = false;
+      const redirectTo =
+        typeof location !== 'undefined' && location.origin && !location.origin.startsWith('file:')
+          ? `${location.origin}${location.pathname}${location.search || ''}`
+          : undefined;
+      const { data, error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+      if (error) throw error;
+      return data;
+    },
+
+    /** Call before sign-in; if preference changed, reloads page (returns true). */
+    applyRememberPreferenceFromForm() {
+      const lr = typeof document !== 'undefined' ? document.getElementById('login-remember') : null;
+      const sr = typeof document !== 'undefined' ? document.getElementById('su-remember') : null;
+      let checked = true;
+      if (lr && lr.offsetParent !== null) checked = lr.checked;
+      else if (sr && sr.offsetParent !== null) checked = sr.checked;
+      const want = checked ? '1' : '0';
+      const prev = localStorage.getItem(REMEMBER_KEY);
+      if (prev === want || (prev === null && want === '1')) {
+        if (prev !== want) localStorage.setItem(REMEMBER_KEY, want);
+        return false;
+      }
+      localStorage.setItem(REMEMBER_KEY, want);
+      location.reload();
+      return true;
+    },
+
+    syncRememberCheckboxes() {
+      const remembered = localStorage.getItem(REMEMBER_KEY) !== '0';
+      ['login-remember', 'su-remember'].forEach((id) => {
+        const el = typeof document !== 'undefined' ? document.getElementById(id) : null;
+        if (el) el.checked = remembered;
+      });
     },
 
     async signIn(email, password) {
