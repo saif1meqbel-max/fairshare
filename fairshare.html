@@ -268,6 +268,33 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 }
 .user-pill:hover{background:var(--surface3);border-color:var(--border3)}
 
+.user-menu-wrap{position:relative}
+.user-menu-dropdown{
+  display:none;position:absolute;right:0;top:calc(100% + 8px);min-width:200px;z-index:200;
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);
+  box-shadow:var(--shadow-lg);padding:6px;
+}
+.user-menu-dropdown.open{display:block}
+.user-menu-dropdown button{
+  display:block;width:100%;text-align:left;padding:10px 12px;border:none;border-radius:var(--r);
+  background:transparent;color:var(--txt);font-size:13px;font-family:var(--font);cursor:pointer;
+}
+.user-menu-dropdown button:hover{background:var(--surface3)}
+.user-menu-dropdown .menu-sep{height:1px;background:var(--border);margin:6px 0}
+
+.invite-banner{
+  background:linear-gradient(135deg,rgba(0,212,170,0.08),rgba(79,124,255,0.06));
+  border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px;margin-bottom:20px;
+}
+.invite-banner-title{font-family:var(--font-display);font-size:14px;font-weight:700;margin-bottom:12px;color:var(--txt)}
+.invite-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.invite-row:last-child{border-bottom:none;padding-bottom:0}
+.invite-row-text{font-size:13px;color:var(--txt2)}
+.invite-row-text strong{color:var(--txt);font-weight:600}
+
 /* Avatars */
 .avatar{
   border-radius:50%;
@@ -1120,11 +1147,15 @@ textarea{resize:vertical;min-height:72px}
 
       <div class="field">
         <label>Email</label>
-        <input type="email" id="login-email" placeholder="you@university.edu" onkeydown="if(event.key==='Enter')handleLogin()">
+        <input type="email" id="login-email" placeholder="you@university.edu" autocomplete="email" onkeydown="if(event.key==='Enter')handleLogin()">
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleLogin()">
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 8px;flex-wrap:wrap;gap:8px">
+        <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleForgotPassword()">Forgot password?</button>
+        <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleResendFromLogin()">Resend confirmation email</button>
       </div>
       <button class="btn btn-primary" onclick="handleLogin()">Sign in</button>
 
@@ -1141,11 +1172,11 @@ textarea{resize:vertical;min-height:72px}
 
       <div class="field">
         <label>Full name</label>
-        <input type="text" id="su-name" placeholder="Jamie Liu">
+        <input type="text" id="su-name" placeholder="Jamie Liu" autocomplete="name">
       </div>
       <div class="field">
         <label>Email</label>
-        <input type="email" id="su-email" placeholder="you@university.edu">
+        <input type="email" id="su-email" placeholder="you@university.edu" autocomplete="email">
       </div>
       <div class="field">
         <label>I am a</label>
@@ -1157,7 +1188,8 @@ textarea{resize:vertical;min-height:72px}
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="su-password" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')handleSignup()">
+        <input type="password" id="su-password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignup()">
+        <div class="help-text">Use at least 8 characters. A mix of letters and numbers is stronger.</div>
       </div>
       <button class="btn btn-primary" onclick="handleSignup()">Create account</button>
       <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
@@ -1205,10 +1237,17 @@ textarea{resize:vertical;min-height:72px}
 
     <div class="nav-right">
       <button class="nav-icon-btn notif-dot" title="Notifications" onclick="showPage('notifications',null);document.querySelector('[data-page=notifications]')?.classList.add('active')" id="notif-btn">🔔</button>
-      <div class="user-pill" onclick="handleLogout()">
-        <div class="avatar av-teal" id="nav-avatar" style="width:26px;height:26px;font-size:10px">??</div>
-        <span id="nav-name">Loading…</span>
-        <span style="font-size:10px;color:var(--txt3)">↓</span>
+      <div class="user-menu-wrap" id="user-menu-wrap">
+        <div class="user-pill" id="user-pill-btn" onclick="toggleUserMenu(event)" title="Account menu">
+          <div class="avatar av-teal" id="nav-avatar" style="width:26px;height:26px;font-size:10px">??</div>
+          <span id="nav-name">Loading…</span>
+          <span style="font-size:10px;color:var(--txt3)">▾</span>
+        </div>
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <button type="button" onclick="openAccountModal()">Account settings</button>
+          <div class="menu-sep"></div>
+          <button type="button" onclick="openSignOutModal()">Sign out…</button>
+        </div>
       </div>
     </div>
   </nav>
@@ -1225,6 +1264,10 @@ textarea{resize:vertical;min-height:72px}
         <button class="btn btn-primary" style="width:auto" onclick="openModal('modal-new-project')">
           <span>+</span> New Project
         </button>
+      </div>
+      <div id="project-invites-wrap" class="invite-banner" style="display:none">
+        <div class="invite-banner-title">📩 Invites to projects</div>
+        <div id="project-invites-list"></div>
       </div>
       <div id="project-grid" class="grid3"></div>
     </div>
@@ -1843,6 +1886,32 @@ textarea{resize:vertical;min-height:72px}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-account" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-title">Account settings</div>
+    <button class="modal-close" onclick="closeModal('modal-account')">✕</button>
+    <p style="font-size:12px;color:var(--txt3);margin:-8px 0 16px">Update how your name appears to teammates. Your email is managed by your sign-in provider.</p>
+    <div class="form-row"><label>Display name</label><input type="text" id="acc-name" placeholder="Your name" autocomplete="name"></div>
+    <div class="form-row"><label>Email</label><input type="email" id="acc-email" readonly style="opacity:0.85;cursor:not-allowed"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-account')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAccountSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-signout" onclick="overlayClose(event,this)">
+  <div class="modal modal-sm">
+    <div class="modal-title">Sign out?</div>
+    <button class="modal-close" onclick="closeModal('modal-signout')">✕</button>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:20px">You will need to sign in again to access your projects.</p>
+    <div class="form-actions" style="margin-top:0">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-signout')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmSignOut()">Sign out</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1910,10 +1979,35 @@ function showSignup(){
   document.getElementById('signup-panel').classList.add('active');
 }
 
+function isValidEmailFormat(email){
+  return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||'').trim());
+}
+
+async function handleForgotPassword(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  if(!email||!isValidEmailFormat(email)){toast('Enter your email above first (correct format)','error');return}
+  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){toast('Password reset uses email — sign in with Supabase (not demo mode)','error');return}
+  try{
+    await window.FSB.sendPasswordResetEmail(email);
+    toast('Check your email for a reset link.','success');
+  }catch(e){toast(e.message||'Could not send reset email','error')}
+}
+
+async function handleResendFromLogin(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  if(!email||!isValidEmailFormat(email)){toast('Enter the email you signed up with','error');return}
+  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){toast('Confirmation emails are for cloud accounts only','error');return}
+  try{
+    await window.FSB.resendConfirmationEmail(email);
+    toast('If an account exists, a new confirmation link was sent.','success');
+  }catch(e){toast(e.message||'Could not resend','error')}
+}
+
 async function handleLogin(){
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
   if(!email||!pass){toast('Please fill all fields','error');return}
+  if(!isValidEmailFormat(email)){toast('Please enter a valid email address','error');return}
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
     try{
       const user=await window.FSB.signIn(email,pass);
@@ -1946,7 +2040,8 @@ async function handleSignup(){
   const role=document.getElementById('su-role').value;
   const pass=document.getElementById('su-password').value;
   if(!name||!email||!pass){toast('Please fill all fields','error');return}
-  if(pass.length<6){toast('Password must be at least 6 characters','error');return}
+  if(!isValidEmailFormat(email)){toast('Please enter a valid email address','error');return}
+  if(pass.length<8){toast('Password must be at least 8 characters','error');return}
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
     try{
       const user=await window.FSB.signUp(email,pass,name,role);
@@ -2006,6 +2101,64 @@ function loginAs(user){
   loadProjects();
   showPage('projects',document.querySelector('[data-page=projects]'));
   renderNotifications();
+  renderProjectInvites();
+}
+
+function toggleUserMenu(ev){
+  ev.stopPropagation();
+  const d=document.getElementById('user-menu-dropdown');
+  if(!d)return;
+  d.classList.toggle('open');
+}
+function closeUserMenu(){
+  const d=document.getElementById('user-menu-dropdown');
+  if(d)d.classList.remove('open');
+}
+function openAccountModal(){
+  closeUserMenu();
+  if(!currentUser)return;
+  document.getElementById('acc-name').value=currentUser.name||'';
+  document.getElementById('acc-email').value=currentUser.email||'';
+  openModal('modal-account');
+}
+async function saveAccountSettings(){
+  const name=document.getElementById('acc-name').value.trim();
+  if(!name){toast('Please enter a display name','error');return}
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.updateProfile==='function'){
+    try{
+      const u=await window.FSB.updateProfile({fullName:name});
+      currentUser=u;
+      STORE.set('session',currentUser.id);
+      const av=document.getElementById('nav-avatar');
+      av.textContent=getInitials(currentUser.name);
+      av.className='avatar '+getAvatarClass(currentUser.name);
+      document.getElementById('nav-name').textContent=currentUser.name.split(' ')[0];
+      closeModal('modal-account');
+      toast('Profile updated','success');
+      renderProjectList();
+    }catch(e){toast(e.message||'Could not save profile','error')}
+    return;
+  }
+  currentUser={...currentUser,name};
+  const users=STORE.get('users')||[];
+  const i=users.findIndex(u=>u.id===currentUser.id);
+  if(i>=0){users[i]={...users[i],name};STORE.set('users',users)}
+  STORE.set('session',currentUser.id);
+  const av=document.getElementById('nav-avatar');
+  av.textContent=getInitials(currentUser.name);
+  av.className='avatar '+getAvatarClass(currentUser.name);
+  document.getElementById('nav-name').textContent=currentUser.name.split(' ')[0];
+  closeModal('modal-account');
+  toast('Profile updated','success');
+  renderProjectList();
+}
+function openSignOutModal(){
+  closeUserMenu();
+  openModal('modal-signout');
+}
+function confirmSignOut(){
+  closeModal('modal-signout');
+  handleLogout();
 }
 
 async function handleLogout(){
@@ -2099,7 +2252,44 @@ function loadProjects(){
   return projects;
 }
 
+function getInviteNotifications(){
+  if(!currentUser)return[];
+  return(STORE.get('notifs_'+currentUser.id)||[]).filter(n=>n.type==='project_invite');
+}
+
+function renderProjectInvites(){
+  const wrap=document.getElementById('project-invites-wrap');
+  const list=document.getElementById('project-invites-list');
+  if(!wrap||!list||!currentUser)return;
+  const invites=getInviteNotifications().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!invites.length){wrap.style.display='none';list.innerHTML='';return}
+  wrap.style.display='';
+  list.innerHTML=invites.map(n=>{
+    const pid=n.projectId||'';
+    const title=n.title||'Project invite';
+    return`<div class="invite-row">
+      <div class="invite-row-text"><strong>${esc(title)}</strong> · ${timeAgo(n.ts||Date.now())}</div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(n.id)})">Open project</button>
+    </div>`;
+  }).join('');
+}
+
+async function openProjectFromInvite(projectId, notifId){
+  if(!projectId){toast('Missing project','error');return}
+  if(notifId) markRead(notifId);
+  let projects=loadProjects();
+  let p=projects.find(x=>x.id===projectId);
+  if(!p&&window.FSB&&typeof window.FSB.reloadStores==='function'){
+    try{await window.FSB.reloadStores()}catch(e){}
+    projects=loadProjects();
+    p=projects.find(x=>x.id===projectId);
+  }
+  if(!p){toast('Project not found yet — refresh the page or ask the owner to add you again.','error');return}
+  await openProject(projectId);
+}
+
 function renderProjectList(){
+  renderProjectInvites();
   const projects=loadProjects();
   const container=document.getElementById('project-grid');
   if(!projects.length){
@@ -2864,6 +3054,7 @@ function addNotification(title,type='info'){
   const unread=notifs.filter(n=>!n.read).length;
   const btn=document.getElementById('notif-btn');
   if(btn)btn.classList.toggle('notif-dot',unread>0);
+  renderProjectInvites();
 }
 
 function renderNotifications(){
@@ -2879,6 +3070,7 @@ function renderNotifications(){
       </div>
       ${!n.read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--teal);margin-left:auto;flex-shrink:0"></div>':''}
     </div>`).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">🔔</div><div class="empty-text">No notifications</div></div>`;
+  renderProjectInvites();
 }
 
 function markRead(id){
@@ -2887,6 +3079,7 @@ function markRead(id){
   if(n)n.read=true;
   STORE.set('notifs_'+currentUser.id,notifs);
   renderNotifications();
+  renderProjectInvites();
 }
 
 function markAllRead(){
@@ -2894,6 +3087,7 @@ function markAllRead(){
   notifs.forEach(n=>n.read=true);
   STORE.set('notifs_'+currentUser.id,notifs);
   renderNotifications();
+  renderProjectInvites();
   document.getElementById('notif-btn').classList.remove('notif-dot');
   toast('All notifications marked as read','success');
 }
@@ -3361,6 +3555,11 @@ function overlayClose(e,el){if(e.target===el)closeModal(el.id)}
 /* ══════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════ */
+document.addEventListener('click',function(ev){
+  if(ev.target.closest&&ev.target.closest('#user-menu-wrap'))return;
+  closeUserMenu();
+});
+
 (async function init(){
   await(window.FSB&&window.FSB.init&&window.FSB.init());
   if(window.FSB&&window.FSB.lastUser){

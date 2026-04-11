@@ -523,6 +523,55 @@
       return null;
     },
 
+    async reloadStores() {
+      if (!sb) return;
+      const {
+        data: { session },
+      } = await sb.auth.getSession();
+      if (!session?.user?.id) return;
+      await hydrateSession(session.user.id);
+    },
+
+    async updateProfile({ fullName }) {
+      const fn = String(fullName || '').trim();
+      if (!fn) throw new Error('Please enter your name');
+      if (!sb || !viewerId) throw new Error('Not signed in');
+      const { error: e1 } = await sb.auth.updateUser({ data: { full_name: fn } });
+      if (e1) throw e1;
+      const { error: e2 } = await sb.from('profiles').update({ full_name: fn }).eq('id', viewerId);
+      if (e2) throw e2;
+      await hydrateSession(viewerId);
+      const {
+        data: { session },
+      } = await sb.auth.getSession();
+      if (!session) throw new Error('Session lost');
+      return mapSessionUser(session);
+    },
+
+    async resendConfirmationEmail(email) {
+      if (!sb) throw new Error('Supabase not configured');
+      const em = String(email || '')
+        .trim()
+        .toLowerCase();
+      if (!em) throw new Error('Enter your email first');
+      const { error } = await sb.auth.resend({ type: 'signup', email: em });
+      if (error) throw error;
+    },
+
+    async sendPasswordResetEmail(email) {
+      if (!sb) throw new Error('Supabase not configured');
+      const em = String(email || '')
+        .trim()
+        .toLowerCase();
+      if (!em) throw new Error('Enter your email first');
+      const redirect =
+        typeof location !== 'undefined' && location.origin && !location.origin.startsWith('file:')
+          ? `${location.origin}${location.pathname}${location.search || ''}`
+          : undefined;
+      const { error } = await sb.auth.resetPasswordForEmail(em, redirect ? { redirectTo: redirect } : undefined);
+      if (error) throw error;
+    },
+
     async signOut() {
       this.localDemo = false;
       stopNotificationsRealtime();
