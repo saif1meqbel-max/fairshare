@@ -2018,10 +2018,11 @@ function syncRememberPair(el){
 }
 
 async function handleGoogleSignIn(){
-  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){
-    toast('Connect Supabase and use cloud mode (not Demo) for Google sign-in','error');
+  if(!window.FSB||!window.FSB.hasCloud){
+    toast('Connect Supabase for Google sign-in','error');
     return;
   }
+  if(typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(typeof location!=='undefined'&&(location.protocol==='file:'||!location.origin)){
     toast('Open this app over http://localhost or https (not file://) for Google sign-in','error');
     return;
@@ -2060,6 +2061,7 @@ async function handleResendFromLogin(){
 }
 
 async function handleLogin(){
+  if(window.FSB&&typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
@@ -2069,7 +2071,13 @@ async function handleLogin(){
     try{
       const user=await window.FSB.signIn(email,pass);
       loginAs(user);
-    }catch(e){toast(e.message||'Sign in failed','error')}
+    }catch(e){
+      const code=e?.code||e?.name;
+      let m=e?.message||'Sign in failed';
+      if(code==='invalid_credentials'||/invalid login credentials/i.test(m))m='Wrong email or password.';
+      else if(code==='email_not_confirmed'||/email not confirmed/i.test(m))m='Confirm your email from the link we sent, then try signing in.';
+      toast(m,'error');
+    }
     return
   }
   const users=STORE.get('users')||[];
@@ -2092,6 +2100,7 @@ function demoLogin(){
 }
 
 async function handleSignup(){
+  if(window.FSB&&typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   const name=document.getElementById('su-name').value.trim();
   const email=document.getElementById('su-email').value.trim().toLowerCase();
@@ -2110,23 +2119,20 @@ async function handleSignup(){
         toast('Check your email to confirm your account, then sign in.','success');
       }
     }catch(e){
+      const code=e?.code||'';
       let msg=e?.message||e?.error_description||String(e)||'Sign up failed';
       if(/Database error|saving new user|trigger/i.test(msg)){
-        msg+=' — In Supabase: run SQL from supabase/migrations/001_fairshare_core.sql, then check Logs → Postgres.';
-      }
-      if(/Invalid login credentials|already registered|already been registered/i.test(msg)){
-        msg='That email is already in use — try Sign in, or use a different email.';
-      }
-      if(/password/i.test(msg)&&!/already/i.test(msg)){
-        msg+=' Try 8+ characters with letters and numbers.';
-      }
-      if(/rate limit|too many requests/i.test(msg)){
+        msg='Could not finish signup (database). In Supabase, run supabase/migrations/001_fairshare_core.sql, then check Logs → Postgres.';
+      }else if(code==='user_already_exists'||code==='email_exists'||/User already registered|already been registered|Email address is already/i.test(msg)){
+        msg='That email already has an account — use Sign in instead.';
+      }else if(code==='weak_password'||code==='same_password'){
+        msg='Password is too weak or common. Use at least 8 characters with a mix of letters and numbers.';
+      }else if(/rate limit|too many requests|over_request_rate_limit/i.test(msg)||code==='over_request_rate_limit'){
         msg='Too many attempts — wait a few minutes, then try again.';
+      }else if(/signup_disabled|Signups not allowed/i.test(msg)){
+        msg='Sign up is disabled in this project’s Supabase settings.';
       }
-      if(/email not confirmed|Email not confirmed/i.test(msg)){
-        msg='Confirm your email from the link Supabase sent, or turn off “Confirm email” under Authentication → Providers → Email.';
-      }
-      console.error('FairShare signUp:',e);
+      console.error('FairShare signUp:',code,msg,e);
       toast(msg,'error');
     }
     return

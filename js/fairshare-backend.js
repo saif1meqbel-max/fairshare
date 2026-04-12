@@ -713,6 +713,16 @@
         this.enabled = false;
       }
     },
+
+    /** Call before email/password or Google sign-in so Supabase is used after "Try Demo". */
+    exitLocalDemoForAuth() {
+      if (!this.hasCloud || !sb) return;
+      this.localDemo = false;
+      remote = true;
+      window.__FAIRSHARE_USE_REMOTE__ = true;
+      this.enabled = true;
+      attachRemoteStore();
+    },
   };
 
   attachLocalStore();
