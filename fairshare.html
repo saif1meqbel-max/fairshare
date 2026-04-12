@@ -705,6 +705,51 @@ textarea{resize:vertical;min-height:72px}
 .doc-name{font-size:14px;font-weight:500;color:var(--txt);margin-bottom:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc-meta{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:8px}
+.badge-doc-doc{background:rgba(79,124,255,0.15);color:var(--blue);border:1px solid rgba(79,124,255,0.25)}
+.badge-doc-slides{background:rgba(155,109,255,0.15);color:var(--purple);border:1px solid rgba(155,109,255,0.25)}
+.badge-doc-sheet{background:rgba(0,212,170,0.15);color:var(--teal);border:1px solid rgba(0,212,170,0.25)}
+.modal-doc-kind-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+@media(max-width:520px){.modal-doc-kind-grid{grid-template-columns:1fr}}
+.doc-kind-choice{
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;
+  border-radius:var(--r2);border:1px solid var(--border2);background:var(--ink3);
+  cursor:pointer;text-align:left;transition:border-color .15s,background .15s;
+  font-family:var(--font);color:var(--txt);
+}
+.doc-kind-choice:hover{border-color:var(--teal);background:var(--surface2)}
+.doc-kind-choice .dk-icon{font-size:26px;line-height:1}
+.doc-kind-choice .dk-title{font-weight:600;font-size:14px}
+.doc-kind-choice .dk-sub{font-size:12px;color:var(--txt3);line-height:1.45}
+.doc-kind-pane{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.doc-kind-pill{font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;letter-spacing:.3px;text-transform:uppercase}
+#doc-pane-document .doc-kind-pill{background:rgba(79,124,255,0.15);color:var(--blue)}
+#doc-pane-slides .doc-kind-pill{background:rgba(155,109,255,0.15);color:var(--purple)}
+#doc-pane-sheet .doc-kind-pill{background:rgba(0,212,170,0.15);color:var(--teal)}
+.slides-toolbar .tb-btn,.sheet-toolbar .tb-btn{font-size:12px}
+.slide-block{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);
+  padding:16px 18px;margin-bottom:14px;
+}
+.slide-block-head{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.slide-title-input{
+  width:100%;padding:10px 12px;margin-bottom:10px;border-radius:var(--r);border:1px solid var(--border2);
+  background:var(--ink3);color:var(--txt);font-size:15px;font-weight:600;font-family:var(--font);
+}
+.slide-bullets-input{
+  width:100%;min-height:100px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--border2);
+  background:var(--ink3);color:var(--txt);font-size:14px;resize:vertical;font-family:var(--font);
+}
+.slides-scroll{overflow-y:auto}
+.sheet-scroll{overflow:auto}
+.sheet-table{border-collapse:collapse;font-size:12px;width:max-content}
+.sheet-table th,.sheet-table td{border:1px solid var(--border2);padding:0;min-width:88px;background:var(--ink3)}
+.sheet-table thead th{background:var(--surface3);color:var(--txt3);font-weight:600;padding:6px 8px}
+.sheet-row-h{width:40px;background:var(--surface3);color:var(--txt3);text-align:center;font-weight:600}
+.sheet-cell{
+  width:100%;min-width:80px;border:none;background:transparent;color:var(--txt);
+  padding:7px 9px;font-family:var(--font);font-size:12px;
+}
+.sheet-cell:focus{outline:2px solid rgba(0,212,170,0.35);outline-offset:-2px}
 
 /* ════════════════════════════════════════════════
    DOCUMENT WORKSPACE (full-screen editor)
@@ -848,8 +893,8 @@ textarea{resize:vertical;min-height:72px}
 
 /* Doc stats bar */
 .doc-stats-bar{
-  height:32px;background:var(--surface2);border-top:1px solid var(--border);
-  display:flex;align-items:center;padding:0 18px;gap:24px;flex-shrink:0;
+  min-height:36px;background:var(--surface2);border-top:1px solid var(--border);
+  display:flex;align-items:center;flex-wrap:wrap;padding:8px 18px;gap:16px 24px;flex-shrink:0;
 }
 .doc-stat-item{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:5px}
 
@@ -1453,7 +1498,7 @@ textarea{resize:vertical;min-height:72px}
           <div class="page-title">Documents</div>
           <div class="page-sub" id="docs-project-name">Select a project first</div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="createDoc()">+ New Doc</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-doc')">+ New file</button>
       </div>
       <div class="card">
         <div id="doc-list"></div>
@@ -1716,6 +1761,7 @@ textarea{resize:vertical;min-height:72px}
       Back
     </div>
     <div class="doc-title-wrap">
+      <span id="doc-kind-badge" class="doc-kind-pill" style="display:none"></span>
       <input type="text" id="doc-title-input" placeholder="Untitled document" oninput="scheduleDocSave()">
       <div class="doc-save-status">
         <div class="doc-save-dot" id="doc-save-dot"></div>
@@ -1739,7 +1785,8 @@ textarea{resize:vertical;min-height:72px}
   <div class="doc-body">
     <!-- Toolbar + editor pane -->
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-      <div class="doc-toolbar">
+      <div id="doc-pane-document" class="doc-kind-pane">
+      <div class="doc-toolbar" id="doc-toolbar">
         <div class="tb-group">
           <select class="tb-select" id="tb-format" onchange="execFormatBlock(this.value)">
             <option value="p">Paragraph</option>
@@ -1786,6 +1833,34 @@ textarea{resize:vertical;min-height:72px}
           </div>
         </div>
       </div>
+      </div>
+
+      <div id="doc-pane-slides" class="doc-kind-pane" style="display:none">
+        <div class="doc-toolbar slides-toolbar" id="doc-toolbar-slides">
+          <span class="doc-kind-pill">Presentation</span>
+          <div class="tb-sep"></div>
+          <button type="button" class="tb-btn" onclick="addSlideBlock()" title="Add slide">+ Slide</button>
+        </div>
+        <div class="doc-editor-pane slides-scroll">
+          <div class="doc-editor-wrap">
+            <div id="slides-editor"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="doc-pane-sheet" class="doc-kind-pane" style="display:none">
+        <div class="doc-toolbar sheet-toolbar" id="doc-toolbar-sheet">
+          <span class="doc-kind-pill">Spreadsheet</span>
+          <div class="tb-sep"></div>
+          <button type="button" class="tb-btn" onclick="addSheetDimension('row')" title="Add row">+ Row</button>
+          <button type="button" class="tb-btn" onclick="addSheetDimension('col')" title="Add column">+ Column</button>
+        </div>
+        <div class="doc-editor-pane sheet-scroll">
+          <div class="doc-editor-wrap sheet-wrap" style="padding:24px">
+            <div id="sheet-table-host"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Comment sidebar -->
@@ -1805,9 +1880,19 @@ textarea{resize:vertical;min-height:72px}
   </div>
 
   <div class="doc-stats-bar">
-    <div class="doc-stat-item">📝 <span id="stat-words">0</span> words</div>
-    <div class="doc-stat-item">🔤 <span id="stat-chars">0</span> chars</div>
-    <div class="doc-stat-item">📖 <span id="stat-reading">0 min</span> read</div>
+    <div id="doc-stats-document" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="doc-stat-item">📝 <span id="stat-words">0</span> words</div>
+      <div class="doc-stat-item">🔤 <span id="stat-chars">0</span> chars</div>
+      <div class="doc-stat-item">📖 <span id="stat-reading">0 min</span> read</div>
+    </div>
+    <div id="doc-stats-slides" style="display:none;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="doc-stat-item">📊 <span id="stat-slide-count">0</span> slides</div>
+      <div class="doc-stat-item">📝 <span id="stat-slide-words">0</span> words</div>
+    </div>
+    <div id="doc-stats-sheet" style="display:none;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="doc-stat-item">▦ <span id="stat-cells-filled">0</span> cells filled</div>
+      <div class="doc-stat-item">📐 <span id="stat-sheet-size">0×0</span></div>
+    </div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--txt3)">
       <span>By member:</span>
       <div id="wc-by-member" style="display:flex;gap:10px;align-items:center"></div>
@@ -1818,6 +1903,35 @@ textarea{resize:vertical;min-height:72px}
 <!-- ═══════════════════════════════════════
      MODALS
 ═══════════════════════════════════════ -->
+
+<!-- New file (document / presentation / spreadsheet) -->
+<div class="modal-overlay" id="modal-new-doc" onclick="overlayClose(event,this)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">New file</div>
+    <button class="modal-close" onclick="closeModal('modal-new-doc')">✕</button>
+    <p class="help-text" style="margin-bottom:4px">Choose what you want to work on with your team.</p>
+    <div class="modal-doc-kind-grid">
+      <button type="button" class="doc-kind-choice" onclick="createDocWithKind('document')">
+        <span class="dk-icon">📄</span>
+        <span class="dk-title">Document</span>
+        <span class="dk-sub">Rich text — write reports, notes, and papers together.</span>
+      </button>
+      <button type="button" class="doc-kind-choice" onclick="createDocWithKind('slides')">
+        <span class="dk-icon">📊</span>
+        <span class="dk-title">Presentation</span>
+        <span class="dk-sub">Slides with titles and bullets — like PowerPoint.</span>
+      </button>
+      <button type="button" class="doc-kind-choice" onclick="createDocWithKind('sheet')">
+        <span class="dk-icon">▦</span>
+        <span class="dk-title">Spreadsheet</span>
+        <span class="dk-sub">Rows and columns — like Excel for shared data.</span>
+      </button>
+    </div>
+    <div class="form-actions" style="margin-top:18px">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-doc')">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- New Project -->
 <div class="modal-overlay" id="modal-new-project" onclick="overlayClose(event,this)">
@@ -2342,7 +2456,7 @@ function seedDemoData(owner){
   const did='doc_demo1';
   if(!(STORE.get('docs_'+pid)||[]).length){
     const content=`<h1>CS470 Research Paper</h1><h2>Abstract</h2><p>This paper investigates performance characteristics of distributed systems under various load conditions. We present empirical data collected from a cluster of 24 nodes over a 30-day period, demonstrating significant throughput improvements when using adaptive load balancing strategies.</p><h2>1. Introduction</h2><p>Distributed systems have become the backbone of modern computing infrastructure. As organizations scale their services, understanding the performance trade-offs becomes increasingly critical. This study aims to provide quantitative analysis of key performance metrics including latency, throughput, and fault tolerance across different architectural configurations.</p><p>Our primary contributions are: (1) a comprehensive benchmarking framework for distributed systems, (2) empirical evidence supporting adaptive load balancing over static approaches, and (3) recommendations for system architects based on our findings.</p><h2>2. Methodology</h2><p>We conducted experiments on a dedicated cluster using industry-standard benchmarking tools. Each experiment was run a minimum of five times to ensure statistical significance. Our measurement framework tracked CPU utilization, memory consumption, network I/O, and request latency at millisecond granularity.</p>`;
-    STORE.set('docs_'+pid,[{id:did,projectId:pid,title:'CS470 Research Paper Draft',content,created:Date.now()-86400000*8,lastEditedBy:'demo',lastEditedAt:Date.now()-3600000*2,wordCounts:{demo:280,m3:340,m2:120,m4:40}}]);
+    STORE.set('docs_'+pid,[{id:did,projectId:pid,kind:'document',title:'CS470 Research Paper Draft',content,created:Date.now()-86400000*8,lastEditedBy:'demo',lastEditedAt:Date.now()-3600000*2,wordCounts:{demo:280,m3:340,m2:120,m4:40}}]);
   }
 
   // Seed chat
@@ -2849,7 +2963,205 @@ function renderActivityPage(){
 /* ══════════════════════════════════════════════
    DOCUMENTS
 ══════════════════════════════════════════════ */
-const DOC_ICONS=['📘','📗','📙','📕','📒','📃'];
+const DOC_KIND_META={
+  document:{label:'Document',icon:'📄',badgeClass:'badge-doc-doc',listBg:'rgba(79,124,255,0.12)'},
+  slides:{label:'Presentation',icon:'📊',badgeClass:'badge-doc-slides',listBg:'rgba(155,109,255,0.12)'},
+  sheet:{label:'Spreadsheet',icon:'▦',badgeClass:'badge-doc-sheet',listBg:'rgba(0,212,170,0.12)'},
+};
+function docKindOf(d){return(d&&d.kind)||'document';}
+
+function docListMetricLine(d){
+  const k=docKindOf(d);
+  if(k==='document'){
+    const wc=d.content?d.content.replace(/<[^>]+>/g,' ').trim().split(/\s+/).filter(Boolean).length:0;
+    return`~${wc} words`;
+  }
+  if(k==='slides'){
+    const slides=d.slides&&d.slides.length?d.slides:[{title:'',bullets:[]}];
+    const w=slidesWordCount(slides);
+    return`${slides.length} slide${slides.length===1?'':'s'} · ~${w} words`;
+  }
+  const sh=normalizeSheet(d.sheet);
+  const f=countFilledCells(sh.data);
+  return`${sh.data.length}×${sh.data[0]?sh.data[0].length:0} · ${f} cells filled`;
+}
+
+function makeEmptySheet(rows,cols){
+  const data=Array.from({length:rows},()=>Array.from({length:cols},()=>''));
+  return{rows,cols,data};
+}
+
+function normalizeSheet(sh){
+  const cols=Math.min(26,Math.max(4,sh&&sh.cols)||8);
+  const rows=Math.min(60,Math.max(4,sh&&sh.rows)||12);
+  let data=sh&&Array.isArray(sh.data)?sh.data:null;
+  if(!data||!data.length){
+    data=Array.from({length:rows},()=>Array.from({length:cols},()=>''));
+  }else{
+    while(data.length<rows)data.push(Array.from({length:data[0].length||cols},()=>''));
+    data=data.slice(0,rows);
+    data=data.map(row=>{
+      const r=[...row];
+      while(r.length<cols)r.push('');
+      return r.slice(0,cols);
+    });
+  }
+  return{rows:data.length,cols:data[0]?data[0].length:cols,data};
+}
+
+function countFilledCells(data){
+  let n=0;
+  for(let r=0;r<data.length;r++){
+    for(let c=0;c<(data[r]||[]).length;c++){
+      if(String((data[r][c]||'').trim()))n++;
+    }
+  }
+  return n;
+}
+
+function slidesWordCount(slides){
+  let t='';
+  (slides||[]).forEach(s=>{
+    t+=(s.title||'')+' ';
+    (s.bullets||[]).forEach(b=>{t+=b+' ';});
+  });
+  return t.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function gatherSlidesFromUI(){
+  const blocks=document.querySelectorAll('#slides-editor .slide-block');
+  const slides=[];
+  blocks.forEach(block=>{
+    const ti=block.querySelector('.slide-title-input');
+    const ta=block.querySelector('.slide-bullets-input');
+    const title=(ti&&ti.value)||'';
+    const raw=(ta&&ta.value)||'';
+    const bullets=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+    slides.push({title:title||'Untitled slide',bullets:bullets.length?bullets:['']});
+  });
+  return slides.length?slides:[{title:'Slide 1',bullets:['']}];
+}
+
+function renderSlidesEditor(slides){
+  const el=document.getElementById('slides-editor');
+  if(!el)return;
+  el.innerHTML='';
+  const arr=slides&&slides.length?slides:[{title:'Slide 1',bullets:['']}];
+  arr.forEach((s,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='slide-block';
+    const head=document.createElement('div');
+    head.className='slide-block-head';
+    head.textContent='Slide '+(i+1);
+    const ti=document.createElement('input');
+    ti.type='text';
+    ti.className='slide-title-input';
+    ti.placeholder='Slide title';
+    ti.value=s.title||'';
+    ti.addEventListener('input',scheduleDocSave);
+    const ta=document.createElement('textarea');
+    ta.className='slide-bullets-input';
+    ta.placeholder='One bullet per line';
+    ta.value=(s.bullets&&s.bullets.length?s.bullets:['']).join('\n');
+    ta.addEventListener('input',scheduleDocSave);
+    wrap.appendChild(head);wrap.appendChild(ti);wrap.appendChild(ta);
+    el.appendChild(wrap);
+  });
+}
+
+function addSlideBlock(){
+  const slides=gatherSlidesFromUI();
+  slides.push({title:'New slide',bullets:['']});
+  renderSlidesEditor(slides);
+  scheduleDocSave();
+  updateDocStats();
+}
+
+function renderSheetEditor(sheet){
+  const host=document.getElementById('sheet-table-host');
+  if(!host)return;
+  const n=normalizeSheet(sheet);
+  let html='<table class="sheet-table"><thead><tr><th class="sheet-row-h"></th>';
+  for(let c=0;c<n.cols;c++){
+    const L=c<26?String.fromCharCode(65+c):String(c+1);
+    html+='<th>'+L+'</th>';
+  }
+  html+='</tr></thead><tbody>';
+  for(let r=0;r<n.rows;r++){
+    html+='<tr><th class="sheet-row-h">'+(r+1)+'</th>';
+    for(let c=0;c<n.cols;c++){
+      const v=(n.data[r]&&n.data[r][c])!=null?String(n.data[r][c]):'';
+      html+='<td><input type="text" class="sheet-cell" data-r="'+r+'" data-c="'+c+'" value="'+esc(v)+'" oninput="scheduleDocSave()"/></td>';
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  host.innerHTML=html;
+}
+
+function readSheetFromDom(){
+  const inputs=document.querySelectorAll('#sheet-table-host .sheet-cell');
+  if(!inputs.length)return makeEmptySheet(12,8);
+  let maxR=0,maxC=0;
+  inputs.forEach(inp=>{
+    const r=+inp.dataset.r,c=+inp.dataset.c;
+    if(r>maxR)maxR=r;
+    if(c>maxC)maxC=c;
+  });
+  const rows=maxR+1,cols=maxC+1;
+  const data=Array.from({length:rows},()=>Array.from({length:cols},()=>''));
+  inputs.forEach(inp=>{
+    const r=+inp.dataset.r,c=+inp.dataset.c;
+    if(data[r])data[r][c]=inp.value;
+  });
+  return{rows,cols,data};
+}
+
+function addSheetDimension(axis){
+  const sh=readSheetFromDom();
+  if(axis==='row'){
+    const cols=sh.data[0]?sh.data[0].length:8;
+    sh.data.push(Array.from({length:cols},()=>''));
+  }else{
+    sh.data=sh.data.map(row=>{const x=[...row,''];return x;});
+  }
+  sh.rows=sh.data.length;
+  sh.cols=sh.data[0]?sh.data[0].length:0;
+  renderSheetEditor(sh);
+  scheduleDocSave();
+  updateDocStats();
+}
+
+function setWorkspaceKind(kind){
+  const kd=DOC_KIND_META[kind]||DOC_KIND_META.document;
+  const badge=document.getElementById('doc-kind-badge');
+  if(badge){
+    badge.textContent=kd.label;
+    badge.style.display='inline-block';
+    badge.className='doc-kind-pill';
+    badge.style.background=kind==='document'?'rgba(79,124,255,0.15)':kind==='slides'?'rgba(155,109,255,0.15)':'rgba(0,212,170,0.15)';
+    badge.style.color=kind==='document'?'var(--blue)':kind==='slides'?'var(--purple)':'var(--teal)';
+  }
+  const pd=document.getElementById('doc-pane-document');
+  const ps=document.getElementById('doc-pane-slides');
+  const pt=document.getElementById('doc-pane-sheet');
+  if(pd)pd.style.display=kind==='document'?'flex':'none';
+  if(ps)ps.style.display=kind==='slides'?'flex':'none';
+  if(pt)pt.style.display=kind==='sheet'?'flex':'none';
+  const sd=document.getElementById('doc-stats-document');
+  const ss=document.getElementById('doc-stats-slides');
+  const st=document.getElementById('doc-stats-sheet');
+  if(sd)sd.style.display=kind==='document'?'flex':'none';
+  if(ss)ss.style.display=kind==='slides'?'flex':'none';
+  if(st)st.style.display=kind==='sheet'?'flex':'none';
+}
+
+function currentDocKind(){
+  if(!currentProject||!currentDocId)return'document';
+  const docs=STORE.get('docs_'+currentProject.id)||[];
+  const d=docs.find(x=>x.id===currentDocId);
+  return docKindOf(d);
+}
 
 function renderDocList(){
   if(!currentProject){
@@ -2857,32 +3169,45 @@ function renderDocList(){
     return;
   }
   const docs=STORE.get('docs_'+currentProject.id)||[];
-  document.getElementById('doc-list').innerHTML=docs.length?docs.map((d,i)=>{
+  document.getElementById('doc-list').innerHTML=docs.length?docs.map((d)=>{
     const editor=currentProject.members.find(m=>m.id===d.lastEditedBy);
-    const wc=d.content?d.content.replace(/<[^>]+>/g,' ').trim().split(/\s+/).filter(Boolean).length:0;
+    const k=docKindOf(d);
+    const meta=DOC_KIND_META[k]||DOC_KIND_META.document;
+    const metric=docListMetricLine(d);
     return`<div class="doc-list-item" onclick="openDoc('${d.id}')">
-      <div class="doc-icon-wrap" style="background:rgba(79,124,255,0.1)">${DOC_ICONS[i%DOC_ICONS.length]}</div>
+      <div class="doc-icon-wrap" style="background:${meta.listBg}">${meta.icon}</div>
       <div class="doc-info">
         <div class="doc-name">${esc(d.title||'Untitled')}</div>
         <div class="doc-meta">
-          <span>~${wc} words</span>
+          <span>${metric}</span>
           ${editor?`<span>·</span><span>Last by ${esc(editor.name.split(' ')[0])}</span>`:''}
           <span>·</span><span>${timeAgo(d.lastEditedAt||d.created)}</span>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-shrink:0">
-        <span class="badge badge-blue">Collaborative</span>
+      <div style="display:flex;gap:8px;flex-shrink:0;align-items:center">
+        <span class="badge ${meta.badgeClass}">${esc(meta.label)}</span>
       </div>
     </div>`;
-  }).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">📄</div><div class="empty-text">No documents yet</div><div class="empty-sub">Create your first shared document</div></div>`;
+  }).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">📄</div><div class="empty-text">No files yet</div><div class="empty-sub">Create a document, presentation, or spreadsheet</div></div>`;
 }
 
-function createDoc(){
+function createDocWithKind(kind){
+  closeModal('modal-new-doc');
   if(!currentProject){toast('Select a project first','error');return}
-  const doc={id:genId('doc'),projectId:currentProject.id,title:'Untitled Document',content:'<p>Start writing your document here…</p>',created:Date.now(),lastEditedBy:currentUser.id,lastEditedAt:Date.now(),wordCounts:{}};
+  if(!['document','slides','sheet'].includes(kind))kind='document';
+  const base={id:genId('doc'),projectId:currentProject.id,created:Date.now(),lastEditedBy:currentUser.id,lastEditedAt:Date.now(),wordCounts:{},comments:[],kind};
+  let doc;
+  if(kind==='document'){
+    doc={...base,title:'Untitled document',content:'<p>Start writing your document here…</p>'};
+  }else if(kind==='slides'){
+    doc={...base,title:'Untitled presentation',slides:[{title:'Slide 1',bullets:['']}]}; 
+  }else{
+    doc={...base,title:'Untitled spreadsheet',sheet:makeEmptySheet(12,8)};
+  }
   let docs=STORE.get('docs_'+currentProject.id)||[];
   docs.push(doc);STORE.set('docs_'+currentProject.id,docs);
-  logActivity({type:'doc_edit',text:'created new document'});
+  const lab=kind==='document'?'document':kind==='slides'?'presentation':'spreadsheet';
+  logActivity({type:'doc_edit',text:`created ${lab}`});
   openDoc(doc.id);
 }
 
@@ -2890,10 +3215,18 @@ function openDoc(docId){
   if(!currentProject)return;
   const docs=STORE.get('docs_'+currentProject.id)||[];
   const doc=docs.find(d=>d.id===docId);
-  if(!doc){toast('Document not found','error');return}
+  if(!doc){toast('File not found','error');return}
   currentDocId=docId;
+  const kind=docKindOf(doc);
+  setWorkspaceKind(kind);
   document.getElementById('doc-title-input').value=doc.title||'';
-  document.getElementById('doc-editor').innerHTML=doc.content||'<p>Start writing…</p>';
+  if(kind==='document'){
+    document.getElementById('doc-editor').innerHTML=doc.content||'<p>Start writing…</p>';
+  }else if(kind==='slides'){
+    renderSlidesEditor(doc.slides);
+  }else{
+    renderSheetEditor(doc.sheet);
+  }
   document.getElementById('doc-workspace').classList.add('open');
   updateDocStats();
   renderComments();
@@ -2902,6 +3235,8 @@ function openDoc(docId){
 }
 
 function closeDocWorkspace(){
+  const b=document.getElementById('doc-kind-badge');
+  if(b)b.style.display='none';
   document.getElementById('doc-workspace').classList.remove('open');
   renderDocList();
 }
@@ -2919,13 +3254,33 @@ function saveDoc(){
   const docs=STORE.get('docs_'+currentProject.id)||[];
   const idx=docs.findIndex(d=>d.id===currentDocId);
   if(idx<0)return;
-  const content=document.getElementById('doc-editor').innerHTML;
   const title=document.getElementById('doc-title-input').value||'Untitled';
-  // Accumulate word count
-  const wc=content.replace(/<[^>]+>/g,' ').trim().split(/\s+/).filter(Boolean).length;
+  const kind=docKindOf(docs[idx]);
+  const prevW=docs[idx]._lastWc||0;
   const prev=docs[idx].wordCounts||{};
-  prev[currentUser.id]=(prev[currentUser.id]||0)+Math.max(0,wc-((docs[idx]._lastWc)||0));
-  docs[idx]={...docs[idx],title,content,lastEditedBy:currentUser.id,lastEditedAt:Date.now(),wordCounts:prev,_lastWc:wc};
+  let patch={title,lastEditedBy:currentUser.id,lastEditedAt:Date.now(),wordCounts:{...prev}};
+
+  if(kind==='document'){
+    const content=document.getElementById('doc-editor').innerHTML;
+    const wc=content.replace(/<[^>]+>/g,' ').trim().split(/\s+/).filter(Boolean).length;
+    patch.content=content;
+    patch._lastWc=wc;
+    patch.wordCounts[currentUser.id]=(patch.wordCounts[currentUser.id]||0)+Math.max(0,wc-prevW);
+  }else if(kind==='slides'){
+    const slides=gatherSlidesFromUI();
+    const wc=slidesWordCount(slides);
+    patch.slides=slides;
+    patch._lastWc=wc;
+    patch.wordCounts[currentUser.id]=(patch.wordCounts[currentUser.id]||0)+Math.max(0,wc-prevW);
+  }else{
+    const sheet=readSheetFromDom();
+    const filled=countFilledCells(sheet.data);
+    patch.sheet=sheet;
+    patch._lastWc=filled;
+    patch.wordCounts[currentUser.id]=(patch.wordCounts[currentUser.id]||0)+Math.max(0,filled-prevW);
+  }
+
+  docs[idx]={...docs[idx],...patch};
   STORE.set('docs_'+currentProject.id,docs);
   document.getElementById('doc-save-dot').classList.remove('saving');
   document.getElementById('doc-save-text').textContent='Saved';
@@ -2939,12 +3294,24 @@ function onDocInput(){
 }
 
 function updateDocStats(){
-  const text=document.getElementById('doc-editor').innerText||'';
-  const words=text.trim().split(/\s+/).filter(Boolean).length;
-  const chars=text.replace(/\s/g,'').length;
-  document.getElementById('stat-words').textContent=words.toLocaleString();
-  document.getElementById('stat-chars').textContent=chars.toLocaleString();
-  document.getElementById('stat-reading').textContent=Math.max(1,Math.ceil(words/200))+' min';
+  const kind=currentDocKind();
+  if(kind==='document'){
+    const text=document.getElementById('doc-editor').innerText||'';
+    const words=text.trim().split(/\s+/).filter(Boolean).length;
+    const chars=text.replace(/\s/g,'').length;
+    document.getElementById('stat-words').textContent=words.toLocaleString();
+    document.getElementById('stat-chars').textContent=chars.toLocaleString();
+    document.getElementById('stat-reading').textContent=Math.max(1,Math.ceil(words/200))+' min';
+  }else if(kind==='slides'){
+    const slides=gatherSlidesFromUI();
+    document.getElementById('stat-slide-count').textContent=slides.length;
+    document.getElementById('stat-slide-words').textContent=slidesWordCount(slides).toLocaleString();
+  }else{
+    const sh=readSheetFromDom();
+    const filled=countFilledCells(sh.data);
+    document.getElementById('stat-cells-filled').textContent=filled.toLocaleString();
+    document.getElementById('stat-sheet-size').textContent=sh.rows+'×'+sh.cols;
+  }
 }
 
 function renderWCByMember(){
@@ -2972,14 +3339,19 @@ function renderWCByMember(){
     </div>`).join('');
 }
 
-/* ── TOOLBAR ── */
-function execCmd(cmd,val){document.execCommand(cmd,false,val||null);updateToolbarState()}
+/* ── TOOLBAR (rich text document only) ── */
+function execCmd(cmd,val){
+  if(currentDocKind()!=='document')return;
+  document.execCommand(cmd,false,val||null);updateToolbarState();
+}
 function execFormatBlock(val){
+  if(currentDocKind()!=='document')return;
   if(val==='p')document.execCommand('formatBlock',false,'<p>');
   else document.execCommand('formatBlock',false,'<'+val+'>');
   updateToolbarState();
 }
 function updateToolbarState(){
+  if(currentDocKind()!=='document')return;
   ['bold','italic','underline'].forEach(cmd=>{
     const btn=document.getElementById('tb-'+cmd);
     if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));
@@ -3072,23 +3444,76 @@ function replyToComment(commentId){
 }
 
 /* ── EXPORT ── */
+function slidesToText(slides){
+  return(slides||[]).map((s,i)=>{
+    const lines=[`--- Slide ${i+1}: ${s.title||'Untitled'} ---`];
+    (s.bullets||[]).forEach(b=>lines.push('• '+b));
+    return lines.join('\n');
+  }).join('\n\n');
+}
+
 function exportDoc(format){
   if(!currentDocId||!currentProject)return;
   const docs=STORE.get('docs_'+currentProject.id)||[];
   const doc=docs.find(d=>d.id===currentDocId);
   if(!doc)return;
   const title=doc.title||'Document';
+  const kind=docKindOf(doc);
+
+  if(format==='pdf'){
+    if(kind!=='document'){
+      toast('For presentations or spreadsheets, export as HTML and use Print → PDF, or CSV for Excel.','default');
+      closeModal('modal-export');
+      return;
+    }
+    window.print();
+    closeModal('modal-export');
+    return;
+  }
+
   let content,mime,ext;
-  if(format==='html'){
-    content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.8;color:#222}h1,h2,h3{font-family:system-ui,sans-serif}blockquote{border-left:3px solid #007aff;padding:8px 16px;color:#555}</style></head><body>${doc.content}</body></html>`;
-    mime='text/html';ext='html';
-  }else if(format==='md'){
-    content=doc.content.replace(/<h1[^>]*>(.*?)<\/h1>/gi,'# $1\n').replace(/<h2[^>]*>(.*?)<\/h2>/gi,'## $1\n').replace(/<h3[^>]*>(.*?)<\/h3>/gi,'### $1\n').replace(/<strong[^>]*>(.*?)<\/strong>/gi,'**$1**').replace(/<em[^>]*>(.*?)<\/em>/gi,'*$1*').replace(/<p[^>]*>(.*?)<\/p>/gi,'$1\n\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
-    mime='text/markdown';ext='md';
-  }else if(format==='txt'){
-    content=doc.content.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ').trim();
-    mime='text/plain';ext='txt';
-  }else{window.print();closeModal('modal-export');return}
+
+  if(kind==='sheet'){
+    const sh=normalizeSheet(doc.sheet);
+    if(format==='html'){
+      let h='<table border="1" cellpadding="6" cellspacing="0">';
+      sh.data.forEach(row=>{
+        h+='<tr>'+row.map(c=>'<td>'+esc(String(c))+'</td>').join('')+'</tr>';
+      });
+      h+='</table>';
+      content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title></head><body><h1>${esc(title)}</h1>${h}</body></html>`;
+      mime='text/html';ext='html';
+    }else{
+      content=sh.data.map(row=>row.map(c=>String(c).replace(/"/g,'""')).join(',')).join('\n');
+      mime='text/csv';ext='csv';
+    }
+  }else if(kind==='slides'){
+    const slides=doc.slides&&doc.slides.length?doc.slides:[{title:'',bullets:[]}];
+    const plain=slidesToText(slides);
+    if(format==='html'){
+      const body=slides.map((s,i)=>`<section style="margin-bottom:2rem"><h2>${esc(s.title||'Slide '+(i+1))}</h2><ul>${(s.bullets||[]).map(b=>'<li>'+esc(b)+'</li>').join('')}</ul></section>`).join('');
+      content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title></head><body><h1>${esc(title)}</h1>${body}</body></html>`;
+      mime='text/html';ext='html';
+    }else if(format==='md'){
+      content='# '+title+'\n\n'+slides.map((s,i)=>'## '+(s.title||'Slide '+(i+1))+'\n\n'+((s.bullets||[]).map(b=>'- '+b).join('\n'))).join('\n\n');
+      mime='text/markdown';ext='md';
+    }else{
+      content=plain;
+      mime='text/plain';ext='txt';
+    }
+  }else{
+    if(format==='html'){
+      content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.8;color:#222}h1,h2,h3{font-family:system-ui,sans-serif}blockquote{border-left:3px solid #007aff;padding:8px 16px;color:#555}</style></head><body>${doc.content}</body></html>`;
+      mime='text/html';ext='html';
+    }else if(format==='md'){
+      content=doc.content.replace(/<h1[^>]*>(.*?)<\/h1>/gi,'# $1\n').replace(/<h2[^>]*>(.*?)<\/h2>/gi,'## $1\n').replace(/<h3[^>]*>(.*?)<\/h3>/gi,'### $1\n').replace(/<strong[^>]*>(.*?)<\/strong>/gi,'**$1**').replace(/<em[^>]*>(.*?)<\/em>/gi,'*$1*').replace(/<p[^>]*>(.*?)<\/p>/gi,'$1\n\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
+      mime='text/markdown';ext='md';
+    }else{
+      content=doc.content.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ').trim();
+      mime='text/plain';ext='txt';
+    }
+  }
+
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([content],{type:mime}));
   a.download=title.replace(/[^a-z0-9]/gi,'_').toLowerCase()+'.'+ext;
@@ -3584,6 +4009,7 @@ const AI_SUGGESTIONS={
 };
 
 function runAIAssist(){
+  if(currentDocKind()!=='document'){toast('AI assist is for rich-text documents only.','error');return;}
   document.getElementById('ai-suggestion').style.display='none';
   document.getElementById('ai-apply-btn').style.display='none';
   aiSuggestionText='';
@@ -3633,6 +4059,7 @@ function applyAISuggestion(){
 }
 
 async function runPlagiarismCheck(){
+  if(currentDocKind()!=='document'){toast('Plagiarism check runs on rich-text documents only.','error');return;}
   const text=document.getElementById('doc-editor').innerText||'';
   if(!text.trim()){toast('No content to check','error');return}
   const base=(window.FSB&&window.FSB.apiBase)?window.FSB.apiBase():'';
