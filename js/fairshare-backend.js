@@ -14,6 +14,7 @@
   let viewerId = null;
   let flushTimer = null;
   let chatChannel = null;
+  let activityChannel = null;
   let notifChannel = null;
 
   function cfg() {
@@ -403,6 +404,43 @@
     };
   }
 
+  function releaseActivityChannel() {
+    if (activityChannel && sb) {
+      sb.removeChannel(activityChannel);
+      activityChannel = null;
+    }
+  }
+
+  function subscribeActivities(projectId) {
+    if (!remote || !sb || !projectId) return;
+    releaseActivityChannel();
+    activityChannel = sb
+      .channel('fs-activity-' + projectId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'fs_activities',
+          filter: 'project_id=eq.' + projectId,
+        },
+        (payload) => {
+          const row = payload.new;
+          if (!row || row.project_id !== projectId) return;
+          const o = rowAct(row);
+          const key = 'activity_' + projectId;
+          const list = mem[key] || [];
+          if (list.some((x) => x.id === o.id)) return;
+          list.push(o);
+          mem[key] = list;
+          if (typeof window.refreshFairshareActivityUI === 'function') {
+            window.refreshFairshareActivityUI(projectId);
+          }
+        }
+      )
+      .subscribe();
+  }
+
   function subscribeChat(projectId, channel) {
     if (!remote || !sb) return;
     if (chatChannel) {
@@ -506,6 +544,7 @@
 
       sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_OUT') {
+          releaseActivityChannel();
           stopNotificationsRealtime();
           viewerId = null;
           for (const k of Object.keys(mem)) delete mem[k];
@@ -742,6 +781,7 @@
       try {
         if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
       } catch (e) {}
+      releaseActivityChannel();
       stopNotificationsRealtime();
       if (sb) await sb.auth.signOut();
       viewerId = null;
@@ -767,6 +807,14 @@
 
     startChatRealtime(projectId, channel) {
       subscribeChat(projectId, channel);
+    },
+
+    startActivitiesRealtime(projectId) {
+      subscribeActivities(projectId);
+    },
+
+    stopActivitiesRealtime() {
+      releaseActivityChannel();
     },
 
     stopChatRealtime() {
