@@ -2074,12 +2074,17 @@ async function handleLogin(){
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
     try{
       const user=await window.FSB.signIn(email,pass);
+      if(!user||!user.id){
+        toast('Sign in did not return a user profile. Refresh the page and try again.','error');
+        return;
+      }
       loginAs(user);
     }catch(e){
       const code=e?.code||e?.name;
       let m=e?.message||'Sign in failed';
       if(code==='invalid_credentials'||/invalid login credentials/i.test(m))m='Wrong email or password.';
       else if(code==='email_not_confirmed'||/email not confirmed/i.test(m))m='Confirm your email from the link we sent, then try signing in.';
+      console.error('FairShare signIn:',code,e);
       toast(m,'error');
     }
     return
@@ -2151,7 +2156,11 @@ async function handleSignup(){
 }
 
 function loginAs(user){
-  if(!user||!user.id){console.warn('FairShare loginAs: invalid user',user);return}
+  if(!user||!user.id){
+    console.warn('FairShare loginAs: invalid user',user);
+    toast('Could not complete sign-in (missing user id). Try again or refresh.','error');
+    return;
+  }
   currentUser=user;
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
@@ -2363,6 +2372,7 @@ function renderProjectList(){
   renderProjectInvites();
   const projects=loadProjects();
   const container=document.getElementById('project-grid');
+  if(!container)return;
   if(!projects.length){
     container.innerHTML=`<div class="empty" style="grid-column:1/-1">
       <div class="empty-icon">📂</div>

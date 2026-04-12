@@ -581,8 +581,24 @@
       attachRemoteStore();
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      await hydrateSession(data.user.id);
-      this.lastUser = await mapSessionUser(data.session);
+      if (!data?.user?.id) throw new Error('Sign in failed: no user returned');
+
+      /* Supabase often omits `session` on the password response; the client session is still persisted — read it back. */
+      let session = data.session;
+      if (!session?.user) {
+        const { data: wrap, error: gsErr } = await sb.auth.getSession();
+        if (gsErr) console.warn('[FSB] getSession after signInWithPassword', gsErr);
+        session = wrap?.session ?? null;
+      }
+      if (!session?.user?.id) {
+        throw new Error(
+          'No stored session after sign-in. Confirm your email if required, or try checking “Keep me signed in” and sign in again.'
+        );
+      }
+
+      await hydrateSession(session.user.id);
+      this.lastUser = await mapSessionUser(session);
+      if (!this.lastUser?.id) throw new Error('Could not load your profile after sign-in.');
       return this.lastUser;
     },
 
@@ -608,12 +624,17 @@
         err.status = error.status;
         throw err;
       }
-      if (data.session) {
+      let session = data.session;
+      if (!session?.user && data.user?.id) {
+        const { data: wrap } = await sb.auth.getSession();
+        session = wrap?.session ?? null;
+      }
+      if (session?.user?.id) {
         remote = true;
         window.__FAIRSHARE_USE_REMOTE__ = true;
         attachRemoteStore();
-        await hydrateSession(data.user.id);
-        this.lastUser = await mapSessionUser(data.session);
+        await hydrateSession(session.user.id);
+        this.lastUser = await mapSessionUser(session);
         return this.lastUser;
       }
       return null;
