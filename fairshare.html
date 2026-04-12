@@ -349,7 +349,9 @@ html[data-theme="light"] .auth-grid{
   display:flex;align-items:center;padding:0 20px;gap:10px;
   position:sticky;top:0;z-index:100;flex-shrink:0;
   box-shadow:0 1px 0 rgba(255,255,255,0.04),0 8px 32px rgba(0,0,0,0.35);
+  pointer-events:none;
 }
+.topnav>*{pointer-events:auto}
 html[data-theme="light"] .topnav{
   box-shadow:0 1px 0 rgba(15,23,42,0.06),0 4px 24px rgba(15,23,42,0.06);
 }
@@ -507,7 +509,7 @@ html[data-theme="light"] .nav-search:focus{
 @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* Page headers */
-.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;position:relative;z-index:2}
 .page-title{font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:-0.6px;line-height:1.2}
 .page-sub{font-size:14px;color:var(--txt2);margin-top:4px}
 
@@ -1772,8 +1774,8 @@ textarea{resize:vertical;min-height:72px}
         </div>
         <div style="display:flex;gap:10px;align-items:center">
           <div class="view-toggle">
-            <button class="view-btn active" id="view-kanban-btn" onclick="setTaskView('kanban',this)">⬛ Board</button>
-            <button class="view-btn" id="view-list-btn" onclick="setTaskView('list',this)">☰ List</button>
+            <button type="button" class="view-btn active" id="view-kanban-btn" onclick="setTaskView('kanban',this)">⬛ Board</button>
+            <button type="button" class="view-btn" id="view-list-btn" onclick="setTaskView('list',this)">☰ List</button>
           </div>
           <select id="task-filter" onchange="renderTasks()" style="width:auto;padding:7px 12px;font-size:12px">
             <option value="all">All tasks</option>
@@ -3443,10 +3445,13 @@ function startLiveFeed(){
 ══════════════════════════════════════════════ */
 function setTaskView(view,btn){
   taskView=view;
-  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('task-board-view').style.display=view==='kanban'?'':'none';
-  document.getElementById('task-list-view').style.display=view==='list'?'':'none';
+  document.querySelectorAll('#page-tasks .view-btn').forEach(b=>b.classList.remove('active'));
+  const tab=btn||document.getElementById(view==='kanban'?'view-kanban-btn':'view-list-btn');
+  if(tab)tab.classList.add('active');
+  const boardEl=document.getElementById('task-board-view');
+  const listEl=document.getElementById('task-list-view');
+  if(boardEl)boardEl.style.display=view==='kanban'?'block':'none';
+  if(listEl)listEl.style.display=view==='list'?'block':'none';
   renderTasks();
 }
 
