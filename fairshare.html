@@ -3617,6 +3617,13 @@ document.addEventListener('click',function(ev){
   closeUserMenu();
 });
 
+window._fairShareApplyLogin=function(user){
+  if(!user)return;
+  const app=document.getElementById('app');
+  if(app&&app.classList.contains('visible')&&currentUser&&currentUser.id===user.id)return;
+  loginAs(user);
+};
+
 (async function init(){
   await(window.FSB&&window.FSB.init&&window.FSB.init());
   if(window.FSB&&typeof window.FSB.syncRememberCheckboxes==='function')window.FSB.syncRememberCheckboxes();

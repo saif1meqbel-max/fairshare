@@ -483,10 +483,27 @@
           viewerId = null;
           for (const k of Object.keys(mem)) delete mem[k];
           this.lastUser = null;
+          return;
         }
-        if (event === 'SIGNED_IN' && session) {
-          await hydrateSession(session.user.id);
-          this.lastUser = await mapSessionUser(session);
+        if (event === 'TOKEN_REFRESHED' && session) {
+          try {
+            this.lastUser = await mapSessionUser(session);
+          } catch (e) {
+            console.warn('[FSB] TOKEN_REFRESHED', e);
+          }
+          return;
+        }
+        /* OAuth redirect: Supabase emits INITIAL_SESSION with the new session, not always SIGNED_IN. */
+        if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+          try {
+            await hydrateSession(session.user.id);
+            this.lastUser = await mapSessionUser(session);
+            if (typeof window._fairShareApplyLogin === 'function') {
+              window._fairShareApplyLogin(this.lastUser);
+            }
+          } catch (e) {
+            console.warn('[FSB] auth state', event, e);
+          }
         }
       });
 
@@ -494,8 +511,12 @@
         data: { session },
       } = await sb.auth.getSession();
       if (session) {
-        await hydrateSession(session.user.id);
-        this.lastUser = await mapSessionUser(session);
+        try {
+          await hydrateSession(session.user.id);
+          this.lastUser = await mapSessionUser(session);
+        } catch (e) {
+          console.warn('[FSB] getSession hydrate', e);
+        }
       }
     },
 
