@@ -1173,7 +1173,7 @@ textarea{resize:vertical;min-height:72px}
         <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleResendFromLogin()">Resend confirmation email</button>
       </div>
       <label class="auth-remember"><input type="checkbox" id="login-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
-      <button class="btn btn-primary" onclick="handleLogin()">Sign in</button>
+      <button type="button" class="btn btn-primary" onclick="handleLogin()">Sign in</button>
 
       <div class="divider">or</div>
       <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-login">
@@ -1181,7 +1181,7 @@ textarea{resize:vertical;min-height:72px}
       </button>
 
       <div class="divider">or</div>
-      <button class="btn btn-demo" onclick="demoLogin()">✨ &nbsp;Try Demo — no signup needed</button>
+      <button type="button" class="btn btn-demo" onclick="demoLogin()">✨ &nbsp;Try Demo — no signup needed</button>
 
       <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Create one</a></div>
     </div>
@@ -1213,7 +1213,7 @@ textarea{resize:vertical;min-height:72px}
         <div class="help-text">Use at least 8 characters. A mix of letters and numbers is stronger.</div>
       </div>
       <label class="auth-remember"><input type="checkbox" id="su-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
-      <button class="btn btn-primary" onclick="handleSignup()">Create account</button>
+      <button type="button" class="btn btn-primary" onclick="handleSignup()">Create account</button>
 
       <div class="divider">or</div>
       <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-signup">
@@ -2018,6 +2018,7 @@ function syncRememberPair(el){
 }
 
 async function handleGoogleSignIn(){
+  if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   if(!window.FSB||!window.FSB.hasCloud){
     toast('Connect Supabase for Google sign-in','error');
     return;
@@ -2041,6 +2042,7 @@ function isValidEmailFormat(email){
 }
 
 async function handleForgotPassword(){
+  if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   if(!email||!isValidEmailFormat(email)){toast('Enter your email above first (correct format)','error');return}
   if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){toast('Password reset uses email — sign in with Supabase (not demo mode)','error');return}
@@ -2051,6 +2053,7 @@ async function handleForgotPassword(){
 }
 
 async function handleResendFromLogin(){
+  if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   if(!email||!isValidEmailFormat(email)){toast('Enter the email you signed up with','error');return}
   if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){toast('Confirmation emails are for cloud accounts only','error');return}
@@ -2061,6 +2064,7 @@ async function handleResendFromLogin(){
 }
 
 async function handleLogin(){
+  if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   if(window.FSB&&typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
@@ -2100,6 +2104,7 @@ function demoLogin(){
 }
 
 async function handleSignup(){
+  if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   if(window.FSB&&typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   const name=document.getElementById('su-name').value.trim();

@@ -456,8 +456,15 @@
     lastUser: null,
     /** True after init when Supabase client exists (even if user is in local demo mode). */
     hasCloud: false,
+    _initPromise: null,
 
     async init() {
+      if (this._initPromise) return this._initPromise;
+      this._initPromise = this._runInit();
+      return this._initPromise;
+    },
+
+    async _runInit() {
       this.lastUser = null;
       window.__FAIRSHARE_USE_REMOTE__ = false;
       const c = cfg();
@@ -716,8 +723,9 @@
 
     /** Call before email/password or Google sign-in so Supabase is used after "Try Demo". */
     exitLocalDemoForAuth() {
-      if (!this.hasCloud || !sb) return;
+      if (!this.hasCloud) return;
       this.localDemo = false;
+      if (!sb) return;
       remote = true;
       window.__FAIRSHARE_USE_REMOTE__ = true;
       this.enabled = true;
