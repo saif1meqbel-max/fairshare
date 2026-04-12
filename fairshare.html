@@ -1775,12 +1775,19 @@ textarea{resize:vertical;min-height:72px}
 
     <!-- ══ DOCUMENTS PAGE ══ -->
     <div class="page" id="page-documents">
+      <input type="file" id="doc-import-input" multiple
+        accept=".docx,.doc,.html,.htm,.txt,.md,text/html,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        class="sr-only" tabindex="-1" aria-hidden="true"
+        onchange="handleDocImportFiles(this)">
       <div class="page-header">
         <div>
           <div class="page-title">Documents</div>
           <div class="page-sub" id="docs-project-name">Select a project first</div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-doc')">+ New file</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn btn-outline btn-sm" onclick="triggerDocImport()">Import from computer</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openModal('modal-new-doc')">+ New file</button>
+        </div>
       </div>
       <div class="card">
         <div id="doc-list"></div>
@@ -2207,7 +2214,7 @@ textarea{resize:vertical;min-height:72px}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title">New file</div>
     <button class="modal-close" onclick="closeModal('modal-new-doc')">✕</button>
-    <p class="help-text" style="margin-bottom:4px">Choose what you want to work on with your team. (Built-in editors — not the Microsoft Office desktop apps.)</p>
+    <p class="help-text" style="margin-bottom:4px">Choose what you want to work on with your team. (Built-in editors — Word files are imported as editable HTML.)</p>
     <div class="modal-doc-kind-grid">
       <button type="button" class="doc-kind-choice" onclick="createDocWithKind('document')">
         <span class="dk-icon">📄</span>
@@ -2225,6 +2232,7 @@ textarea{resize:vertical;min-height:72px}
         <span class="dk-sub">Rows and columns — like Excel for shared data.</span>
       </button>
     </div>
+    <p class="help-text" style="margin-top:16px;margin-bottom:0">Or bring in an existing file: <button type="button" class="btn btn-outline btn-sm" style="margin-left:6px" onclick="closeModal('modal-new-doc');triggerDocImport()">Import from computer</button> <span style="opacity:0.85">(.docx, .html, .txt, .md)</span></p>
     <div class="form-actions" style="margin-top:18px">
       <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-doc')">Cancel</button>
     </div>
@@ -3790,6 +3798,7 @@ function renderDocList(){
         <div class="doc-name">${esc(d.title||'Untitled')}</div>
         <div class="doc-meta">
           <span>${metric}</span>
+          ${d.importedFrom?`<span>·</span><span title="${esc(d.importedFrom)}">Imported</span>`:''}
           ${editor?`<span>·</span><span>Last by ${esc(editor.name.split(' ')[0])}</span>`:''}
           <span>·</span><span>${timeAgo(d.lastEditedAt||d.created)}</span>
         </div>
@@ -3798,7 +3807,148 @@ function renderDocList(){
         <span class="badge ${meta.badgeClass}">${esc(meta.label)}</span>
       </div>
     </div>`;
-  }).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">📄</div><div class="empty-text">No files yet</div><div class="empty-sub">Create a document, presentation, or spreadsheet</div></div>`;
+  }).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">📄</div><div class="empty-text">No files yet</div><div class="empty-sub">Create a new file or import Word (.docx), HTML, or plain text from your computer</div></div>`;
+}
+
+function triggerDocImport(){
+  if(!currentProject){toast('Open a project from Projects first.','error');return}
+  const el=document.getElementById('doc-import-input');
+  if(el)el.click();
+}
+
+function baseNameFromFile(name){
+  const i=name.lastIndexOf('.');
+  const base=(i>0?name.slice(0,i):name).trim();
+  return base.replace(/[\\/]/g,'')||'Imported document';
+}
+function fileExtFromName(name){
+  const i=name.lastIndexOf('.');
+  return i>=0?name.slice(i+1).toLowerCase():'';
+}
+
+function sanitizeImportedHtml(html){
+  const d=document.createElement('div');
+  d.innerHTML=String(html||'');
+  d.querySelectorAll('script,iframe,object,embed,link[rel="stylesheet"]').forEach(n=>n.remove());
+  try{
+    d.querySelectorAll('*').forEach(el=>{
+      [...el.attributes].forEach(a=>{
+        if(/^on/i.test(a.name))el.removeAttribute(a.name);
+        if((a.name==='href'||a.name==='src')&&/^\s*javascript:/i.test(a.value))el.removeAttribute(a.name);
+      });
+    });
+  }catch(e){}
+  return(d.innerHTML&&d.innerHTML.trim())?d.innerHTML:'<p>(empty)</p>';
+}
+
+function plainTextToDocHtml(text){
+  const t=String(text||'').trim();
+  if(!t)return'<p></p>';
+  const parts=t.split(/\n\s*\n/).filter(Boolean);
+  if(parts.length<=1)return'<p>'+esc(t.replace(/\n/g,'<br>'))+'</p>';
+  return parts.map(p=>'<p>'+esc(p.trim().replace(/\n/g,'<br>'))+'</p>').join('');
+}
+
+let _mammothLoadPromise=null;
+function ensureMammoth(){
+  if(typeof mammoth!=='undefined'&&mammoth&&mammoth.convertToHtml)return Promise.resolve();
+  if(_mammothLoadPromise)return _mammothLoadPromise;
+  _mammothLoadPromise=new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js';
+    s.onload=()=>{
+      if(typeof mammoth!=='undefined'&&mammoth&&mammoth.convertToHtml)resolve();
+      else{_mammothLoadPromise=null;reject(new Error('Converter unavailable'));}
+    };
+    s.onerror=()=>{_mammothLoadPromise=null;reject(new Error('Could not load Word converter (check network).'));};
+    document.head.appendChild(s);
+  });
+  return _mammothLoadPromise;
+}
+
+function readFileAsArrayBuffer(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>res(fr.result);
+    fr.onerror=()=>rej(fr.error||new Error('Read failed'));
+    fr.readAsArrayBuffer(file);
+  });
+}
+function readFileAsText(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>res(String(fr.result||''));
+    fr.onerror=()=>rej(fr.error||new Error('Read failed'));
+    fr.readAsText(file);
+  });
+}
+
+async function importLocalDocContent(file){
+  const ext=fileExtFromName(file.name);
+  const mime=(file.type||'').toLowerCase();
+  const isDocx=ext==='docx'||mime.indexOf('wordprocessingml')>=0||mime.indexOf('officedocument.wordprocessingml')>=0;
+  const isHtml=ext==='html'||ext==='htm'||mime.indexOf('html')>=0;
+  const isText=ext==='txt'||ext==='md'||mime==='text/plain'||mime==='';
+
+  if(isDocx){
+    await ensureMammoth();
+    const ab=await readFileAsArrayBuffer(file);
+    const result=await mammoth.convertToHtml({arrayBuffer:ab});
+    return sanitizeImportedHtml(result.value);
+  }
+  if(isHtml){
+    const t=await readFileAsText(file);
+    return sanitizeImportedHtml(t);
+  }
+  if(isText||ext==='md'){
+    const t=await readFileAsText(file);
+    return plainTextToDocHtml(t);
+  }
+  if(ext==='doc'){
+    throw new Error('Older .doc format is not supported. In Word use “Save As” → .docx and import again.');
+  }
+  throw new Error('Unsupported type. Use .docx, .html, .txt, or .md.');
+}
+
+async function handleDocImportFiles(input){
+  const files=input.files;
+  if(!files||!files.length){input.value='';return}
+  if(!currentProject){toast('Open a project first.','error');input.value='';return}
+  closeModal('modal-new-doc');
+  const maxChars=4000000;
+  const imported=[];
+  if(files.length>1)toast(`Importing ${files.length} files…`,'default');
+  else toast('Importing…','default');
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    try{
+      const html=await importLocalDocContent(file);
+      if(html.length>maxChars){
+        toast(file.name+' is too large after import.','error');
+        continue;
+      }
+      const title=baseNameFromFile(file.name);
+      imported.push({
+        id:genId('doc'),projectId:currentProject.id,kind:'document',
+        title,content:html,created:Date.now(),
+        lastEditedBy:currentUser.id,lastEditedAt:Date.now(),
+        wordCounts:{},comments:[],importedFrom:file.name
+      });
+    }catch(e){
+      console.error('Import:',e);
+      toast(e.message||'Could not import '+file.name,'error');
+    }
+  }
+  input.value='';
+  if(!imported.length)return;
+  let docs=STORE.get('docs_'+currentProject.id)||[];
+  imported.forEach(doc=>docs.push(doc));
+  STORE.set('docs_'+currentProject.id,docs);
+  imported.forEach(doc=>logActivity({type:'doc_edit',text:`imported document: ${doc.title}`}));
+  renderDocList();
+  openDoc(imported[imported.length-1].id);
+  if(imported.length>1)toast(imported.length+' documents imported — opened the last one.','success');
+  else toast('Document imported — you can edit and save like any FairShare file.','success');
 }
 
 function createDocWithKind(kind){
