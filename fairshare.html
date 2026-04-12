@@ -2352,9 +2352,9 @@ textarea{resize:vertical;min-height:72px}
         <span class="export-sub">.md file</span>
       </button>
       <button class="export-btn" onclick="exportDoc('pdf')">
-        <span class="export-icon">🖨</span>
-        <span class="export-label">Print / PDF</span>
-        <span class="export-sub">Via browser print</span>
+        <span class="export-icon">📕</span>
+        <span class="export-label">PDF</span>
+        <span class="export-sub">Download .pdf file</span>
       </button>
     </div>
     <div style="margin-top:20px;padding:14px;background:var(--ink3);border-radius:var(--r);font-size:12px;color:var(--txt2);border:1px solid var(--border)">
@@ -4423,6 +4423,117 @@ function safeExportFileBase(title){
   return(s.slice(0,72)||'fairshare_export').toLowerCase();
 }
 
+async function loadHtml2Pdf(){
+  const mod=await import('https://esm.sh/html2pdf.js@0.10.2');
+  return mod.default;
+}
+
+async function exportDocumentPdfBlob(base){
+  const wrap=document.createElement('div');
+  wrap.setAttribute('data-fairshare-pdf','1');
+  wrap.style.cssText='box-sizing:border-box;width:190mm;min-height:40px;padding:12mm 14mm;background:#fff;color:#1a1a1a;font-family:Georgia,\"Times New Roman\",serif;line-height:1.75;font-size:11.5pt;';
+  wrap.innerHTML=document.getElementById('doc-editor').innerHTML;
+  wrap.querySelectorAll('a').forEach(a=>{a.style.color='#0a5';a.style.textDecoration='underline'});
+  document.body.appendChild(wrap);
+  try{
+    const html2pdf=await loadHtml2Pdf();
+    await html2pdf().set({
+      margin:[8,8,8,8],
+      filename:base+'.pdf',
+      image:{type:'jpeg',quality:0.92},
+      html2canvas:{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']},
+    }).from(wrap).save();
+  }finally{
+    wrap.remove();
+  }
+}
+
+async function exportSlidesPdfBlob(doc, base, title){
+  const slides=doc.slides&&doc.slides.length?doc.slides:[{title:'',bullets:[]}];
+  const inner=slides.map((s,i)=>{
+    const brk=i<slides.length-1?'page-break-after:always;':'';
+    return `<div style="${brk}padding:18px 16px 28px;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:20px;background:#fafbff">
+      <div style="font-size:11px;color:#888;margin-bottom:10px;font-weight:600">Slide ${i+1} of ${slides.length}</div>
+      <h2 style="margin:0 0 14px;font-size:20px;color:#12151f;line-height:1.2">${esc(s.title||'Untitled slide')}</h2>
+      <ul style="margin:0;padding-left:1.15em;font-size:13.5px;line-height:1.55;color:#333">${(s.bullets||[]).filter(b=>String(b).trim()).map(b=>'<li style="margin-bottom:.35em">'+esc(b)+'</li>').join('')||'<li style="opacity:.45">—</li>'}</ul>
+    </div>`;
+  }).join('');
+  const wrap=document.createElement('div');
+  wrap.setAttribute('data-fairshare-pdf','1');
+  wrap.style.cssText='box-sizing:border-box;width:190mm;padding:14mm 12mm;background:#fff;color:#111;font-family:system-ui,-apple-system,Segoe UI,sans-serif';
+  wrap.innerHTML=`<h1 style="font-size:17px;margin:0 0 20px;color:#222;font-weight:700">${esc(title)}</h1>${inner}`;
+  document.body.appendChild(wrap);
+  try{
+    const html2pdf=await loadHtml2Pdf();
+    await html2pdf().set({
+      margin:[10,10,10,10],
+      filename:base+'.pdf',
+      image:{type:'jpeg',quality:0.9},
+      html2canvas:{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['avoid-all','css','legacy']},
+    }).from(wrap).save();
+  }finally{
+    wrap.remove();
+  }
+}
+
+async function exportSheetPdfBlob(doc, base, title){
+  const sh=normalizeSheet(doc.sheet);
+  let h='<table style="border-collapse:collapse;width:100%;font-size:11px">';
+  sh.data.forEach(row=>{
+    h+='<tr>'+row.map(c=>'<td style="border:1px solid #ccc;padding:7px 9px">'+esc(String(c))+'</td>').join('')+'</tr>';
+  });
+  h+='</table>';
+  const wrap=document.createElement('div');
+  wrap.setAttribute('data-fairshare-pdf','1');
+  wrap.style.cssText='box-sizing:border-box;width:190mm;padding:12mm;background:#fff;color:#111;font-family:system-ui,-apple-system,Segoe UI,sans-serif';
+  wrap.innerHTML=`<h1 style="font-size:16px;margin:0 0 18px;color:#222">${esc(title)}</h1>${h}`;
+  document.body.appendChild(wrap);
+  try{
+    const html2pdf=await loadHtml2Pdf();
+    await html2pdf().set({
+      margin:[10,10,10,10],
+      filename:base+'.pdf',
+      image:{type:'jpeg',quality:0.92},
+      html2canvas:{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:landscapeForWideTable(sh)?'landscape':'portrait'},
+      pagebreak:{mode:['css','legacy']},
+    }).from(wrap).save();
+  }finally{
+    wrap.remove();
+  }
+}
+
+function landscapeForWideTable(sh){
+  const cols=(sh.data[0]&&sh.data[0].length)||0;
+  return cols>6;
+}
+
+async function exportDocPdf(){
+  if(!currentDocId||!currentProject)return;
+  const docs=STORE.get('docs_'+currentProject.id)||[];
+  const doc=docs.find(d=>d.id===currentDocId);
+  if(!doc)return;
+  const kind=docKindOf(doc);
+  const titleInput=document.getElementById('doc-title-input');
+  const title=(titleInput&&titleInput.value||doc.title||'Document').trim();
+  const base=safeExportFileBase(title);
+  toast('Building PDF…','default');
+  if(kind==='document'){
+    await exportDocumentPdfBlob(base);
+  }else if(kind==='slides'){
+    await exportSlidesPdfBlob(doc,base,title);
+  }else if(kind==='sheet'){
+    await exportSheetPdfBlob(doc,base,title);
+  }else{
+    throw new Error('Unsupported document type for PDF');
+  }
+  toast('PDF downloaded.','success');
+}
+
 function exportDoc(format){
   if(!currentDocId||!currentProject)return;
   const docs=STORE.get('docs_'+currentProject.id)||[];
@@ -4445,13 +4556,11 @@ function exportDoc(format){
   }
 
   if(format==='pdf'){
-    if(kind!=='document'){
-      toast('For presentations or spreadsheets, export as HTML and use Print → PDF, or CSV for Excel.','default');
-      closeModal('modal-export');
-      return;
-    }
-    window.print();
     closeModal('modal-export');
+    exportDocPdf().catch(e=>{
+      console.error(e);
+      toast(e.message||'PDF export failed','error');
+    });
     return;
   }
 
