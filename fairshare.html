@@ -2329,8 +2329,13 @@ textarea{resize:vertical;min-height:72px}
   <div class="modal modal-sm">
     <div class="modal-title">⬇ Export Document</div>
     <button class="modal-close" onclick="closeModal('modal-export')">✕</button>
-    <p style="font-size:13px;color:var(--txt2);margin-bottom:20px">Download this document in your preferred format.</p>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:20px">Download this document in your preferred format. <strong style="color:var(--txt)">Word + report</strong> includes a real .docx plus a separate contribution &amp; AI summary page (ZIP).</p>
     <div class="export-grid">
+      <button class="export-btn" onclick="exportDoc('docx')" style="border-color:rgba(0,212,170,0.35)">
+        <span class="export-icon">📎</span>
+        <span class="export-label">Word + report</span>
+        <span class="export-sub">.docx + HTML page in .zip</span>
+      </button>
       <button class="export-btn" onclick="exportDoc('html')">
         <span class="export-icon">🌐</span>
         <span class="export-label">HTML</span>
@@ -4183,6 +4188,23 @@ function offlineAiHeuristicScore(text){
   return{ai_percent:score,summary:'Offline style heuristic — not a forensic verdict.'};
 }
 
+function persistAIDetectForCurrentDoc(p, meta){
+  if(!currentProject||!currentDocId||typeof p!=='number'||!Number.isFinite(p))return;
+  const docs=STORE.get('docs_'+currentProject.id)||[];
+  const idx=docs.findIndex(d=>d.id===currentDocId);
+  if(idx<0)return;
+  const m=meta||{};
+  docs[idx]={
+    ...docs[idx],
+    aiDetectPercent:Math.max(0,Math.min(100,Math.round(p))),
+    aiDetectSummary:String(m.summary||'').slice(0,500),
+    aiDetectConfidence:String(m.confidence||'').slice(0,32),
+    aiDetectMode:String(m.mode||'').slice(0,32),
+    aiDetectAt:Date.now(),
+  };
+  STORE.set('docs_'+currentProject.id,docs);
+}
+
 async function runAiDetectScan(){
   if(currentDocKind()!=='document')return;
   const seq=++aiDetectSeq;
@@ -4217,6 +4239,7 @@ async function runAiDetectScan(){
       const conf=j.confidence?` (${j.confidence} confidence)`:'';
       const prov=j.provider==='claude'?' · Claude':'';
       if(metaEl)metaEl.textContent=(j.summary||'Estimate updated.')+conf+prov;
+      persistAIDetectForCurrentDoc(p,{summary:j.summary,confidence:j.confidence,mode:j.provider||'claude'});
       return;
     }
     const h=offlineAiHeuristicScore(text);
@@ -4224,6 +4247,7 @@ async function runAiDetectScan(){
     if(fill)fill.style.width=Math.min(100,h.ai_percent)+'%';
     const err=await r.json().catch(()=>({}));
     if(metaEl)metaEl.textContent=h.summary+(err.error?' '+err.error:' Server AI unavailable — heuristic only.');
+    persistAIDetectForCurrentDoc(h.ai_percent,{summary:h.summary,mode:'heuristic'});
   }catch(e){
     if(e.name==='AbortError')return;
     if(seq!==aiDetectSeq)return;
@@ -4231,6 +4255,7 @@ async function runAiDetectScan(){
     if(pctEl)pctEl.textContent=Math.round(h.ai_percent)+'%';
     if(fill)fill.style.width=Math.min(100,h.ai_percent)+'%';
     if(metaEl)metaEl.textContent=h.summary+' (connect npm server + ANTHROPIC_API_KEY for model-based estimate).';
+    persistAIDetectForCurrentDoc(h.ai_percent,{summary:h.summary,mode:'heuristic'});
   }
 }
 
@@ -4393,6 +4418,11 @@ function slidesToText(slides){
   }).join('\n\n');
 }
 
+function safeExportFileBase(title){
+  const s=String(title||'export').replace(/[<>:"/\\|?*]/g,'').replace(/\s+/g,'_').replace(/_+/g,'_').trim();
+  return(s.slice(0,72)||'fairshare_export').toLowerCase();
+}
+
 function exportDoc(format){
   if(!currentDocId||!currentProject)return;
   const docs=STORE.get('docs_'+currentProject.id)||[];
@@ -4400,6 +4430,19 @@ function exportDoc(format){
   if(!doc)return;
   const title=doc.title||'Document';
   const kind=docKindOf(doc);
+
+  if(format==='docx'){
+    if(kind!=='document'){
+      toast('Word export applies to rich-text documents.','error');
+      return;
+    }
+    closeModal('modal-export');
+    exportWordAndReportZip().catch(e=>{
+      console.error(e);
+      toast(e.message||'Word export failed','error');
+    });
+    return;
+  }
 
   if(format==='pdf'){
     if(kind!=='document'){
@@ -4462,6 +4505,139 @@ function exportDoc(format){
   a.click();
   closeModal('modal-export');
   toast('Exported!','success');
+}
+
+function htmlToDocxParagraphs(html, { Paragraph, TextRun, HeadingLevel }){
+  const d=document.createElement('div');
+  d.innerHTML=html||'<p></p>';
+  const nodes=d.querySelectorAll('h1, h2, h3, p, blockquote, ul > li, ol > li');
+  const out=[];
+  nodes.forEach(node=>{
+    const tag=node.tagName.toLowerCase();
+    const text=node.textContent.replace(/\s+/g,' ').trim();
+    if(!text)return;
+    if(tag==='h1')out.push(new Paragraph({ text, heading: HeadingLevel.HEADING_1 }));
+    else if(tag==='h2')out.push(new Paragraph({ text, heading: HeadingLevel.HEADING_2 }));
+    else if(tag==='h3')out.push(new Paragraph({ text, heading: HeadingLevel.HEADING_3 }));
+    else if(tag==='blockquote')out.push(new Paragraph({ children:[new TextRun({ text, italics:true })] }));
+    else if(tag==='li')out.push(new Paragraph({ text:'• '+text }));
+    else out.push(new Paragraph({ text }));
+  });
+  if(!out.length){
+    const t=d.textContent.replace(/\s+/g,' ').trim();
+    if(t)out.push(new Paragraph({ text:t }));
+    else out.push(new Paragraph({ text:'(empty document)' }));
+  }
+  return out;
+}
+
+async function buildDocxBlobFromEditor(html, title){
+  const docx=await import('https://esm.sh/docx@9.1.0');
+  const { Document, Packer, Paragraph, HeadingLevel }=docx;
+  const body=htmlToDocxParagraphs(html,{ Paragraph, TextRun:docx.TextRun, HeadingLevel });
+  const cover=new Paragraph({ text:String(title||'Document'), heading: HeadingLevel.HEADING_1 });
+  const doc=new Document({
+    sections:[{
+      properties:{},
+      children:[cover,...body],
+    }],
+  });
+  return Packer.toBlob(doc);
+}
+
+function buildContributionReportHtml(doc, project, title, liveWords){
+  const wcs=doc.wordCounts||{};
+  const totalStored=Object.values(wcs).reduce((a,b)=>a+(+b||0),0)||1;
+  const rows=project.members.map(m=>{
+    const w=+wcs[m.id]||0;
+    const pct=totalStored?Math.round(w/totalStored*1000)/10:0;
+    return`<tr><td>${esc(m.name)}</td><td>${esc(m.email||'')}</td><td style="text-align:right">${w}</td><td style="text-align:right">${pct}%</td></tr>`;
+  }).join('');
+  const lastEditor=project.members.find(x=>x.id===doc.lastEditedBy);
+  const aiPct=typeof doc.aiDetectPercent==='number'?doc.aiDetectPercent:null;
+  const aiSum=doc.aiDetectSummary||'';
+  const aiConf=doc.aiDetectConfidence||'';
+  const aiMode=doc.aiDetectMode||'';
+  const aiWhen=doc.aiDetectAt?new Date(doc.aiDetectAt).toLocaleString():'';
+  return`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FairShare report — ${esc(title)}</title>
+<style>
+body{font-family:Segoe UI,system-ui,sans-serif;max-width:820px;margin:36px auto;padding:0 24px 56px;color:#111;line-height:1.55;background:#fafafa}
+h1{font-size:1.4rem;margin:0 0 10px}
+h2{font-size:1.1rem;margin:28px 0 10px;border-bottom:1px solid #ddd;padding-bottom:6px}
+.sub{color:#444;font-size:14px;margin-bottom:6px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:#fff}
+th,td{border:1px solid #ccc;padding:10px 12px;text-align:left}
+th{background:#eee;font-weight:600}
+.section{background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:18px 20px;margin-top:18px}
+.disclaimer{font-size:12px;color:#555;margin-top:28px;border-top:1px solid #ddd;padding-top:16px}
+.note{font-size:13px;color:#555}
+.bad{color:#b45309}
+@media print{body{background:#fff}}
+</style></head><body>
+<h1>FairShare — contribution &amp; writing summary</h1>
+<p class="sub"><strong>Project:</strong> ${esc(project.name)}</p>
+<p class="sub"><strong>Document:</strong> ${esc(title)}</p>
+<p class="sub"><strong>Exported:</strong> ${esc(new Date().toLocaleString())}</p>
+<p class="sub"><strong>Words in editor (current):</strong> ${liveWords.toLocaleString()}</p>
+<div class="section">
+<h2>Who contributed (word totals)</h2>
+<p class="note">Per-member counts are tracked in FairShare during editing; they approximate share of drafting activity, not legal attribution of each sentence.</p>
+<table><thead><tr><th>Member</th><th>Email</th><th>Words (tracked)</th><th>Approx. share</th></tr></thead><tbody>${rows}</tbody></table>
+<p class="note"><strong>Last edited by:</strong> ${esc(lastEditor?lastEditor.name:'—')}</p>
+</div>
+<div class="section">
+<h2>AI writing estimate</h2>
+${aiPct!=null?`<p><strong>Estimated generative-AI style likelihood:</strong> ${aiPct}%${aiConf?' ('+esc(aiConf)+' confidence)':''}</p>
+<p>${esc(aiSum)}</p>
+<p class="note">Model / mode: ${esc(aiMode||'—')}${aiWhen?' · '+esc(aiWhen):''}</p>`:`<p class="bad">No AI estimate is stored yet. Open the document, wait for the live “AI writing estimate” bar to finish analyzing, save if needed, then export again.</p>`}
+</div>
+<p class="disclaimer">This report is for teaching and discussion only. It does not constitute forensic proof of AI use or misconduct. Follow your institution’s academic integrity policies.</p>
+<p style="font-size:12px;color:#888">Generated by FairShare</p>
+</body></html>`;
+}
+
+async function exportWordAndReportZip(){
+  if(!currentDocId||!currentProject)return;
+  const docs=STORE.get('docs_'+currentProject.id)||[];
+  const doc=docs.find(d=>d.id===currentDocId);
+  if(!doc||docKindOf(doc)!=='document'){toast('Open a text document first.','error');return;}
+  const html=document.getElementById('doc-editor').innerHTML;
+  const title=(document.getElementById('doc-title-input').value||doc.title||'Document').trim();
+  const base=safeExportFileBase(title);
+  toast('Building Word document and report…','default');
+  const docxBlob=await buildDocxBlobFromEditor(html,title);
+  const liveText=document.getElementById('doc-editor').innerText||'';
+  const liveWords=liveText.trim().split(/\s+/).filter(Boolean).length;
+  const docsFresh=STORE.get('docs_'+currentProject.id)||[];
+  const docForReport=docsFresh.find(d=>d.id===currentDocId)||doc;
+  const reportHtml=buildContributionReportHtml(docForReport,currentProject,title,liveWords);
+  try{
+    const mod=await import('https://esm.sh/jszip@3.10.1');
+    const JSZip=mod.default;
+    const zip=new JSZip();
+    zip.file(base+'.docx',docxBlob);
+    zip.file(base+'_FairShare_contribution_report.html',reportHtml);
+    const zblob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(zblob);
+    a.download=base+'_fairshare_export.zip';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('Downloaded ZIP: Word (.docx) + contribution report page.','success');
+  }catch(zipErr){
+    console.warn(zipErr);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(docxBlob);
+    a.download=base+'.docx';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    const a2=document.createElement('a');
+    a2.href=URL.createObjectURL(new Blob([reportHtml],{type:'text/html;charset=utf-8'}));
+    a2.download=base+'_FairShare_contribution_report.html';
+    a2.click();
+    setTimeout(()=>URL.revokeObjectURL(a2.href),4000);
+    toast('Downloaded .docx and HTML report separately (ZIP unavailable in this browser).','success');
+  }
 }
 
 /* ══════════════════════════════════════════════
