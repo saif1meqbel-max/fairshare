@@ -2940,6 +2940,7 @@ async function handleLogout(){
   currentUser=null;currentProject=null;
   clearInterval(activityInterval);
   if(window.FSB&&typeof window.FSB.stopChatRealtime==='function')window.FSB.stopChatRealtime();
+  if(window.FSB&&typeof window.FSB.stopActivitiesRealtime==='function')window.FSB.stopActivitiesRealtime();
   if(window.FSB&&typeof window.FSB.stopNotificationsRealtime==='function')window.FSB.stopNotificationsRealtime();
   document.getElementById('app').classList.remove('visible');
   document.getElementById('auth-screen').classList.add('visible');
@@ -3219,10 +3220,10 @@ async function openProject(id){
   // Update UI hints
   document.getElementById('tasks-project-name').textContent=p.name;
   document.getElementById('docs-project-name').textContent=p.name;
-  document.getElementById('chat-members-online').textContent=`${p.members.length} members · ${Math.floor(Math.random()*p.members.length)+1} online`;
+  document.getElementById('chat-members-online').textContent=`${p.members.length} members in this project`;
 
   renderDashboard();
-  startLiveFeed();
+  startLiveActivity();
   renderChatChannels();
   if(window.FSB&&window.FSB.enabled)window.FSB.startChatRealtime(id,currentChatChannel);
   showPage('dashboard',document.querySelector('[data-page=dashboard]'));
@@ -3381,6 +3382,30 @@ function renderLiveFeed(){
     :`<div style="color:var(--txt3);font-size:13px;padding:20px 0;text-align:center">No activity yet</div>`;
 }
 
+/** After local logActivity or remote Realtime INSERT — refresh dashboard feed + activity tab without fake data. */
+function refreshActivityDisplays(){
+  if(!currentProject)return;
+  renderLiveFeed();
+  const actPg=document.getElementById('page-activity');
+  if(actPg&&actPg.classList.contains('active'))renderActivityPage();
+  const dash=document.getElementById('page-dashboard');
+  if(dash&&dash.classList.contains('active'))renderContributions();
+}
+
+window.refreshFairshareActivityUI=function(projectId){
+  if(!currentProject||currentProject.id!==projectId)return;
+  refreshActivityDisplays();
+};
+
+function startLiveActivity(){
+  clearInterval(activityInterval);
+  activityInterval=null;
+  renderLiveFeed();
+  if(window.FSB&&typeof window.FSB.startActivitiesRealtime==='function'&&window.__FAIRSHARE_USE_REMOTE__&&currentProject){
+    window.FSB.startActivitiesRealtime(currentProject.id);
+  }
+}
+
 function renderUpcoming(){
   if(!currentProject)return;
   const tasks=STORE.get('tasks_'+currentProject.id)||[];
@@ -3399,45 +3424,6 @@ function renderUpcoming(){
       <div style="font-size:11px;color:${color};white-space:nowrap">${dl<0?'Overdue':dl===0?'Today':dl+' days'}</div>
     </div>`;
   }).join(''):`<div style="color:var(--txt3);font-size:13px;padding:20px 0;text-align:center">All tasks completed! 🎉</div>`;
-}
-
-function startLiveFeed(){
-  clearInterval(activityInterval);
-  const FAKE_ACTS=[
-    ()=>({type:'doc_edit',text:`edited ${['Introduction','Methodology','Results','Discussion'][Math.floor(Math.random()*4)]} — ${Math.floor(Math.random()*200+50)} words added`}),
-    ()=>({type:'comment',text:`commented on ${['Figure 1','the abstract','Section 3','the bibliography'][Math.floor(Math.random()*4)]}`}),
-    ()=>({type:'view',text:'is reviewing the dashboard'}),
-  ];
-  activityInterval=setInterval(()=>{
-    if(!currentProject)return;
-    const members=currentProject.members.filter(m=>m.id!==currentUser.id);
-    if(!members.length)return;
-    const m=members[Math.floor(Math.random()*members.length)];
-    const gen=FAKE_ACTS[Math.floor(Math.random()*FAKE_ACTS.length)];
-    const act={id:genId('a'),projectId:currentProject.id,userId:m.id,userName:m.name,ts:Date.now(),...gen()};
-    let acts=STORE.get('activity_'+currentProject.id)||[];
-    acts.push(act);STORE.set('activity_'+currentProject.id,acts);
-
-    // Update live feed
-    const lf=document.getElementById('live-feed');
-    if(lf&&document.getElementById('page-dashboard').classList.contains('active')){
-      const item=document.createElement('div');item.innerHTML=actHtml(act);
-      lf.insertBefore(item.firstElementChild,lf.firstChild);
-      while(lf.children.length>8)lf.removeChild(lf.lastChild);
-      renderContributions();
-    }
-    // Update activity page
-    const af=document.getElementById('activity-full');
-    if(af&&document.getElementById('page-activity').classList.contains('active')){
-      const item2=document.createElement('div');item2.innerHTML=actHtml(act);
-      af.insertBefore(item2.firstElementChild,af.firstChild);
-      while(af.children.length>30)af.removeChild(af.lastChild);
-    }
-    // Typing simulation in doc workspace
-    if(document.getElementById('doc-workspace').classList.contains('open')){
-      simulatePresenceTyping(m.name);
-    }
-  },4000);
 }
 
 /* ══════════════════════════════════════════════
@@ -3565,6 +3551,7 @@ function logActivity(data){
   const act={id:genId('a'),projectId:currentProject.id,userId:currentUser.id,userName:currentUser.name,ts:Date.now(),...data};
   let acts=STORE.get('activity_'+currentProject.id)||[];
   acts.push(act);STORE.set('activity_'+currentProject.id,acts);
+  refreshActivityDisplays();
 }
 
 /* ══════════════════════════════════════════════
@@ -4349,14 +4336,6 @@ function renderDocPresence(){
   document.getElementById('doc-presence-pills').innerHTML=present.map(m=>
     `<div class="avatar ${getAvatarClass(m.name)}" style="width:26px;height:26px;font-size:10px;border:2px solid var(--surface)" title="${esc(m.name)}">${getInitials(m.name)}</div>`
   ).join('');
-}
-
-function simulatePresenceTyping(name){
-  const el=document.getElementById('presence-typing');
-  if(!el)return;
-  el.textContent=`${name} is typing…`;
-  clearTimeout(simulatePresenceTyping._t);
-  simulatePresenceTyping._t=setTimeout(()=>{el.textContent=''},2500);
 }
 
 /* ── COMMENTS ── */
@@ -5454,6 +5433,16 @@ document.addEventListener('keydown',function(e){
   }
   document.getElementById('auth-screen').classList.add('visible');
 })();
+
+/* Local / demo: another tab updated fs4_activity_<projectId> — refresh feed without polling. */
+window.addEventListener('storage',function(e){
+  if(!e.key||e.key.indexOf('fs4_activity_')!==0)return;
+  const pid=e.key.slice('fs4_activity_'.length);
+  try{
+    if(typeof currentProject==='undefined'||!currentProject||currentProject.id!==pid)return;
+    refreshActivityDisplays();
+  }catch(_){}
+});
 </script>
 </body>
 </html>
