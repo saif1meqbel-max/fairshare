@@ -1,0 +1,18 @@
+---
+description: Keep index.html identical to fairshare.html for GitHub/static hosting
+alwaysApply: true
+---
+
+# FairShare → index.html sync
+
+The canonical single-page app is **`fairshare.html`**. The repo also uses **`index.html`** at the project root for hosts that default to `index.html` (e.g. GitHub Pages).
+
+## Required behavior
+
+1. **Whenever you edit `fairshare.html`**, before finishing the task **copy the entire file contents into `index.html`** (overwrite `index.html` so it matches byte-for-byte unless the user explicitly asks otherwise).
+
+2. Use the same tool/write flow you use for other files (e.g. read `fairshare.html`, then write to `index.html`). Do **not** claim this cannot be done or defer to the user for manual copy-paste.
+
+3. If you only change other files (`js/`, `server/`, `supabase/`, etc.) and **do not** touch `fairshare.html`, you do **not** need to update `index.html`.
+
+4. Do not add a separate manual step for “paste into GitHub”; syncing **`index.html` in the workspace** is what gets committed and pushed to GitHub like any other file.
