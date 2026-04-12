@@ -72,14 +72,98 @@ window.__FAIRSHARE__ = {
   --text-xs:11px;--text-sm:13px;--text-base:14px;--text-lg:16px;--text-xl:20px;
   --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;
   --ease-out:cubic-bezier(0.22,1,0.36,1);
+  --btn-primary-fg:#081018;
+  --skip-fg:#081018;
+  --topnav-bg:rgba(21,28,42,0.94);
+  --nav-search-bg:rgba(10,13,18,0.5);
+  --nav-search-focus-bg:rgba(17,24,39,0.75);
+  --app-footer-bg:rgba(10,13,18,0.4);
+}
+
+html[data-theme="light"]{
+  --ink:#f4f6fb;
+  --ink2:#e8ecf4;
+  --ink3:#dce2ee;
+  --ink4:#cfd6e4;
+  --surface:#ffffff;
+  --surface2:#f1f4fa;
+  --surface3:#e6eaf4;
+  --txt:#0f172a;
+  --txt2:#475569;
+  --txt3:#64748b;
+  --teal:#00a88a;
+  --teal2:#008f75;
+  --border:rgba(15,23,42,0.09);
+  --border2:rgba(15,23,42,0.12);
+  --border3:rgba(15,23,42,0.18);
+  --shadow:0 4px 24px rgba(15,23,42,0.08),0 1px 3px rgba(15,23,42,0.06);
+  --shadow-lg:0 20px 50px rgba(15,23,42,0.12);
+  --btn-primary-fg:#ffffff;
+  --skip-fg:#0f172a;
+  --topnav-bg:rgba(255,255,255,0.92);
+  --nav-search-bg:rgba(255,255,255,0.9);
+  --nav-search-focus-bg:#ffffff;
+  --app-footer-bg:rgba(255,255,255,0.85);
+}
+html[data-theme="midnight"]{
+  --ink:#05060a;
+  --ink2:#0c0e14;
+  --ink3:#141824;
+  --ink4:#1c2235;
+  --surface:#0e1018;
+  --surface2:#131722;
+  --surface3:#1a1f2e;
+  --txt:#eef1ff;
+  --txt2:#8b95b5;
+  --txt3:#5c6789;
+  --teal:#00e6bb;
+  --teal2:#00c9a3;
+  --border:rgba(255,255,255,0.05);
+  --border2:rgba(255,255,255,0.09);
+  --border3:rgba(255,255,255,0.14);
+  --shadow:0 4px 24px rgba(0,0,0,0.55);
+  --shadow-lg:0 24px 70px rgba(0,0,0,0.65);
+  --btn-primary-fg:#041210;
+  --skip-fg:#041210;
+  --topnav-bg:rgba(12,14,22,0.96);
+  --nav-search-bg:rgba(5,6,10,0.55);
+  --nav-search-focus-bg:rgba(20,24,36,0.85);
+  --app-footer-bg:rgba(8,10,16,0.5);
+}
+html[data-theme="ocean"]{
+  --ink:#061018;
+  --ink2:#0c1828;
+  --ink3:#122238;
+  --ink4:#1a2f48;
+  --surface:#0c1624;
+  --surface2:#102030;
+  --surface3:#162a40;
+  --txt:#e8f4ff;
+  --txt2:#8aa3c4;
+  --txt3:#5a7399;
+  --teal:#00dfc4;
+  --teal2:#00b8a3;
+  --border:rgba(120,180,255,0.08);
+  --border2:rgba(120,180,255,0.12);
+  --border3:rgba(120,180,255,0.18);
+  --shadow:0 4px 24px rgba(0,20,40,0.5);
+  --shadow-lg:0 22px 60px rgba(0,15,35,0.55);
+  --btn-primary-fg:#031a18;
+  --skip-fg:#031a18;
+  --topnav-bg:rgba(10,22,38,0.94);
+  --nav-search-bg:rgba(6,16,28,0.55);
+  --nav-search-focus-bg:rgba(16,32,52,0.82);
+  --app-footer-bg:rgba(6,14,24,0.45);
 }
 
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(0,212,170,0.22);color:var(--txt)}
+html[data-theme="light"] ::selection{background:rgba(0,168,138,0.18);color:var(--txt)}
+html[data-theme="light"] .kbd{box-shadow:0 1px 0 rgba(15,23,42,0.08)}
 .skip-link{
   position:absolute;left:12px;top:-100px;z-index:10000;
-  padding:10px 16px;background:var(--teal);color:var(--ink);font-weight:600;font-size:13px;border-radius:var(--r);
+  padding:10px 16px;background:var(--teal);color:var(--skip-fg);font-weight:600;font-size:13px;border-radius:var(--r);
   text-decoration:none;transition:top 0.2s var(--ease-out);
 }
 .skip-link:focus{top:12px;outline:2px solid var(--txt);outline-offset:2px}
@@ -117,6 +201,17 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
     linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
   background-size:60px 60px;
   mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 70%);
+}
+html[data-theme="light"] .auth-bg{
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 30%, rgba(0,168,138,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 70%, rgba(79,124,255,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 60% 10%, rgba(155,109,255,0.05) 0%, transparent 50%);
+}
+html[data-theme="light"] .auth-grid{
+  background-image:
+    linear-gradient(rgba(15,23,42,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.05) 1px, transparent 1px);
 }
 
 .auth-card{
@@ -184,7 +279,7 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 }
 .btn-primary{
   background:linear-gradient(135deg,var(--teal),var(--teal2));
-  color:var(--ink);font-weight:600;width:100%;
+  color:var(--btn-primary-fg);font-weight:600;width:100%;
   box-shadow:0 4px 16px rgba(0,212,170,0.3);
 }
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,212,170,0.4)}
@@ -248,12 +343,15 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 /* ── TOPNAV ── */
 .topnav{
   height:56px;
-  background:rgba(21,28,42,0.94);
+  background:var(--topnav-bg);
   backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;padding:0 20px;gap:10px;
   position:sticky;top:0;z-index:100;flex-shrink:0;
   box-shadow:0 1px 0 rgba(255,255,255,0.04),0 8px 32px rgba(0,0,0,0.35);
+}
+html[data-theme="light"] .topnav{
+  box-shadow:0 1px 0 rgba(15,23,42,0.06),0 4px 24px rgba(15,23,42,0.06);
 }
 
 .nav-logo{display:flex;align-items:center;gap:9px;margin-right:6px;text-decoration:none}
@@ -289,16 +387,19 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 .nav-search{
   width:100%;height:36px;padding:0 14px 0 38px;
   border-radius:100px;border:1px solid var(--border);
-  background:rgba(10,13,18,0.5);color:var(--txt);font-family:var(--font);font-size:13px;
+  background:var(--nav-search-bg);color:var(--txt);font-family:var(--font);font-size:13px;
   outline:none;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238896b3' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:12px 50%;
+}
+html[data-theme="light"] .nav-search{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
 }
 .nav-search::placeholder{color:var(--txt3)}
 .nav-search:focus{
   border-color:rgba(0,212,170,0.35);
   box-shadow:0 0 0 3px rgba(0,212,170,0.1);
-  background-color:rgba(17,24,39,0.75);
+  background-color:var(--nav-search-focus-bg);
 }
 .nav-text-btn{
   padding:7px 12px;border-radius:8px;border:1px solid transparent;background:transparent;
@@ -325,7 +426,7 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 .notif-dot::after{
   content:'';position:absolute;top:6px;right:6px;
   width:7px;height:7px;border-radius:50%;
-  background:var(--red);border:2px solid var(--ink2);
+  background:var(--red);border:2px solid var(--surface2);
 }
 
 .user-pill{
@@ -561,10 +662,22 @@ textarea{resize:vertical;min-height:72px}
   font-size:11px;color:var(--txt3);
   display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
   border-top:1px solid var(--border);
-  background:rgba(10,13,18,0.4);
+  background:var(--app-footer-bg);
 }
 .app-footer-dot{opacity:0.5}
 .chat-mention{color:var(--teal);font-weight:600}
+
+/* Theme picker */
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
+.theme-card{
+  border:2px solid var(--border);border-radius:var(--r2);padding:14px 16px;text-align:left;
+  cursor:pointer;background:var(--surface);font-family:var(--font);transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;
+}
+.theme-card:hover{border-color:var(--border3);transform:translateY(-1px)}
+.theme-card.active{border-color:var(--teal);box-shadow:0 0 0 1px rgba(0,212,170,0.25)}
+.theme-card-title{font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:4px;color:var(--txt)}
+.theme-card-desc{font-size:12px;color:var(--txt2);line-height:1.4}
+.theme-swatch{height:10px;border-radius:5px;margin-top:12px;border:1px solid var(--border2)}
 
 /* ════════════════════════════════════════════════
    PROJECT CARDS
@@ -900,7 +1013,7 @@ textarea{resize:vertical;min-height:72px}
 
 .doc-topbar{
   height:52px;
-  background:rgba(21,28,42,0.95);
+  background:var(--topnav-bg);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:0;padding:0;flex-shrink:0;
@@ -1342,6 +1455,14 @@ textarea{resize:vertical;min-height:72px}
 .truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 </style>
+<script>
+(function(){
+  try{
+    var t=localStorage.getItem('fairshare_theme');
+    if(t==='light'||t==='midnight'||t==='ocean')document.documentElement.setAttribute('data-theme',t);
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <a href="#main-scroll" class="skip-link">Skip to main content</a>
@@ -1427,6 +1548,9 @@ textarea{resize:vertical;min-height:72px}
       </button>
       <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
     </div>
+    <div style="text-align:center;margin-top:8px">
+      <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="openThemeModal()">Theme &amp; appearance</button>
+    </div>
     <div class="auth-trust" role="note">Secure sessions · Role-aware workspaces · Designed for transparent collaboration</div>
   </div>
 </div>
@@ -1479,6 +1603,7 @@ textarea{resize:vertical;min-height:72px}
     </div>
 
     <div class="nav-right">
+      <button type="button" class="nav-icon-btn" title="Theme" aria-label="Change theme" onclick="openThemeModal()">🎨</button>
       <button type="button" class="nav-text-btn" title="Help and keyboard shortcuts" onclick="openModal('modal-help')">Help</button>
       <button class="nav-icon-btn notif-dot" title="Notifications" aria-label="Notifications" onclick="showPage('notifications',null);document.querySelector('[data-page=notifications]')?.classList.add('active')" id="notif-btn">🔔</button>
       <div class="user-menu-wrap" id="user-menu-wrap">
@@ -1488,6 +1613,7 @@ textarea{resize:vertical;min-height:72px}
           <span style="font-size:10px;color:var(--txt3)">▾</span>
         </div>
         <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <button type="button" onclick="closeUserMenu();openThemeModal()">Theme</button>
           <button type="button" onclick="closeUserMenu();openModal('modal-help')">Help &amp; shortcuts</button>
           <button type="button" onclick="openAccountModal()">Account settings</button>
           <div class="menu-sep"></div>
@@ -2311,6 +2437,40 @@ textarea{resize:vertical;min-height:72px}
   </div>
 </div>
 
+<!-- Theme -->
+<div class="modal-overlay" id="modal-theme" onclick="overlayClose(event,this)">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div class="modal-title">Theme</div>
+    <button type="button" class="modal-close" onclick="closeModal('modal-theme')">✕</button>
+    <p class="help-lead">Choose an appearance for FairShare. Your choice is saved on this device.</p>
+    <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Color theme">
+      <button type="button" class="theme-card" data-theme-id="dark" onclick="setFairShareTheme('dark')">
+        <div class="theme-card-title">FairShare dark</div>
+        <div class="theme-card-desc">Default — refined charcoal and teal accents.</div>
+        <div class="theme-swatch" style="background:linear-gradient(90deg,#1a2236,#0a0d12)"></div>
+      </button>
+      <button type="button" class="theme-card" data-theme-id="light" onclick="setFairShareTheme('light')">
+        <div class="theme-card-title">White</div>
+        <div class="theme-card-desc">Bright workspace with high contrast for daytime use.</div>
+        <div class="theme-swatch" style="background:linear-gradient(90deg,#ffffff,#e8ecf4)"></div>
+      </button>
+      <button type="button" class="theme-card" data-theme-id="midnight" onclick="setFairShareTheme('midnight')">
+        <div class="theme-card-title">Midnight</div>
+        <div class="theme-card-desc">Deeper blacks and neon teal for low-light focus.</div>
+        <div class="theme-swatch" style="background:linear-gradient(90deg,#1a1f2e,#05060a)"></div>
+      </button>
+      <button type="button" class="theme-card" data-theme-id="ocean" onclick="setFairShareTheme('ocean')">
+        <div class="theme-card-title">Ocean</div>
+        <div class="theme-card-desc">Cool navy blues with cyan highlights.</div>
+        <div class="theme-swatch" style="background:linear-gradient(90deg,#162a40,#061018)"></div>
+      </button>
+    </div>
+    <div class="form-actions" style="margin-top:20px">
+      <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-theme')">Done</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2433,6 +2593,31 @@ function applyProjectTemplateTasks(projId,templateKey,opts){
 function onNavProjectSearch(){
   const page=document.getElementById('page-projects');
   if(page&&page.classList.contains('active'))renderProjectList();
+}
+
+function getFairShareTheme(){
+  return document.documentElement.getAttribute('data-theme')||'dark';
+}
+function syncThemeModalUI(){
+  const cur=getFairShareTheme();
+  document.querySelectorAll('#theme-grid .theme-card').forEach(el=>{
+    const id=el.getAttribute('data-theme-id');
+    const on=id===cur;
+    el.classList.toggle('active',on);
+    el.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
+function setFairShareTheme(name){
+  const ok=['dark','light','midnight','ocean'];
+  if(!ok.includes(name))return;
+  try{localStorage.setItem('fairshare_theme',name)}catch(e){}
+  if(name==='dark')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',name);
+  syncThemeModalUI();
+}
+function openThemeModal(){
+  syncThemeModalUI();
+  openModal('modal-theme');
 }
 
 /* ══════════════════════════════════════════════
