@@ -4,354 +4,133 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairShare — Fair group work for schools & universities</title>
-  <meta name="description" content="FairShare helps teams plan tasks, share documents, chat, and see contribution analytics — built so everyone’s work is visible and fair.">
+  <meta name="description" content="FairShare helps teams plan tasks, share documents, chat, and see contribution analytics — built for UK & UAE schools and universities.">
+  <link rel="icon" type="image/png" href="/assets/fairshare-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --ink: #0a0d12;
-      --ink2: #111827;
-      --surface: #151c2a;
-      --surface2: #1a2236;
-      --txt: #f0f4ff;
-      --txt2: #8896b3;
-      --txt3: #4d5b78;
-      --teal: #00d4aa;
-      --teal-dim: rgba(0, 212, 170, 0.12);
-      --blue: #4f7cff;
-      --border: rgba(255, 255, 255, 0.08);
-      --r: 14px;
-      --r2: 20px;
-      --font-display: 'Syne', system-ui, sans-serif;
-      --font: 'DM Sans', system-ui, sans-serif;
-      --max: 1080px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font);
-      background: var(--ink);
-      color: var(--txt);
-      line-height: 1.6;
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: var(--teal); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
-
-    /* Nav */
-    .site-nav {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 24px;
-      background: rgba(10, 13, 18, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-    .brand {
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 1.15rem;
-      letter-spacing: -0.02em;
-      color: var(--txt);
-      text-decoration: none;
-    }
-    .brand:hover { text-decoration: none; color: var(--teal); }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .nav-links a:not(.btn) {
-      color: var(--txt2);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 8px 12px;
-      border-radius: 10px;
-      text-decoration: none;
-    }
-    .nav-links a:not(.btn):hover {
-      color: var(--txt);
-      background: rgba(255, 255, 255, 0.04);
-      text-decoration: none;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: var(--r);
-      font-family: var(--font);
-      font-weight: 600;
-      font-size: 14px;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.15s var(--ease, ease), box-shadow 0.15s;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--teal), #00b894);
-      color: #081018;
-    }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0, 212, 170, 0.25); text-decoration: none; }
-    .btn-ghost {
-      background: transparent;
-      color: var(--txt2);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { color: var(--txt); border-color: rgba(255,255,255,0.15); text-decoration: none; }
-
-    /* Hero */
-    .hero {
-      padding: 72px 24px 88px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: -40% -20% auto;
-      height: 70%;
-      background: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 170, 0.14), transparent 55%);
-      pointer-events: none;
-    }
-    .hero-inner { position: relative; max-width: 720px; margin: 0 auto; }
-    .eyebrow {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--teal);
-      margin-bottom: 16px;
-    }
-    h1 {
-      font-family: var(--font-display);
-      font-size: clamp(2rem, 5vw, 2.85rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      margin-bottom: 20px;
-    }
-    .hero-lead {
-      font-size: 1.125rem;
-      color: var(--txt2);
-      max-width: 560px;
-      margin: 0 auto 32px;
-    }
-    .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-
-    /* Sections */
-    section { padding: 72px 0; border-top: 1px solid var(--border); }
-    section:first-of-type { border-top: none; }
-    .section-head {
-      margin-bottom: 40px;
-      max-width: 640px;
-    }
-    .section-head h2 {
-      font-family: var(--font-display);
-      font-size: clamp(1.6rem, 3vw, 2rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 12px;
-    }
-    .section-head p { color: var(--txt2); font-size: 1.05rem; }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r2);
-      padding: 24px;
-    }
-    .card h3 {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-    .card p { color: var(--txt2); font-size: 14px; line-height: 1.55; }
-    .card .icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: var(--teal-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 16px;
-    }
-
-    /* Pricing */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      align-items: stretch;
-    }
-    .price-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--r2);
-      padding: 28px;
-      display: flex;
-      flex-direction: column;
-    }
-    .price-card.featured {
-      border-color: rgba(0, 212, 170, 0.35);
-      box-shadow: 0 0 0 1px rgba(0, 212, 170, 0.1), 0 20px 50px rgba(0, 0, 0, 0.35);
-    }
-    .price-card .tag {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--teal);
-      margin-bottom: 8px;
-    }
-    .price-card h3 { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 8px; }
-    .price {
-      font-family: var(--font-display);
-      font-size: 2.25rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin: 12px 0 16px;
-    }
-    .price small { font-size: 1rem; font-weight: 600; color: var(--txt3); }
-    .price-card ul {
-      list-style: none;
-      margin: 0 0 24px;
-      flex: 1;
-    }
-    .price-card li {
-      padding: 8px 0;
-      padding-left: 22px;
-      position: relative;
-      font-size: 14px;
-      color: var(--txt2);
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
-    .price-card li:last-child { border-bottom: none; }
-    .price-card li::before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: var(--teal);
-      font-weight: 700;
-      font-size: 12px;
-    }
-    .price-note { font-size: 12px; color: var(--txt3); margin-top: 12px; }
-
-    /* FAQ */
-    details.faq-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      margin-bottom: 10px;
-      overflow: hidden;
-    }
-    details.faq-item summary {
-      padding: 18px 20px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 15px;
-      list-style: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-    details.faq-item summary::-webkit-details-marker { display: none; }
-    details.faq-item summary::after {
-      content: '+';
-      color: var(--teal);
-      font-size: 1.25rem;
-      font-weight: 400;
-    }
-    details.faq-item[open] summary::after { content: '−'; }
-    details.faq-item .faq-body {
-      padding: 0 20px 18px;
-      color: var(--txt2);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    /* CTA band */
-    .cta-band {
-      text-align: center;
-      padding: 80px 24px;
-      background: linear-gradient(180deg, var(--ink2) 0%, var(--ink) 100%);
-      border-top: 1px solid var(--border);
-    }
-    .cta-band h2 {
-      font-family: var(--font-display);
-      font-size: clamp(1.5rem, 3vw, 1.85rem);
-      margin-bottom: 12px;
-    }
-    .cta-band p { color: var(--txt2); margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto; }
-
-    /* Footer */
-    footer {
-      padding: 40px 24px;
-      border-top: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--txt3);
-    }
-    footer .foot-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    footer a { color: var(--txt2); }
-    footer a:hover { color: var(--txt); }
-
-    @media (max-width: 640px) {
-      .site-nav .nav-links a:not(.btn) { display: none; }
-      .site-nav .nav-links { gap: 6px; }
-    }
-  </style>
+  <link rel="stylesheet" href="site.css">
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-nav">
-    <a class="brand" href="#top">FairShare</a>
+    <a class="brand" href="index.html#top">
+      <img class="brand-logo" src="/assets/fairshare-logo.png" width="36" height="36" alt="" decoding="async">
+      <span>FairShare</span>
+    </a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="#about">About</a>
-      <a href="#features">Features</a>
+      <a href="#education">For schools</a>
+      <a href="#product">Product</a>
+      <a href="#compare">Compare</a>
+      <a href="case-studies.html">Stories</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
-      <a class="btn btn-primary" data-app-link href="/fairshare.html">Open app</a>
+      <div class="nav-cta">
+        <a class="btn btn-demo" href="mailto:demo@fairshare.app?subject=FairShare%20—%20Book%20a%20demo">Book a demo</a>
+        <a class="btn btn-primary" data-app-link href="/fairshare.html">Open app</a>
+      </div>
     </nav>
   </header>
 
-  <main id="top">
-    <section class="hero">
+  <main id="main">
+    <section class="hero" id="top">
       <div class="hero-inner">
+        <div class="hero-logo-wrap" aria-hidden="true">
+          <img class="hero-logo" src="/assets/fairshare-logo.png" width="72" height="72" alt="" decoding="async">
+        </div>
         <span class="eyebrow">Group work, made fair</span>
         <h1>One place for projects, tasks, docs, chat &amp; contribution insight</h1>
         <p class="hero-lead">
-          FairShare is a workspace for coursework and team projects: shared tasks and documents,
-          real-time chat, and analytics that make everyone’s contributions visible — so assessment can be fairer and collaboration clearer.
+          FairShare is built for <strong style="color: var(--txt); font-weight: 600;">universities, sixth forms, and high schools</strong> in the UK, UAE, and beyond — so group work is coordinated, visible, and fairer without replacing your LMS.
+        </p>
+        <p class="hero-sub">
+          Book a walkthrough for your department, or open the app to try a pilot. We align with institutional procurement: UK GDPR, UAE PDPL, and data processing agreements on request.
         </p>
         <div class="hero-cta">
-          <a class="btn btn-primary" data-app-link href="/fairshare.html">Go to platform</a>
-          <a class="btn btn-ghost" href="#about">Learn more</a>
+          <a class="btn btn-primary" href="mailto:demo@fairshare.app?subject=FairShare%20—%20Book%20a%20demo">Book a demo</a>
+          <a class="btn btn-demo" data-app-link href="/fairshare.html">Open the platform</a>
+          <a class="btn btn-ghost" href="#product">See the product</a>
+        </div>
+        <p class="hero-cta-note">Replace <code style="font-size:11px;opacity:.85">demo@fairshare.app</code> with your real inbox when you go live.</p>
+      </div>
+    </section>
+
+    <section class="trusted-strip" aria-labelledby="trusted-heading">
+      <div class="wrap">
+        <p id="trusted-heading" class="trusted-label">Trusted by teams at</p>
+        <div class="trusted-logos" role="list">
+          <span class="trusted-placeholder" role="listitem">Your university (pilot)</span>
+          <span class="trusted-placeholder" role="listitem">Your school trust</span>
+          <span class="trusted-placeholder" role="listitem">Your sixth form college</span>
+        </div>
+        <p style="margin-top:20px;font-size:12px;color:var(--txt3);max-width:520px;margin-left:auto;margin-right:auto;">Swap these placeholders for authorised institution names or logos when you have permission.</p>
+      </div>
+    </section>
+
+    <section id="product" class="product-preview">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Inside the workspace</h2>
+          <p>A single interface for the work students actually do together — not another silo.</p>
+        </div>
+        <div class="workspace-gallery">
+          <figure class="workspace-shot workspace-shot--lead">
+            <img
+              src="img/workspace-dashboard.png"
+              alt="FairShare project dashboard: CS470 Research Paper with progress, task summary, contribution scores by member, and live activity feed."
+              width="1600"
+              height="900"
+              loading="eager"
+              decoding="async">
+            <figcaption>Project dashboard — deadlines, task status, contribution overview, and real-time activity in one view.</figcaption>
+          </figure>
+          <div class="workspace-gallery-row">
+            <figure class="workspace-shot">
+              <img
+                src="img/workspace-analytics-overview.png"
+                alt="FairShare Analytics: fairness index, individual contribution scores ranked by team member, and export options."
+                width="1600"
+                height="900"
+                loading="lazy"
+                decoding="async">
+              <figcaption>Analytics — fairness index, individual scores, and team performance at a glance.</figcaption>
+            </figure>
+            <figure class="workspace-shot">
+              <img
+                src="img/workspace-analytics-detail.png"
+                alt="FairShare Analytics detail: score breakdown by category, fairness flags, task distribution, and deadline performance."
+                width="1600"
+                height="900"
+                loading="lazy"
+                decoding="async">
+              <figcaption>Drill-down — score breakdown, fairness flags, workload split, and deadline metrics.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="education">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Built for how schools really run group work</h2>
+          <p>Three entry points — same platform. Positioning for your website and procurement decks.</p>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <div class="icon" aria-hidden="true">🎓</div>
+            <h3>Universities</h3>
+            <p>Module teams and labs need clear ownership of tasks and docs before submission to Moodle, Canvas, or Blackboard. FairShare sits beside the LMS for <em>execution</em>, not submission.</p>
+          </div>
+          <div class="card">
+            <div class="icon" aria-hidden="true">📚</div>
+            <h3>Sixth form &amp; college</h3>
+            <p>EPQ, BTEC, and A-level cohorts balance autonomy with oversight. Contribution signals help teachers coach groups before grades are at risk.</p>
+          </div>
+          <div class="card">
+            <div class="icon" aria-hidden="true">🏫</div>
+            <h3>High school</h3>
+            <p>Structured projects with safeguarding-aware chat and activity. Use school-mediated accounts where your policy requires it — we support institutional conversations, not consumer-only signup.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -361,26 +140,24 @@
         <div class="section-head">
           <h2>What is FairShare?</h2>
           <p>
-            FairShare is a web platform for <strong style="color: var(--txt); font-weight: 600;">universities, colleges, and schools</strong> where
-            students work in groups. It combines project spaces with task boards, collaborative documents, team chat,
-            activity feeds, and contribution-oriented reporting — designed to reduce “free rider” problems and support transparent group work.
+            A web workspace for coursework and team projects: shared tasks and documents, real-time chat, activity feeds, and contribution-oriented analytics — designed to reduce free-rider dynamics and make collaboration visible.
           </p>
         </div>
         <div class="grid-3">
           <div class="card">
             <div class="icon" aria-hidden="true">📂</div>
             <h3>Project workspaces</h3>
-            <p>Create a project, add members, set deadlines, and keep everything for that group in one place.</p>
+            <p>Members, deadlines, and everything for one group in one place.</p>
           </div>
           <div class="card">
             <div class="icon" aria-hidden="true">📊</div>
             <h3>Contribution awareness</h3>
-            <p>Dashboards and analytics highlight participation patterns — a signal for instructors, not a verdict; judgment stays with your institution.</p>
+            <p>Dashboards highlight participation patterns — a signal for educators, not an automated verdict.</p>
           </div>
           <div class="card">
             <div class="icon" aria-hidden="true">🔐</div>
-            <h3>Built for real classes</h3>
-            <p>Sign-in, cloud sync, and optional integrations are designed so institutions can adopt FairShare alongside their existing tools.</p>
+            <h3>Institution-ready</h3>
+            <p>Security, privacy, and subprocessors documented for IT and DPO review — see our <a href="security.html">Security &amp; trust</a> page.</p>
           </div>
         </div>
       </div>
@@ -390,21 +167,116 @@
       <div class="wrap">
         <div class="section-head">
           <h2>What you get</h2>
-          <p>Core capabilities your teams use every week — in a single, focused interface.</p>
+          <p>Core capabilities teams use every week in one focused interface.</p>
         </div>
         <div class="grid-3">
           <div class="card">
             <h3>Tasks &amp; boards</h3>
-            <p>Organise work with assignees, due dates, and views that suit how your group actually plans.</p>
+            <p>Assignees, due dates, and views that match how the group plans.</p>
           </div>
           <div class="card">
             <h3>Docs &amp; exports</h3>
-            <p>Rich documents in the workspace, with export options when you need to hand work in elsewhere.</p>
+            <p>Rich documents in the workspace with export when work is handed in elsewhere.</p>
           </div>
           <div class="card">
             <h3>Chat &amp; activity</h3>
-            <p>Project channels and an activity feed so coordination and history stay next to the work.</p>
+            <p>Project channels and feeds so coordination stays next to the work.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>How FairShare fits your stack</h2>
+          <p>We don’t replace your LMS or your chat tool — we focus on <strong style="color:var(--txt);font-weight:600;">fair, visible group execution</strong>.</p>
+        </div>
+        <div class="compare-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Typical LMS</th>
+                <th>Chat / files only</th>
+                <th>FairShare</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Submission &amp; grades</td>
+                <td class="yes">Core strength</td>
+                <td class="no">Not designed for it</td>
+                <td class="partial">Export / hand-in elsewhere</td>
+              </tr>
+              <tr>
+                <td>Group task ownership</td>
+                <td class="partial">Varies by tool</td>
+                <td class="no">Rarely structured</td>
+                <td class="yes">Built-in</td>
+              </tr>
+              <tr>
+                <td>Shared docs in context</td>
+                <td class="partial">Often separate</td>
+                <td class="partial">Docs without project glue</td>
+                <td class="yes">Per project</td>
+              </tr>
+              <tr>
+                <td>Contribution visibility</td>
+                <td class="no">Limited</td>
+                <td class="no">Not the focus</td>
+                <td class="yes">Analytics &amp; activity</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="testimonials" aria-labelledby="testimonials-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="testimonials-heading">What educators say</h2>
+          <p>Placeholder quotes — replace with real testimonials and consent.</p>
+        </div>
+        <div class="testimonial-grid">
+          <blockquote class="quote-card">
+            <p class="quote-text">“Finally something that shows who did what before the deadline panic — without us digging through five different tools.”</p>
+            <footer class="quote-meta">
+              <strong>Dr. A. Rahman</strong>
+              Module lead, UK university (pilot)
+            </footer>
+          </blockquote>
+          <blockquote class="quote-card">
+            <p class="quote-text">“We needed a clearer picture of group balance for EPQ — FairShare gave us a shared workspace and a starting point for conversations.”</p>
+            <footer class="quote-meta">
+              <strong>Head of Sixth Form</strong>
+              UK independent school (placeholder)
+            </footer>
+          </blockquote>
+          <blockquote class="quote-card">
+            <p class="quote-text">“Procurement asked about GDPR and UAE PDPL alignment — having a written security page and DPA template made the conversation faster.”</p>
+            <footer class="quote-meta">
+              <strong>IT director</strong>
+              UAE school group (placeholder)
+            </footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section id="stories">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Case studies</h2>
+          <p>Short narratives you can share with leadership — expand on the dedicated stories page.</p>
+        </div>
+        <div class="card case-teaser">
+          <div>
+            <h3 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:8px;">From pilot to department rollout</h3>
+            <p style="color:var(--txt2);font-size:14px;max-width:560px;">See how one cohort used FairShare for a term-long project — including setup, safeguarding notes, and outcomes (template content).</p>
+          </div>
+          <a class="btn btn-demo" href="case-studies.html">Read stories</a>
         </div>
       </div>
     </section>
@@ -414,46 +286,84 @@
         <div class="section-head">
           <h2>Pricing</h2>
           <p>
-            Starter tiers for teams and pilots; <strong style="color: var(--txt); font-weight: 600;">institutional pricing</strong> for schools and universities
-            is customised to cohort size, support, and deployment — contact us for a quote aligned to UK &amp; UAE schools.
+            Transparent tiers for pilots and departments; <strong style="color: var(--txt); font-weight: 600;">Campus</strong> is customised for cohort size, support SLAs, and UK / UAE legal alignment.
           </p>
         </div>
         <div class="pricing-grid">
           <div class="price-card">
-            <span class="tag">Try it</span>
+            <span class="tag">Pilot</span>
             <h3>Starter</h3>
-            <div class="price">Free <small>/ pilot</small></div>
+            <p class="price-tier-desc">For a single class or evaluation — no card required.</p>
+            <div class="price">Free</div>
             <ul>
-              <li>Core projects, tasks &amp; docs</li>
-              <li>Limited seats for evaluation</li>
-              <li>Community-level support</li>
+              <li>Up to <strong>25 seats</strong> per pilot (adjust in sales)</li>
+              <li>Projects, tasks, docs, chat, activity</li>
+              <li>Community email support (best-effort)</li>
+              <li>Data hosted per our <a href="security.html">security</a> practices</li>
             </ul>
-            <a class="btn btn-ghost" style="width:100%" data-app-link href="/fairshare.html">Open app</a>
-            <p class="price-note">Ideal for a single class or internal trial.</p>
+            <a class="btn btn-ghost" style="width:100%" data-app-link href="/fairshare.html">Start in the app</a>
+            <p class="price-note">Upgrade path to Team when you’re ready.</p>
           </div>
           <div class="price-card featured">
-            <span class="tag">Most popular</span>
+            <span class="tag">Departments</span>
             <h3>Team</h3>
-            <div class="price">Contact us</div>
+            <p class="price-tier-desc">For faculties and school groups that need predictability and help.</p>
+            <div class="price">From <small>£ / AED — quote</small></div>
             <ul>
-              <li>Full feature set for departments</li>
-              <li>Higher limits &amp; priority fixes</li>
-              <li>Onboarding call &amp; documentation</li>
+              <li><strong>Higher seat caps</strong> and fair-use limits agreed in contract</li>
+              <li><strong>Priority</strong> bug fixes &amp; onboarding call</li>
+              <li>Documentation for IT / DPO review</li>
+              <li>Optional: termly review with your admin</li>
             </ul>
-            <a class="btn btn-primary" style="width:100%" href="mailto:hello@fairshare.app?subject=FairShare%20Team%20plan">Request pricing</a>
-            <p class="price-note">Replace email with your real sales inbox when ready.</p>
+            <a class="btn btn-primary" style="width:100%" href="mailto:sales@fairshare.app?subject=FairShare%20Team%20plan">Request a quote</a>
+            <p class="price-note">Regional pricing for UK &amp; UAE; academic year billing available.</p>
           </div>
           <div class="price-card">
             <span class="tag">Institutions</span>
             <h3>Campus</h3>
+            <p class="price-tier-desc">Universities, trusts, and groups that need enterprise alignment.</p>
             <div class="price">Custom</div>
             <ul>
-              <li>SSO / domain options (roadmap)</li>
-              <li>DPAs &amp; data residency discussions</li>
-              <li>Dedicated success &amp; training</li>
+              <li><strong>DPA</strong> &amp; UK / UAE transfer discussions</li>
+              <li>SSO / domain strategy <em>(roadmap — confirm in contract)</em></li>
+              <li>Dedicated success &amp; training sessions</li>
+              <li>Custom reporting where agreed</li>
             </ul>
-            <a class="btn btn-ghost" style="width:100%" href="mailto:hello@fairshare.app?subject=FairShare%20Campus">Talk to us</a>
-            <p class="price-note">For universities, trusts, and school groups.</p>
+            <a class="btn btn-ghost" style="width:100%" href="mailto:campus@fairshare.app?subject=FairShare%20Campus">Contact campus sales</a>
+            <p class="price-note">Replace placeholder addresses with your real sales inboxes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="compliance-strip">
+      <div class="wrap">
+        <p>
+          <strong style="color:var(--txt);">Compliance posture:</strong> FairShare is designed to support institutions subject to
+          <strong>UK GDPR</strong> and the <strong>UAE PDPL</strong>. We sign Data Processing Agreements where we act as processor,
+          document subprocessors, and work with your DPO on transfers and retention. This is not legal advice — your counsel confirms fit for your context.
+        </p>
+      </div>
+    </div>
+
+    <section class="contact-strip" id="contact">
+      <div class="wrap">
+        <div class="section-head" style="text-align:center;max-width:560px;margin-left:auto;margin-right:auto;">
+          <h2>Contact</h2>
+          <p>Use role-based inboxes so enquiries route correctly — update domains before launch.</p>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-card">
+            <strong>Demos &amp; pilots</strong>
+            <a href="mailto:demo@fairshare.app">demo@fairshare.app</a>
+          </div>
+          <div class="contact-card">
+            <strong>Schools &amp; colleges</strong>
+            <a href="mailto:schools@fairshare.app">schools@fairshare.app</a>
+          </div>
+          <div class="contact-card">
+            <strong>Universities</strong>
+            <a href="mailto:universities@fairshare.app">universities@fairshare.app</a>
           </div>
         </div>
       </div>
@@ -463,68 +373,91 @@
       <div class="wrap">
         <div class="section-head">
           <h2>FAQ</h2>
-          <p>Quick answers for educators and students evaluating FairShare.</p>
+          <p>Educators, students, and procurement — including questions we hear in UK &amp; UAE conversations.</p>
         </div>
         <details class="faq-item">
           <summary>Who is FairShare for?</summary>
-          <div class="faq-body">Higher education, sixth form / college, and high school group work where you want clearer coordination and fairer visibility into how students contribute — without replacing your LMS overnight.</div>
+          <div class="faq-body">Higher education, sixth form / college, and high school group work where you want clearer coordination and fairer visibility into contributions — without replacing your LMS overnight.</div>
         </details>
         <details class="faq-item">
-          <summary>Does FairShare replace our learning management system?</summary>
-          <div class="faq-body">FairShare focuses on <em>group project execution</em> — tasks, docs, chat, and contribution signals. Many schools use it alongside Moodle, Canvas, Blackboard, or Google Classroom for submission and grades.</div>
+          <summary>Does FairShare replace our LMS?</summary>
+          <div class="faq-body">No. FairShare focuses on <em>group project execution</em> — tasks, docs, chat, and contribution signals. Most institutions keep Moodle, Canvas, Blackboard, or Google Classroom for modules, submission, and grades.</div>
+        </details>
+        <details class="faq-item">
+          <summary>How do you handle UK GDPR?</summary>
+          <div class="faq-body">We document our role (often processor to your institution), list subprocessors, support Data Processing Agreements, and describe retention and security on our <a href="security.html">Security &amp; trust</a> page. Your DPO validates fit for your school.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What about UAE PDPL and cross-border transfers?</summary>
+          <div class="faq-body">Institutions in the UAE should assess transfers (e.g. UK/EU hosting or AI subprocessors) under PDPL rules. We provide information for your transfer analysis; legal sign-off sits with your organisation.</div>
         </details>
         <details class="faq-item">
           <summary>Is student data safe?</summary>
-          <div class="faq-body">You should run FairShare with a proper host and database configuration, sign data processing agreements where required, and follow your jurisdiction’s rules (e.g. UK GDPR / UAE PDPL). We’re happy to discuss architecture with your IT and DPO.</div>
+          <div class="faq-body">Run FairShare on a properly configured host, use strong authentication, and follow our security documentation. We do not market FairShare as a consumer toy — it is intended for institutional use with appropriate governance.</div>
         </details>
         <details class="faq-item">
           <summary>What does “contribution analytics” mean?</summary>
-          <div class="faq-body">Signals derived from activity and task participation — useful for coaching and spotting imbalance. They are not proof of misconduct; instructors remain responsible for academic judgment.</div>
+          <div class="faq-body">Signals from activity and tasks — useful for coaching and spotting imbalance. They are not proof of misconduct; instructors remain responsible for academic judgment.</div>
+        </details>
+        <details class="faq-item">
+          <summary>SSO and school domains?</summary>
+          <div class="faq-body">Campus-tier customers can discuss SSO and domain allowlists as part of procurement. Roadmap items are confirmed in writing — not promised on this marketing page alone.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Can we export data if we leave?</summary>
+          <div class="faq-body">Institutional contracts should define export and deletion windows. The product includes export paths for key artefacts; confirm scope with sales for Campus agreements.</div>
         </details>
         <details class="faq-item">
           <summary>How do we get started?</summary>
-          <div class="faq-body">Open the platform, run a pilot with one cohort, and contact us for institutional pricing, training, and legal alignment for UK and UAE deployments.</div>
+          <div class="faq-body">Book a demo, run a Starter pilot with one cohort, then move to Team or Campus when procurement and safeguarding sign-off are in place.</div>
         </details>
       </div>
     </section>
 
     <div class="cta-band">
       <h2>Ready to try FairShare?</h2>
-      <p>Open the live workspace with your team, or reach out for a campus conversation.</p>
-      <a class="btn btn-primary" data-app-link href="/fairshare.html">Launch FairShare</a>
+      <p>Open the workspace for a pilot, or talk to us about a department or campus rollout.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="mailto:demo@fairshare.app?subject=FairShare%20—%20Book%20a%20demo">Book a demo</a>
+        <a class="btn btn-demo" data-app-link href="/fairshare.html">Open the platform</a>
+      </div>
     </div>
   </main>
 
   <footer>
     <div class="wrap foot-grid">
       <div>
-        <strong style="color: var(--txt2); font-family: var(--font-display);">FairShare</strong>
-        <p style="margin-top: 8px; max-width: 320px;">Fair group work for schools and universities. Not affiliated with your institution unless contracted.</p>
+        <div class="foot-brand">
+          <img src="/assets/fairshare-logo.png" width="32" height="32" alt="" decoding="async">
+          <strong style="color: var(--txt2); font-family: var(--font-display); font-size: 1.05rem;">FairShare</strong>
+        </div>
+        <p style="margin-top: 6px; max-width: 300px;">Fair group work for schools and universities. Not affiliated with your institution unless contracted.</p>
       </div>
-      <div>
-        <p style="margin-bottom: 8px;"><strong style="color: var(--txt2);">Product</strong></p>
+      <div class="foot-col">
+        <strong>Product</strong>
         <p><a data-app-link href="/fairshare.html">Platform</a></p>
         <p><a href="#pricing">Pricing</a></p>
-        <p><a href="#faq">FAQ</a></p>
+        <p><a href="case-studies.html">Stories</a></p>
+        <p><a href="status.html">Status</a></p>
       </div>
-      <div>
-        <p style="margin-bottom: 8px;"><strong style="color: var(--txt2);">Legal (placeholders)</strong></p>
-        <p><a href="#">Privacy policy</a></p>
-        <p><a href="#">Terms of use</a></p>
+      <div class="foot-col">
+        <strong>Trust</strong>
+        <p><a href="security.html">Security &amp; privacy</a></p>
+        <p><a href="privacy.html">Privacy policy</a></p>
+        <p><a href="terms.html">Terms of use</a></p>
+      </div>
+      <div class="foot-col">
+        <strong>Contact</strong>
+        <p><a href="mailto:demo@fairshare.app">demo@fairshare.app</a></p>
+        <p><a href="mailto:sales@fairshare.app">sales@fairshare.app</a></p>
       </div>
     </div>
-    <div class="wrap" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center;">
+    <div class="wrap foot-bottom">
       © <span id="y"></span> FairShare. All rights reserved.
     </div>
   </footer>
 
   <script>
-    /**
-     * Platform URL — change once for production or split hosting.
-     * Examples:
-     *   '/fairshare.html'  → same site, app at domain root (default with npm start)
-     *   'https://app.yourschool.org/fairshare.html' → app on another subdomain
-     */
     (function () {
       var APP = typeof window.FAIRSHARE_APP_URL === 'string' && window.FAIRSHARE_APP_URL
         ? window.FAIRSHARE_APP_URL
