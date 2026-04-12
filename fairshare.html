@@ -69,10 +69,20 @@ window.__FAIRSHARE__ = {
   /* Typography */
   --font-display:'Syne',sans-serif;
   --font:'DM Sans',sans-serif;
+  --text-xs:11px;--text-sm:13px;--text-base:14px;--text-lg:16px;--text-xl:20px;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;
+  --ease-out:cubic-bezier(0.22,1,0.36,1);
 }
 
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(0,212,170,0.22);color:var(--txt)}
+.skip-link{
+  position:absolute;left:12px;top:-100px;z-index:10000;
+  padding:10px 16px;background:var(--teal);color:var(--ink);font-weight:600;font-size:13px;border-radius:var(--r);
+  text-decoration:none;transition:top 0.2s var(--ease-out);
+}
+.skip-link:focus{top:12px;outline:2px solid var(--txt);outline-offset:2px}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -211,6 +221,10 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 .auth-switch{margin-top:20px;font-size:13px;color:var(--txt2);text-align:center}
 .auth-switch a{color:var(--teal);cursor:pointer;font-weight:500;text-decoration:none}
 .auth-switch a:hover{text-decoration:underline}
+.auth-trust{
+  margin-top:20px;padding-top:18px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--txt3);line-height:1.45;text-align:center;
+}
 .auth-remember{display:flex;align-items:center;gap:10px;margin:12px 0 16px;font-size:13px;color:var(--txt2);cursor:pointer;user-select:none}
 .auth-remember input{width:auto;accent-color:var(--teal)}
 .btn-google{
@@ -234,11 +248,12 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 /* ── TOPNAV ── */
 .topnav{
   height:56px;
-  background:rgba(21,28,42,0.92);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  background:rgba(21,28,42,0.94);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;padding:0 20px;gap:10px;
   position:sticky;top:0;z-index:100;flex-shrink:0;
+  box-shadow:0 1px 0 rgba(255,255,255,0.04),0 8px 32px rgba(0,0,0,0.35);
 }
 
 .nav-logo{display:flex;align-items:center;gap:9px;margin-right:6px;text-decoration:none}
@@ -268,7 +283,34 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 .nav-tab.active .tab-dot{background:var(--teal)}
 .tab-dot{width:5px;height:5px;border-radius:50%;background:transparent;display:inline-block;margin-right:6px;transition:background 0.2s}
 
-.nav-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.nav-search-wrap{
+  flex:0 1 280px;min-width:0;margin:0 4px;
+}
+.nav-search{
+  width:100%;height:36px;padding:0 14px 0 38px;
+  border-radius:100px;border:1px solid var(--border);
+  background:rgba(10,13,18,0.5);color:var(--txt);font-family:var(--font);font-size:13px;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238896b3' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:12px 50%;
+}
+.nav-search::placeholder{color:var(--txt3)}
+.nav-search:focus{
+  border-color:rgba(0,212,170,0.35);
+  box-shadow:0 0 0 3px rgba(0,212,170,0.1);
+  background-color:rgba(17,24,39,0.75);
+}
+.nav-text-btn{
+  padding:7px 12px;border-radius:8px;border:1px solid transparent;background:transparent;
+  color:var(--txt3);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;
+  transition:color 0.15s,background 0.15s,border-color 0.15s;white-space:nowrap;
+}
+.nav-text-btn:hover{color:var(--txt);background:var(--surface2);border-color:var(--border)}
+@media (max-width:780px){
+  .nav-search-wrap{display:none}
+}
+
+.nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 
 .nav-icon-btn{
   width:34px;height:34px;border-radius:9px;
@@ -440,8 +482,8 @@ textarea{resize:vertical;min-height:72px}
 /* ── MODAL ── */
 .modal-overlay{
   position:fixed;inset:0;
-  background:rgba(0,0,0,0.65);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  background:rgba(5,8,14,0.72);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   z-index:500;display:none;align-items:center;justify-content:center;padding:20px;
 }
 .modal-overlay.open{display:flex;animation:overlayIn 0.2s ease}
@@ -480,19 +522,49 @@ textarea{resize:vertical;min-height:72px}
 #toast{
   position:fixed;bottom:28px;left:50%;
   transform:translateX(-50%) translateY(80px);
-  background:var(--surface3);
+  background:linear-gradient(145deg,var(--surface3),var(--ink4));
   border:1px solid var(--border2);
   color:var(--txt);
-  padding:11px 22px;
-  border-radius:100px;
+  padding:12px 20px;
+  border-radius:14px;
   font-size:13px;font-weight:500;
   z-index:999;
   transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
   pointer-events:none;
-  box-shadow:var(--shadow);
+  box-shadow:var(--shadow-lg);
   white-space:nowrap;
+  max-width:min(420px,92vw);
+  text-align:center;
 }
+#toast.toast-rich{
+  white-space:normal;text-align:left;
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+}
+#toast .toast-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--txt3)}
+#toast .toast-msg{font-size:13px;color:var(--txt);line-height:1.4;font-weight:500}
 #toast.show{transform:translateX(-50%) translateY(0)}
+.kbd{
+  display:inline-block;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;
+  font-family:var(--font);color:var(--txt2);
+  background:var(--ink4);border:1px solid var(--border2);box-shadow:0 1px 0 rgba(0,0,0,0.35);
+}
+.help-shortcuts-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.help-shortcuts-table td{padding:8px 0;border-bottom:1px solid var(--border);vertical-align:middle}
+.help-shortcuts-table td:last-child{text-align:right;color:var(--txt2)}
+.help-section-title{font-family:var(--font-display);font-size:14px;font-weight:700;margin:20px 0 10px;color:var(--txt)}
+.help-section-title:first-child{margin-top:0}
+.modal.modal-wide{max-width:560px}
+.help-lead{font-size:13px;color:var(--txt2);line-height:1.55;margin-bottom:8px}
+
+.app-footer{
+  flex-shrink:0;padding:10px 24px 14px;
+  font-size:11px;color:var(--txt3);
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  border-top:1px solid var(--border);
+  background:rgba(10,13,18,0.4);
+}
+.app-footer-dot{opacity:0.5}
+.chat-mention{color:var(--teal);font-weight:600}
 
 /* ════════════════════════════════════════════════
    PROJECT CARDS
@@ -1272,6 +1344,7 @@ textarea{resize:vertical;min-height:72px}
 </style>
 </head>
 <body>
+<a href="#main-scroll" class="skip-link">Skip to main content</a>
 
 <!-- ═══════════════════════════════════════
      AUTH SCREEN
@@ -1291,7 +1364,7 @@ textarea{resize:vertical;min-height:72px}
     <!-- Login panel -->
     <div class="auth-panel active" id="login-panel">
       <div class="auth-headline">Welcome back</div>
-      <div class="auth-sub">Track contributions. Build accountability. Earn your grade.</div>
+      <div class="auth-sub">One workspace for fair group work — tasks, docs, chat, and contribution insight.</div>
 
       <div class="field">
         <label>Email</label>
@@ -1322,7 +1395,7 @@ textarea{resize:vertical;min-height:72px}
     <!-- Signup panel -->
     <div class="auth-panel" id="signup-panel">
       <div class="auth-headline">Create account</div>
-      <div class="auth-sub">Join FairShare and make group work fair.</div>
+      <div class="auth-sub">Set up your team workspace in minutes — built for courses and cross-functional projects.</div>
 
       <div class="field">
         <label>Full name</label>
@@ -1354,6 +1427,7 @@ textarea{resize:vertical;min-height:72px}
       </button>
       <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
     </div>
+    <div class="auth-trust" role="note">Secure sessions · Role-aware workspaces · Designed for transparent collaboration</div>
   </div>
 </div>
 
@@ -1362,7 +1436,7 @@ textarea{resize:vertical;min-height:72px}
 ═══════════════════════════════════════ -->
 <div id="app">
   <!-- Top navigation -->
-  <nav class="topnav">
+  <nav class="topnav" aria-label="Main">
     <div class="nav-logo">
       <div class="nav-logo-icon" aria-hidden="true"><img src="assets/fairshare-logo.png" alt=""></div>
       <span class="nav-logo-text">FairShare</span>
@@ -1398,8 +1472,15 @@ textarea{resize:vertical;min-height:72px}
       </button>
     </div>
 
+    <div class="nav-search-wrap">
+      <label for="nav-quick-search" class="sr-only">Search projects by name or description</label>
+      <input type="search" id="nav-quick-search" class="nav-search" placeholder="Search projects…" autocomplete="off" aria-describedby="nav-search-hint" oninput="onNavProjectSearch()">
+      <span id="nav-search-hint" class="sr-only">Filters the project list when you are on Projects</span>
+    </div>
+
     <div class="nav-right">
-      <button class="nav-icon-btn notif-dot" title="Notifications" onclick="showPage('notifications',null);document.querySelector('[data-page=notifications]')?.classList.add('active')" id="notif-btn">🔔</button>
+      <button type="button" class="nav-text-btn" title="Help and keyboard shortcuts" onclick="openModal('modal-help')">Help</button>
+      <button class="nav-icon-btn notif-dot" title="Notifications" aria-label="Notifications" onclick="showPage('notifications',null);document.querySelector('[data-page=notifications]')?.classList.add('active')" id="notif-btn">🔔</button>
       <div class="user-menu-wrap" id="user-menu-wrap">
         <div class="user-pill" id="user-pill-btn" onclick="toggleUserMenu(event)" title="Account menu">
           <div class="avatar av-teal" id="nav-avatar" style="width:26px;height:26px;font-size:10px">??</div>
@@ -1407,6 +1488,7 @@ textarea{resize:vertical;min-height:72px}
           <span style="font-size:10px;color:var(--txt3)">▾</span>
         </div>
         <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <button type="button" onclick="closeUserMenu();openModal('modal-help')">Help &amp; shortcuts</button>
           <button type="button" onclick="openAccountModal()">Account settings</button>
           <div class="menu-sep"></div>
           <button type="button" onclick="openSignOutModal()">Sign out…</button>
@@ -1421,8 +1503,8 @@ textarea{resize:vertical;min-height:72px}
     <div class="page active" id="page-projects">
       <div class="page-header">
         <div>
-          <div class="page-title">My Projects</div>
-          <div class="page-sub">Select a project to view its workspace</div>
+          <div class="page-title">Projects</div>
+          <div class="page-sub">Your workspaces — open one for dashboard, tasks, documents, chat, and analytics</div>
         </div>
         <button class="btn btn-primary" style="width:auto" onclick="openModal('modal-new-project')">
           <span>+</span> New Project
@@ -1815,6 +1897,10 @@ textarea{resize:vertical;min-height:72px}
     </div>
 
   </div><!-- /main -->
+  <footer class="app-footer" role="contentinfo">
+    <span>FairShare</span><span class="app-footer-dot" aria-hidden="true">·</span>
+    <span>Collaborative learning workspace</span>
+  </footer>
 </div><!-- /app -->
 
 <!-- ═══════════════════════════════════════
@@ -2016,6 +2102,16 @@ textarea{resize:vertical;min-height:72px}
   <div class="modal">
     <div class="modal-title">✦ New Project</div>
     <button class="modal-close" onclick="closeModal('modal-new-project')">✕</button>
+    <div class="form-row">
+      <label>Starter template</label>
+      <select id="np-template" onchange="applyNpTemplateHint()">
+        <option value="blank">Blank — start from scratch</option>
+        <option value="research">Research paper — literature → draft → final</option>
+        <option value="sprint">Agile sprint — planning → review → retro</option>
+        <option value="course">Course / syllabus — weekly milestones</option>
+      </select>
+      <div class="help-text" id="np-template-hint">Choose a template to add starter tasks you can edit anytime.</div>
+    </div>
     <div class="form-row"><label>Project name</label><input type="text" id="np-name" placeholder="e.g. CS470 Research Paper"></div>
     <div class="form-row"><label>Description</label><textarea id="np-desc" placeholder="What is this project about?"></textarea></div>
     <div class="form-row"><label>Deadline</label><input type="date" id="np-deadline"></div>
@@ -2174,6 +2270,47 @@ textarea{resize:vertical;min-height:72px}
   </div>
 </div>
 
+<!-- Welcome (first visit) -->
+<div class="modal-overlay" id="modal-welcome" onclick="overlayClose(event,this)">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div class="modal-title">Welcome to FairShare</div>
+    <button type="button" class="modal-close" onclick="closeModal('modal-welcome')">✕</button>
+    <p class="help-lead">You now have a single place for <strong style="color:var(--txt)">projects, tasks, shared documents, chat, and contribution analytics</strong> — built so everyone’s work is visible and fair.</p>
+    <div class="help-section-title">Quick start</div>
+    <ol style="margin:0 0 0 18px;font-size:13px;color:var(--txt2);line-height:1.65">
+      <li>Create a <strong style="color:var(--txt)">project</strong> and pick a template if you want starter tasks.</li>
+      <li>Open the project to use the <strong style="color:var(--txt)">Dashboard, Tasks, Docs, and Chat</strong> tabs.</li>
+      <li>Use <span class="kbd">?</span> anytime for help and keyboard shortcuts.</li>
+    </ol>
+    <div class="form-actions" style="margin-top:22px">
+      <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-welcome')">Get started</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help & shortcuts -->
+<div class="modal-overlay" id="modal-help" onclick="overlayClose(event,this)">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div class="modal-title">Help &amp; keyboard shortcuts</div>
+    <button type="button" class="modal-close" onclick="closeModal('modal-help')">✕</button>
+    <p class="help-lead">FairShare keeps coursework and team projects organized in one workspace. Press <span class="kbd">?</span> from most screens to reopen this panel.</p>
+    <div class="help-section-title" id="help-panel-shortcuts">Shortcuts</div>
+    <table class="help-shortcuts-table" aria-label="Keyboard shortcuts">
+      <tr><td>Open Help</td><td><span class="kbd">?</span></td></tr>
+      <tr><td>Skip to main content</td><td><span class="kbd">Tab</span> from top of page</td></tr>
+    </table>
+    <div class="help-section-title">Projects &amp; tasks</div>
+    <p class="help-lead">Use <strong style="color:var(--txt)">Projects</strong> to list workspaces; open one to load the dashboard. Tasks support assignees, due dates, and completion tracking for fair contribution reporting.</p>
+    <div class="help-section-title">Chat</div>
+    <p class="help-lead">Type <strong style="color:var(--teal)">@Name</strong> to highlight mentions in messages (styling only — everyone still sees the channel).</p>
+    <div class="help-section-title">Trust &amp; data</div>
+    <p class="help-lead">Sign-in uses your configured identity provider (email/password or Google via Supabase). Project data syncs when cloud mode is enabled; demo mode stays on this browser only.</p>
+    <div class="form-actions" style="margin-top:18px">
+      <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-help')">Done</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2220,13 +2357,82 @@ function daysLeft(d){if(!d)return null;return Math.ceil((new Date(d+'T00:00:00')
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return'Just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 function genId(prefix='id'){return prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)}
-function toast(msg,type='default'){
+function formatChatText(text){
+  const s=String(text||'');
+  return esc(s).replace(/@([\w.-]+)/g,'<span class="chat-mention">@$1</span>');
+}
+function toast(msg,type='default',title){
   const t=document.getElementById('toast');
-  t.textContent=msg;
+  if(!t)return;
+  t.classList.remove('toast-rich');
+  if(title){
+    t.classList.add('toast-rich');
+    t.innerHTML='<span class="toast-title">'+esc(title)+'</span><span class="toast-msg">'+esc(msg)+'</span>';
+  }else{
+    t.textContent=msg;
+  }
   t.style.borderColor=type==='success'?'var(--teal)':type==='error'?'var(--red)':'var(--border2)';
   t.classList.add('show');
   clearTimeout(toast._timer);
   toast._timer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+const PROJECT_TEMPLATES={
+  blank:{hint:'No starter tasks — add your own from the Tasks page.',tasks:[]},
+  research:{
+    hint:'Adds milestones from sources through final manuscript.',
+    tasks:['Literature review & key sources','Thesis & outline','First full draft','Peer review & revisions','Final paper & references']
+  },
+  sprint:{
+    hint:'Adds a lightweight agile cadence your team can rename.',
+    tasks:['Sprint planning & goals','Daily sync notes','Sprint review demo','Retrospective & improvements']
+  },
+  course:{
+    hint:'Weekly checkpoints typical of term-based courses.',
+    tasks:['Week 1–2: readings & intro','Midterm prep & checkpoint','Group milestone','Final project / exam prep']
+  }
+};
+function applyNpTemplateHint(){
+  const sel=document.getElementById('np-template');
+  const hint=document.getElementById('np-template-hint');
+  if(!sel||!hint)return;
+  const meta=PROJECT_TEMPLATES[sel.value];
+  hint.textContent=meta?meta.hint:'';
+}
+function templateTaskDue(deadline,index,total){
+  if(deadline){
+    const endMs=new Date(deadline+'T12:00:00').getTime();
+    const now=Date.now();
+    const start=Math.min(now,endMs);
+    const effEnd=Math.max(endMs,now+86400000);
+    const span=Math.max(86400000,effEnd-start);
+    const frac=(index+1)/(total+1);
+    return new Date(start+span*frac).toISOString().slice(0,10);
+  }
+  const d=new Date();
+  d.setDate(d.getDate()+7*(index+1));
+  return d.toISOString().slice(0,10);
+}
+function applyProjectTemplateTasks(projId,templateKey,opts){
+  const tpl=PROJECT_TEMPLATES[templateKey];
+  if(!tpl||!tpl.tasks||!tpl.tasks.length)return;
+  const deadline=opts&&opts.deadline;
+  const ownerId=opts&&opts.ownerId;
+  const n=tpl.tasks.length;
+  let tasks=STORE.get('tasks_'+projId)||[];
+  tpl.tasks.forEach((name,i)=>{
+    tasks.push({
+      id:genId('t'),projectId:projId,name,
+      desc:'',assignedTo:ownerId,priority:i===0?'high':'medium',
+      due:templateTaskDue(deadline,i,n),
+      status:'todo',created:Date.now()
+    });
+  });
+  STORE.set('tasks_'+projId,tasks);
+}
+function onNavProjectSearch(){
+  const page=document.getElementById('page-projects');
+  if(page&&page.classList.contains('active'))renderProjectList();
 }
 
 /* ══════════════════════════════════════════════
@@ -2418,6 +2624,12 @@ function loginAs(user){
   showPage('projects',document.querySelector('[data-page=projects]'));
   renderNotifications();
   renderProjectInvites();
+  try{
+    if(!localStorage.getItem('fairshare_welcome_v1')){
+      localStorage.setItem('fairshare_welcome_v1','1');
+      setTimeout(()=>openModal('modal-welcome'),500);
+    }
+  }catch(e){}
 }
 
 function toggleUserMenu(ev){
@@ -2646,7 +2858,25 @@ function renderProjectList(){
     </div>`;
     return;
   }
-  container.innerHTML=projects.map((p,i)=>{
+  const qEl=document.getElementById('nav-quick-search');
+  const q=(qEl&&qEl.value||'').trim().toLowerCase();
+  let list=projects;
+  if(q){
+    list=projects.filter(p=>
+      (p.name||'').toLowerCase().includes(q)||
+      (p.desc||'').toLowerCase().includes(q)||
+      (p.instructor||'').toLowerCase().includes(q)
+    );
+  }
+  if(!list.length){
+    container.innerHTML=`<div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">🔎</div>
+      <div class="empty-text">No matching projects</div>
+      <div class="empty-sub">Try another search or <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('nav-quick-search').value='';onNavProjectSearch();">Clear search</button></div>
+    </div>`;
+    return;
+  }
+  container.innerHTML=list.map((p,i)=>{
     const tasks=STORE.get('tasks_'+p.id)||[];
     const done=tasks.filter(t=>t.status==='done').length;
     const pct=tasks.length?Math.round(done/tasks.length*100):0;
@@ -2704,6 +2934,7 @@ function createProject(){
   const deadline=document.getElementById('np-deadline').value;
   const instructor=document.getElementById('np-instructor').value.trim();
   const membersRaw=document.getElementById('np-members').value.trim();
+  const templateKey=(document.getElementById('np-template')||{}).value||'blank';
   if(!name){toast('Please enter a project name','error');return}
   const members=[{id:currentUser.id,name:currentUser.name,email:currentUser.email}];
   if(membersRaw){
@@ -2716,10 +2947,13 @@ function createProject(){
   let projects=loadProjects();
   projects.unshift(proj);
   STORE.set('projects_'+currentUser.id,projects);
+  applyProjectTemplateTasks(proj.id,templateKey,{deadline,ownerId:currentUser.id});
   closeModal('modal-new-project');
   renderProjectList();
-  toast('Project created! ✦','success');
+  toast('Project created with your workspace ready.','success','Project created');
   ['np-name','np-desc','np-deadline','np-instructor','np-members'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  const ts=document.getElementById('np-template');
+  if(ts){ts.value='blank';applyNpTemplateHint()}
 }
 
 /* ══════════════════════════════════════════════
@@ -3740,7 +3974,7 @@ function renderChatMessages(){
       ${!isOwn?`<div class="avatar ${getAvatarClass(m.userName)}" style="width:28px;height:28px;font-size:10px;flex-shrink:0">${getInitials(m.userName)}</div>`:''}
       <div>
         ${!isOwn?`<div style="font-size:11px;color:var(--txt3);margin-bottom:3px">${esc(m.userName)}</div>`:''}
-        <div class="chat-bubble">${esc(m.text)}</div>
+        <div class="chat-bubble">${formatChatText(m.text)}</div>
         <div class="chat-msg-meta">${timeAgo(m.ts)}</div>
       </div>
     </div>`;
@@ -4317,6 +4551,10 @@ function openModal(id){
       `<option value="${m.id}">${esc(m.name)}${m.id===currentUser.id?' (you)':''}</option>`
     ).join('');
   }
+  if(id==='modal-new-project'){
+    const ts=document.getElementById('np-template');
+    if(ts){ts.value='blank';applyNpTemplateHint()}
+  }
   if(id==='modal-export')renderWCByMember();
   document.getElementById(id).classList.add('open');
 }
@@ -4337,6 +4575,16 @@ window._fairShareApplyLogin=function(user){
   if(app&&app.classList.contains('visible')&&currentUser&&currentUser.id===user.id)return;
   loginAs(user);
 };
+
+document.addEventListener('keydown',function(e){
+  const t=e.target;
+  const tag=t&&t.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
+  if(e.key==='?'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    e.preventDefault();
+    openModal('modal-help');
+  }
+});
 
 (async function init(){
   await(window.FSB&&window.FSB.init&&window.FSB.init());
