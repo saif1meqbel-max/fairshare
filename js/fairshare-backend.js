@@ -535,22 +535,23 @@
       return data;
     },
 
-    /** Call before sign-in; if preference changed, reloads page (returns true). */
+    /**
+     * Saves "keep me signed in" without reloading. Never blocks sign-in.
+     * (Storage engine is chosen once at page load; changing this takes effect next visit.)
+     */
     applyRememberPreferenceFromForm() {
-      const lr = typeof document !== 'undefined' ? document.getElementById('login-remember') : null;
-      const sr = typeof document !== 'undefined' ? document.getElementById('su-remember') : null;
+      if (typeof document === 'undefined') return false;
+      const lr = document.getElementById('login-remember');
+      const sr = document.getElementById('su-remember');
+      const loginOn = document.getElementById('login-panel')?.classList.contains('active');
+      const signupOn = document.getElementById('signup-panel')?.classList.contains('active');
       let checked = true;
-      if (lr && lr.offsetParent !== null) checked = lr.checked;
-      else if (sr && sr.offsetParent !== null) checked = sr.checked;
-      const want = checked ? '1' : '0';
-      const prev = localStorage.getItem(REMEMBER_KEY);
-      if (prev === want || (prev === null && want === '1')) {
-        if (prev !== want) localStorage.setItem(REMEMBER_KEY, want);
-        return false;
-      }
-      localStorage.setItem(REMEMBER_KEY, want);
-      location.reload();
-      return true;
+      if (loginOn && lr) checked = lr.checked;
+      else if (signupOn && sr) checked = sr.checked;
+      else if (lr) checked = lr.checked;
+      else if (sr) checked = sr.checked;
+      localStorage.setItem(REMEMBER_KEY, checked ? '1' : '0');
+      return false;
     },
 
     syncRememberCheckboxes() {

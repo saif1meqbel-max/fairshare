@@ -2014,6 +2014,7 @@ function syncRememberPair(el){
   const b=document.getElementById('su-remember');
   if(a)a.checked=c;
   if(b)b.checked=c;
+  try{localStorage.setItem('fairshare_remember_me',c?'1':'0')}catch(e){}
 }
 
 async function handleGoogleSignIn(){
@@ -2025,7 +2026,7 @@ async function handleGoogleSignIn(){
     toast('Open this app over http://localhost or https (not file://) for Google sign-in','error');
     return;
   }
-  if(typeof window.FSB.applyRememberPreferenceFromForm==='function'&&window.FSB.applyRememberPreferenceFromForm())return;
+  if(typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   try{
     toast('Redirecting to Google…','default');
     await window.FSB.signInWithGoogle();
@@ -2059,7 +2060,7 @@ async function handleResendFromLogin(){
 }
 
 async function handleLogin(){
-  if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function'&&window.FSB.applyRememberPreferenceFromForm())return;
+  if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
   if(!email||!pass){toast('Please fill all fields','error');return}
@@ -2091,7 +2092,7 @@ function demoLogin(){
 }
 
 async function handleSignup(){
-  if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function'&&window.FSB.applyRememberPreferenceFromForm())return;
+  if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   const name=document.getElementById('su-name').value.trim();
   const email=document.getElementById('su-email').value.trim().toLowerCase();
   const role=document.getElementById('su-role').value;
