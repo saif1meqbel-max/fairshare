@@ -4936,6 +4936,24 @@ document.addEventListener('keydown',function(e){
     loginAs(window.FSB.lastUser);
     return;
   }
+  /* Restore local / demo accounts from fs4_* when Supabase is configured (session lives in localStorage, not FSB.lastUser). */
+  try{
+    const rawS=localStorage.getItem('fs4_session');
+    const rawU=localStorage.getItem('fs4_users');
+    if(rawS&&rawU){
+      const sid=JSON.parse(rawS);
+      const users=JSON.parse(rawU);
+      if(sid&&Array.isArray(users)){
+        const user=users.find(u=>u.id===sid);
+        if(user){
+          if(window.FSB&&window.FSB.hasCloud&&typeof window.FSB.useLocalDemo==='function')
+            window.FSB.useLocalDemo();
+          loginAs(user);
+          return;
+        }
+      }
+    }
+  }catch(e){}
   const sid=STORE.get('session');
   if(sid){
     const users=STORE.get('users')||[];

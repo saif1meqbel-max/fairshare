@@ -5,6 +5,8 @@
  */
 (function () {
   const REMEMBER_KEY = 'fairshare_remember_me';
+  /** When set, user chose “Try Demo” — keep STORE on localStorage so refresh stays signed in. */
+  const LOCAL_MODE_KEY = 'fairshare_local_mode';
   const PREFIX = 'fs4_';
   const mem = Object.create(null);
   let sb = null;
@@ -483,10 +485,24 @@
       this.client = sb;
       this.authUsesSessionStorageOnly = !getRememberPreference();
       this.hasCloud = true;
-      remote = true;
       this.enabled = true;
-      window.__FAIRSHARE_USE_REMOTE__ = true;
-      attachRemoteStore();
+      /* Demo / local accounts use localStorage; cloud-synced accounts use in-memory + Supabase session. */
+      try {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem(LOCAL_MODE_KEY) === '1') {
+          this.localDemo = true;
+          remote = false;
+          window.__FAIRSHARE_USE_REMOTE__ = false;
+          attachLocalStore();
+        } else {
+          remote = true;
+          window.__FAIRSHARE_USE_REMOTE__ = true;
+          attachRemoteStore();
+        }
+      } catch (e) {
+        remote = true;
+        window.__FAIRSHARE_USE_REMOTE__ = true;
+        attachRemoteStore();
+      }
 
       sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_OUT') {
@@ -496,6 +512,12 @@
           this.lastUser = null;
           return;
         }
+        /* Stay on Try Demo after refresh — don’t apply a leftover Supabase session from the same browser. */
+        try {
+          if (typeof localStorage !== 'undefined' && localStorage.getItem(LOCAL_MODE_KEY) === '1') {
+            if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
+          }
+        } catch (e) {}
         if (event === 'TOKEN_REFRESHED' && session) {
           try {
             this.lastUser = await mapSessionUser(session);
@@ -518,15 +540,32 @@
         }
       });
 
-      const {
-        data: { session },
-      } = await sb.auth.getSession();
-      if (session) {
-        try {
-          await hydrateSession(session.user.id);
-          this.lastUser = await mapSessionUser(session);
-        } catch (e) {
-          console.warn('[FSB] getSession hydrate', e);
+      if (!this.localDemo) {
+        let {
+          data: { session },
+        } = await sb.auth.getSession();
+        if (!session?.user) {
+          try {
+            const { data: gu, error: uerr } = await sb.auth.getUser();
+            if (gu?.user?.id && !uerr) {
+              const again = await sb.auth.getSession();
+              session = again.data.session;
+            }
+          } catch (e) {
+            console.warn('[FSB] getUser fallback', e);
+          }
+        }
+        if (session?.user) {
+          try {
+            await hydrateSession(session.user.id);
+          } catch (e) {
+            console.warn('[FSB] getSession hydrate', e);
+          }
+          try {
+            this.lastUser = await mapSessionUser(session);
+          } catch (e) {
+            console.warn('[FSB] mapSessionUser after session', e);
+          }
         }
       }
     },
@@ -534,6 +573,9 @@
     async signInWithGoogle() {
       if (!sb) throw new Error('Supabase not configured');
       this.localDemo = false;
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
+      } catch (e) {}
       const redirectTo =
         typeof location !== 'undefined' && location.origin && !location.origin.startsWith('file:')
           ? `${location.origin}${location.pathname}${location.search || ''}`
@@ -599,6 +641,9 @@
       await hydrateSession(session.user.id);
       this.lastUser = await mapSessionUser(session);
       if (!this.lastUser?.id) throw new Error('Could not load your profile after sign-in.');
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
+      } catch (e) {}
       return this.lastUser;
     },
 
@@ -635,6 +680,9 @@
         attachRemoteStore();
         await hydrateSession(session.user.id);
         this.lastUser = await mapSessionUser(session);
+        try {
+          if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
+        } catch (e) {}
         return this.lastUser;
       }
       return null;
@@ -691,6 +739,9 @@
 
     async signOut() {
       this.localDemo = false;
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
+      } catch (e) {}
       stopNotificationsRealtime();
       if (sb) await sb.auth.signOut();
       viewerId = null;
@@ -735,6 +786,9 @@
 
     useLocalDemo() {
       this.localDemo = true;
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.setItem(LOCAL_MODE_KEY, '1');
+      } catch (e) {}
       remote = false;
       window.__FAIRSHARE_USE_REMOTE__ = false;
       for (const k of Object.keys(mem)) delete mem[k];
@@ -750,6 +804,9 @@
     exitLocalDemoForAuth() {
       if (!this.hasCloud) return;
       this.localDemo = false;
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
+      } catch (e) {}
       if (!sb) return;
       remote = true;
       window.__FAIRSHARE_USE_REMOTE__ = true;
