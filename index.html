@@ -1084,16 +1084,45 @@ textarea{resize:vertical;min-height:72px}
 
 .doc-body{flex:1;display:flex;overflow:hidden}
 
-/* Editor toolbar */
+/* Editor ribbon (Word-style Home) */
+.doc-ribbon{
+  flex-shrink:0;
+  background:rgba(15,20,32,0.98);
+  border-bottom:1px solid var(--border);
+}
+.doc-ribbon-tabrow{
+  display:flex;align-items:flex-end;gap:2px;padding:0 10px;border-bottom:1px solid var(--border2);
+}
+.doc-ribbon-tab{
+  background:transparent;border:none;color:var(--txt2);
+  padding:8px 16px 6px;font-size:12px;font-weight:600;cursor:pointer;
+  border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;
+  margin-bottom:-1px;font-family:var(--font);
+}
+.doc-ribbon-tab:hover{color:var(--txt);background:rgba(255,255,255,0.04)}
+.doc-ribbon-tab.active{
+  color:var(--txt);background:rgba(21,28,42,0.95);
+  border-color:var(--border2);border-bottom-color:rgba(21,28,42,0.95);
+}
 .doc-toolbar{
   background:rgba(21,28,42,0.95);
   backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--border);
-  padding:7px 18px;
-  display:flex;align-items:center;gap:2px;flex-wrap:wrap;flex-shrink:0;
+  padding:8px 14px 10px;
+  display:flex;align-items:stretch;gap:0;flex-wrap:wrap;flex-shrink:0;
 }
-.tb-group{display:flex;align-items:center;gap:1px}
-.tb-sep{width:1px;height:20px;background:var(--border2);margin:0 7px}
+.ribbon-group{
+  display:flex;flex-direction:column;gap:5px;padding:2px 10px 4px;
+  border-right:1px solid var(--border2);min-height:52px;justify-content:flex-end;
+}
+.ribbon-group:last-of-type{border-right:none}
+.ribbon-group-label{
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--txt3);user-select:none;line-height:1;
+}
+.ribbon-group .tb-group{align-self:flex-start}
+.ribbon-stack{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.tb-group{display:flex;align-items:center;gap:1px;flex-wrap:wrap}
+.tb-sep{width:1px;min-height:36px;align-self:center;background:var(--border2);margin:0 6px}
 .tb-btn{
   width:30px;height:28px;border:none;background:transparent;
   border-radius:6px;cursor:pointer;font-size:13px;
@@ -1107,6 +1136,13 @@ textarea{resize:vertical;min-height:72px}
   background:var(--ink3);border:1px solid var(--border2);
   border-radius:6px;padding:3px 6px;font-size:12px;
   font-family:var(--font);color:var(--txt);outline:none;cursor:pointer;
+}
+.tb-font-wide{min-width:132px;max-width:160px}
+.tb-color-wrap{display:flex;align-items:center;gap:3px}
+.tb-color-wrap label{font-size:10px;color:var(--txt3);cursor:pointer}
+.tb-color-input{
+  width:26px;height:22px;padding:0;border:1px solid var(--border2);border-radius:4px;
+  background:var(--ink3);cursor:pointer;vertical-align:middle;
 }
 
 /* Editor */
@@ -2113,47 +2149,112 @@ textarea{resize:vertical;min-height:72px}
     <!-- Toolbar + editor pane -->
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <div id="doc-pane-document" class="doc-kind-pane">
-      <div class="doc-toolbar" id="doc-toolbar">
-        <div class="tb-group">
-          <select class="tb-select" id="tb-format" onchange="execFormatBlock(this.value)">
-            <option value="p">Paragraph</option>
-            <option value="h1">Heading 1</option>
-            <option value="h2">Heading 2</option>
-            <option value="h3">Heading 3</option>
-          </select>
+      <div class="doc-ribbon" id="doc-ribbon">
+        <div class="doc-ribbon-tabrow">
+          <button type="button" class="doc-ribbon-tab active" aria-current="true">Home</button>
+        </div>
+        <div class="doc-toolbar" id="doc-toolbar">
+        <div class="ribbon-group">
+          <span class="ribbon-group-label">Clipboard</span>
+          <div class="tb-group">
+            <button type="button" class="tb-btn" onclick="execCmd('cut')" title="Cut">✂</button>
+            <button type="button" class="tb-btn" onclick="execCmd('copy')" title="Copy">⎘</button>
+            <button type="button" class="tb-btn" onclick="execCmd('paste')" title="Paste">📋</button>
+          </div>
         </div>
         <div class="tb-sep"></div>
-        <div class="tb-group">
-          <button class="tb-btn" id="tb-bold" onclick="execCmd('bold')" title="Bold"><b>B</b></button>
-          <button class="tb-btn" id="tb-italic" onclick="execCmd('italic')" title="Italic"><i>I</i></button>
-          <button class="tb-btn" id="tb-underline" onclick="execCmd('underline')" title="Underline"><u>U</u></button>
+        <div class="ribbon-group">
+          <span class="ribbon-group-label">Font</span>
+          <div class="ribbon-stack">
+            <div class="tb-group">
+              <select class="tb-select tb-font-wide" id="tb-font" title="Font" onchange="execFontName(this.value)">
+                <option value="Georgia">Georgia</option>
+                <option value="Arial">Arial</option>
+                <option value="Calibri">Calibri</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Segoe UI">Segoe UI</option>
+                <option value="system-ui">System UI</option>
+              </select>
+              <select class="tb-select" id="tb-size" title="Size" onchange="execFontSize(this.value)">
+                <option value="1">8 pt</option>
+                <option value="2">10 pt</option>
+                <option value="3" selected>12 pt</option>
+                <option value="4">14 pt</option>
+                <option value="5">18 pt</option>
+                <option value="6">24 pt</option>
+                <option value="7">36 pt</option>
+              </select>
+            </div>
+            <div class="tb-group">
+              <button type="button" class="tb-btn" id="tb-bold" onclick="execCmd('bold')" title="Bold (⌘B)"><b>B</b></button>
+              <button type="button" class="tb-btn" id="tb-italic" onclick="execCmd('italic')" title="Italic (⌘I)"><i>I</i></button>
+              <button type="button" class="tb-btn" id="tb-underline" onclick="execCmd('underline')" title="Underline (⌘U)"><u>U</u></button>
+              <button type="button" class="tb-btn" id="tb-strike" onclick="execCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+              <button type="button" class="tb-btn" id="tb-sub" onclick="execCmd('subscript')" title="Subscript">X₂</button>
+              <button type="button" class="tb-btn" id="tb-sup" onclick="execCmd('superscript')" title="Superscript">X²</button>
+            </div>
+            <div class="tb-group tb-color-wrap">
+              <label title="Text color">A <input type="color" class="tb-color-input" id="tb-fg-color" value="#e8ecff" oninput="execForeColor(this.value)" aria-label="Font color"></label>
+              <label title="Highlight">🖍 <input type="color" class="tb-color-input" id="tb-hi-color" value="#ffff00" oninput="execHiliteColor(this.value)" aria-label="Highlight color"></label>
+            </div>
+          </div>
         </div>
         <div class="tb-sep"></div>
-        <div class="tb-group">
-          <button class="tb-btn" onclick="execCmd('insertUnorderedList')" title="Bullet list">≡</button>
-          <button class="tb-btn" onclick="execCmd('insertOrderedList')" title="Numbered list">1.</button>
-          <button class="tb-btn" onclick="execCmd('formatBlock','blockquote')" title="Blockquote">"</button>
+        <div class="ribbon-group">
+          <span class="ribbon-group-label">Paragraph</span>
+          <div class="tb-group">
+            <button type="button" class="tb-btn" onclick="execCmd('insertUnorderedList')" title="Bullets">•≡</button>
+            <button type="button" class="tb-btn" onclick="execCmd('insertOrderedList')" title="Numbering">1.</button>
+            <button type="button" class="tb-btn" onclick="execFormatBlock('blockquote')" title="Quote">❝</button>
+            <button type="button" class="tb-btn" onclick="execCmd('outdent')" title="Decrease indent">⇤</button>
+            <button type="button" class="tb-btn" onclick="execCmd('indent')" title="Increase indent">⇥</button>
+          </div>
+          <div class="tb-group">
+            <button type="button" class="tb-btn" id="tb-aleft" onclick="execCmd('justifyLeft')" title="Align left">⬅</button>
+            <button type="button" class="tb-btn" id="tb-acenter" onclick="execCmd('justifyCenter')" title="Center">☰</button>
+            <button type="button" class="tb-btn" id="tb-aright" onclick="execCmd('justifyRight')" title="Align right">➡</button>
+            <button type="button" class="tb-btn" id="tb-afull" onclick="execCmd('justifyFull')" title="Justify">⬌</button>
+          </div>
         </div>
         <div class="tb-sep"></div>
-        <div class="tb-group">
-          <button class="tb-btn" onclick="execCmd('justifyLeft')" title="Align left">⬅</button>
-          <button class="tb-btn" onclick="execCmd('justifyCenter')" title="Center">☰</button>
-          <button class="tb-btn" onclick="execCmd('justifyRight')" title="Align right">➡</button>
+        <div class="ribbon-group">
+          <span class="ribbon-group-label">Styles</span>
+          <div class="tb-group">
+            <select class="tb-select tb-font-wide" id="tb-format" onchange="execFormatBlock(this.value)">
+              <option value="p">Normal</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+            </select>
+            <button type="button" class="tb-btn" onclick="execCmd('removeFormat')" title="Clear formatting">⌕</button>
+          </div>
         </div>
         <div class="tb-sep"></div>
-        <div class="tb-group">
-          <button class="tb-btn" onclick="execCmd('undo')" title="Undo">↩</button>
-          <button class="tb-btn" onclick="execCmd('redo')" title="Redo">↪</button>
+        <div class="ribbon-group">
+          <span class="ribbon-group-label">Editing</span>
+          <div class="tb-group">
+            <button type="button" class="tb-btn" onclick="execCmd('undo')" title="Undo">↩</button>
+            <button type="button" class="tb-btn" onclick="execCmd('redo')" title="Redo">↪</button>
+          </div>
         </div>
         <div class="tb-sep"></div>
-        <button class="tb-btn tb-btn-wide" onclick="runAIAssist()" title="AI Writing Assistant">✨ AI</button>
-        <button class="tb-btn tb-btn-wide" onclick="runPlagiarismCheck()" title="Plagiarism Check">🔍 Check</button>
+        <div class="ribbon-group">
+          <span class="ribbon-group-label">Tools</span>
+          <div class="tb-group">
+            <button type="button" class="tb-btn tb-btn-wide" onclick="runAIAssist()" title="AI Writing Assistant">✨ AI</button>
+            <button type="button" class="tb-btn tb-btn-wide" onclick="runPlagiarismCheck()" title="Plagiarism Check">🔍 Check</button>
+          </div>
+        </div>
+        </div>
       </div>
 
       <div class="doc-editor-pane">
         <div class="doc-editor-wrap">
           <div id="doc-editor" contenteditable="true" spellcheck="true"
             oninput="onDocInput()"
+            onkeydown="docEditorKeydown(event)"
             onkeyup="updateToolbarState()"
             onmouseup="updateToolbarState()">
             <p>Start writing your document here…</p>
@@ -4153,6 +4254,7 @@ function onDocInput(){
   scheduleDocSave();
   updateDocStats();
   scheduleAiDetectDebounced();
+  updateToolbarState();
 }
 
 function scheduleAiDetectDebounced(){
@@ -4298,23 +4400,95 @@ function renderWCByMember(){
     </div>`).join('');
 }
 
-/* ── TOOLBAR (rich text document only) ── */
+/* ── TOOLBAR (rich text document only, Word-style Home) ── */
+let tbStyleWithCssDone=false;
+function ensureDocEditorFocus(){
+  const ed=document.getElementById('doc-editor');
+  if(!ed)return;
+  ed.focus();
+  if(!tbStyleWithCssDone){
+    try{
+      document.execCommand('styleWithCSS',false,true);
+      tbStyleWithCssDone=true;
+    }catch(e){}
+  }
+}
 function execCmd(cmd,val){
   if(currentDocKind()!=='document')return;
-  document.execCommand(cmd,false,val||null);updateToolbarState();
+  ensureDocEditorFocus();
+  try{
+    document.execCommand(cmd,false,val===undefined?null:val);
+  }catch(e){
+    toast('That action is not available in your browser. Try selecting text first.','default');
+  }
+  updateToolbarState();
+}
+function execFontName(name){
+  if(currentDocKind()!=='document'||!name)return;
+  ensureDocEditorFocus();
+  document.execCommand('fontName',false,name);
+  updateToolbarState();
+}
+function execFontSize(level){
+  if(currentDocKind()!=='document')return;
+  ensureDocEditorFocus();
+  document.execCommand('fontSize',false,String(level));
+  updateToolbarState();
+}
+function execForeColor(hex){
+  if(currentDocKind()!=='document')return;
+  ensureDocEditorFocus();
+  document.execCommand('foreColor',false,hex);
+  updateToolbarState();
+}
+function execHiliteColor(hex){
+  if(currentDocKind()!=='document')return;
+  ensureDocEditorFocus();
+  try{
+    if(!document.execCommand('hiliteColor',false,hex))document.execCommand('backColor',false,hex);
+  }catch(e){
+    try{document.execCommand('backColor',false,hex)}catch(_){}
+  }
+  updateToolbarState();
 }
 function execFormatBlock(val){
   if(currentDocKind()!=='document')return;
+  ensureDocEditorFocus();
   if(val==='p')document.execCommand('formatBlock',false,'<p>');
+  else if(val==='blockquote')document.execCommand('formatBlock',false,'<blockquote>');
   else document.execCommand('formatBlock',false,'<'+val+'>');
   updateToolbarState();
 }
+function docEditorKeydown(e){
+  if(currentDocKind()!=='document')return;
+  const mod=e.metaKey||e.ctrlKey;
+  if(!mod)return;
+  const k=e.key.toLowerCase();
+  if(k==='b'){e.preventDefault();execCmd('bold');}
+  else if(k==='i'){e.preventDefault();execCmd('italic');}
+  else if(k==='u'){e.preventDefault();execCmd('underline');}
+  else if(k==='z'&&!e.shiftKey){e.preventDefault();execCmd('undo');}
+  else if((k==='z'&&e.shiftKey)||k==='y'){e.preventDefault();execCmd('redo');}
+}
 function updateToolbarState(){
   if(currentDocKind()!=='document')return;
-  ['bold','italic','underline'].forEach(cmd=>{
-    const btn=document.getElementById('tb-'+cmd);
-    if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));
-  });
+  try{
+    const map={bold:'tb-bold',italic:'tb-italic',underline:'tb-underline',strikeThrough:'tb-strike',subscript:'tb-sub',superscript:'tb-sup'};
+    Object.keys(map).forEach(cmd=>{
+      const btn=document.getElementById(map[cmd]);
+      if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));
+    });
+    [['justifyLeft','tb-aleft'],['justifyCenter','tb-acenter'],['justifyRight','tb-aright'],['justifyFull','tb-afull']].forEach(([cmd,id])=>{
+      const b=document.getElementById(id);
+      if(b)b.classList.toggle('active',document.queryCommandState(cmd));
+    });
+    const fmt=document.getElementById('tb-format');
+    if(fmt){
+      let block=(document.queryCommandValue('formatBlock')||'p').toLowerCase().replace(/[<>]/g,'');
+      if(!block||block==='div')block='p';
+      if(['p','h1','h2','h3'].includes(block))fmt.value=block;
+    }
+  }catch(e){}
 }
 function toggleCommentPane(){
   const pane=document.getElementById('doc-comment-pane');
