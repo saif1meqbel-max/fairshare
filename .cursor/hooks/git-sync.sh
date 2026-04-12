@@ -6,6 +6,11 @@ cat >/dev/null 2>&1 || true
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
+# Canonical app is fairshare.html; index.html is for GitHub Pages and must match before commit.
+if [[ -f fairshare.html ]]; then
+  cp -f fairshare.html index.html
+fi
+
 git add -A
 if git diff --staged --quiet; then
   exit 0

@@ -16,3 +16,7 @@ The canonical single-page app is **`fairshare.html`**. The repo also uses **`ind
 3. If you only change other files (`js/`, `server/`, `supabase/`, etc.) and **do not** touch `fairshare.html`, you do **not** need to update `index.html`.
 
 4. Do not add a separate manual step for “paste into GitHub”; syncing **`index.html` in the workspace** is what gets committed and pushed to GitHub like any other file.
+
+5. **Deploy**: Pushing to **`main`** triggers **`.github/workflows/deploy-pages.yml`**, which publishes `index.html`, `fairshare.html`, `js/`, and `assets/` to **GitHub Pages**. In the repo, set **Settings → Pages → Build and deployment → Source: GitHub Actions** (one-time).
+
+6. The **stop hook** (`.cursor/hooks/git-sync.sh`) copies **`fairshare.html` → `index.html`** before staging, then commits and pushes when there are changes—so a synced tree on `main` leads to an automatic Pages deploy without a separate deploy step.
