@@ -2946,6 +2946,10 @@ function loginAs(user){
     toast('Could not complete sign-in (missing user id). Try again or refresh.','error');
     return;
   }
+  const appEl=document.getElementById('app');
+  if(currentUser&&currentUser.id===user.id&&appEl&&appEl.classList.contains('visible')){
+    return;
+  }
   currentUser=user;
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
@@ -5557,10 +5561,31 @@ document.addEventListener('click',function(ev){
   closeUserMenu();
 });
 
+window._fairShareRefreshAfterHydrate=function(user){
+  if(!user)return;
+  if(!currentUser||currentUser.id!==user.id)return;
+  currentUser=user;
+  const av=document.getElementById('nav-avatar');
+  if(av){
+    av.textContent=getInitials(user.name);
+    av.className='avatar '+getAvatarClass(user.name);
+  }
+  const nn=document.getElementById('nav-name');
+  if(nn) nn.textContent=(user.name||'User').split(' ')[0];
+  const adminTab=document.getElementById('admin-tab');
+  if(adminTab) adminTab.style.display=(user.role==='admin'||user.role==='instructor')?'':'none';
+  renderProjectList();
+  renderNotifications();
+  renderProjectInvites();
+};
+
 window._fairShareApplyLogin=function(user){
   if(!user)return;
   const app=document.getElementById('app');
-  if(app&&app.classList.contains('visible')&&currentUser&&currentUser.id===user.id)return;
+  if(app&&app.classList.contains('visible')&&currentUser&&currentUser.id===user.id){
+    if(typeof window._fairShareRefreshAfterHydrate==='function') window._fairShareRefreshAfterHydrate(user);
+    return;
+  }
   loginAs(user);
 };
 
