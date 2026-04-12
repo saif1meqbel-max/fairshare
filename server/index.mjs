@@ -24,6 +24,7 @@ const anthropic = process.env.ANTHROPIC_API_KEY
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
+    aiDetect: Boolean(anthropic),
     anthropic: Boolean(anthropic),
     daily: Boolean(process.env.DAILY_API_KEY),
     copyleaks: Boolean(process.env.COPYLEAKS_API_KEY && process.env.COPYLEAKS_EMAIL),
@@ -81,6 +82,55 @@ app.post('/api/ai/suggest', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message || 'Claude request failed' });
+  }
+});
+
+/**
+ * AI writing estimate — pedagogical signal only, not forensic proof.
+ * Returns JSON: ai_percent, confidence, summary
+ */
+app.post('/api/ai/detect', async (req, res) => {
+  if (!anthropic) {
+    return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured on server' });
+  }
+  const { text } = req.body || {};
+  const slice = typeof text === 'string' ? text.slice(0, 50_000) : '';
+  const trimmed = slice.trim();
+  if (trimmed.length < 40) {
+    return res.status(400).json({ error: 'Need at least a short paragraph (~40+ characters) for an estimate.' });
+  }
+  const system = `You estimate how likely it is that student writing was produced or heavily revised by generative AI (ChatGPT, Claude, etc.). This is an approximate signal for instructors, not legal or forensic proof.
+
+Respond with valid JSON ONLY (no markdown fences), exactly this shape:
+{"ai_percent":<integer 0-100>,"confidence":"low"|"medium"|"high","summary":"<one short sentence>"}
+
+Calibration hints: polished generic academic prose with even sentence length might be moderate (25–55%). Text with strong personal voice, messy structure, or course-specific details might be lower (10–35%). Highly templated, list-heavy, or uniformly “perfect” phrasing without specifics might be higher (50–85%). Avoid extremes 0 or 100 unless clearly justified.`;
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 350,
+      system,
+      messages: [{ role: 'user', content: `Analyze this document text:\n\n${trimmed}` }],
+    });
+    const block = msg.content?.find((b) => b.type === 'text');
+    const raw = block?.type === 'text' ? block.text : '';
+    let parsed;
+    try {
+      const m = raw.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(m ? m[0] : raw);
+    } catch (e) {
+      return res.status(502).json({ error: 'Could not parse model response', detail: raw.slice(0, 300) });
+    }
+    let p = Math.round(Number(parsed.ai_percent));
+    if (!Number.isFinite(p)) p = 42;
+    const ai_percent = Math.max(0, Math.min(100, p));
+    const confidence = ['low', 'medium', 'high'].includes(parsed.confidence) ? parsed.confidence : 'medium';
+    const summary = String(parsed.summary || 'Estimate complete.').slice(0, 280);
+    res.json({ ai_percent, confidence, summary, provider: 'claude' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'AI detect request failed' });
   }
 });
 

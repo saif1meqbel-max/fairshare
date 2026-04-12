@@ -1058,6 +1058,27 @@ textarea{resize:vertical;min-height:72px}
 }
 .presence-typing{font-size:11px;color:var(--txt2);font-style:italic}
 
+.ai-detect-bar{
+  display:none;align-items:center;gap:12px;flex-wrap:wrap;
+  min-height:42px;padding:8px 18px;
+  background:linear-gradient(90deg,rgba(0,212,170,0.06),rgba(79,124,255,0.05));
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.ai-detect-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3);white-space:nowrap}
+.ai-detect-meter{
+  flex:1;min-width:120px;max-width:280px;height:8px;border-radius:100px;
+  background:var(--ink4);overflow:hidden;border:1px solid var(--border2);
+}
+.ai-detect-fill{
+  height:100%;width:0%;border-radius:100px;
+  background:linear-gradient(90deg,var(--teal),var(--amber) 55%,var(--red));
+  transition:width 0.45s var(--ease-out);
+}
+.ai-detect-pct{font-family:var(--font-display);font-size:15px;font-weight:800;min-width:42px;color:var(--txt)}
+.ai-detect-meta{font-size:11px;color:var(--txt2);flex:1;min-width:180px;line-height:1.35}
+.ai-detect-disclaimer{font-size:10px;color:var(--txt3);opacity:0.9}
+
 .doc-body{flex:1;display:flex;overflow:hidden}
 
 /* Editor toolbar */
@@ -2075,6 +2096,16 @@ textarea{resize:vertical;min-height:72px}
     <span class="presence-typing" id="presence-typing"></span>
   </div>
 
+  <div class="ai-detect-bar" id="ai-detect-bar" role="status" aria-live="polite">
+    <span class="ai-detect-label">AI writing estimate</span>
+    <div class="ai-detect-meter" title="Higher = more likely generative-AI style (approximate)">
+      <div class="ai-detect-fill" id="ai-detect-fill"></div>
+    </div>
+    <span class="ai-detect-pct" id="ai-detect-pct">—</span>
+    <span class="ai-detect-meta" id="ai-detect-meta">Type to analyze. Estimates update while you edit.</span>
+    <span class="ai-detect-disclaimer">Not proof of misconduct — instructor judgment required.</span>
+  </div>
+
   <div class="doc-body">
     <!-- Toolbar + editor pane -->
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
@@ -2504,6 +2535,7 @@ textarea{resize:vertical;min-height:72px}
 ══════════════════════════════════════════════ */
 let currentUser=null, currentProject=null, activityInterval=null;
 let currentDocId=null, docSaveTimer=null;
+let aiDetectTimer=null,aiDetectAbort=null,aiDetectSeq=0;
 let deckSlideIndex=0;
 let _fsDeckSlides=null;
 let taskView='kanban'; // 'kanban' | 'list'
@@ -2747,8 +2779,8 @@ function demoLogin(){
   if(!demo){
     demo={id:'demo',name:'Jamie Liu',email:'demo@fairshare.app',password:'demo',role:'student',created:Date.now()};
     users.push(demo);STORE.set('users',users);
-    seedDemoData(demo);
   }
+  seedDemoData(demo);
   loginAs(demo);
 }
 
@@ -2809,6 +2841,10 @@ function loginAs(user){
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
   document.getElementById('app').classList.add('visible');
+
+  if(user.id==='demo'&&user.email==='demo@fairshare.app'){
+    try{seedDemoData(user)}catch(e){}
+  }
 
   // Set avatar/name in nav
   const av=document.getElementById('nav-avatar');
@@ -2965,6 +3001,61 @@ function seedDemoData(owner){
       STORE.set('chat_'+pid+'_'+ch,demoMsgs);
     }
   });
+
+  /* HRM3130 — includes Feyza Cim; open this project’s doc to try live AI writing estimate */
+  const pidHrm='proj_hrm3130';
+  projects=STORE.get('projects_demo')||[];
+  const hrmMembers=[
+    {id:'demo',name:'Jamie Liu',email:'demo@fairshare.app'},
+    {id:'feyzacim',name:'Feyza Cim',email:'feyzacim@uni.edu'},
+    {id:'m2',name:'Maya Rodriguez',email:'maya@uni.edu'},
+  ];
+  const projHrm={
+    id:pidHrm,
+    name:'HRM3130 — Managing People at Work',
+    desc:'University course project (remote-friendly). Individual reflection + group coordination.',
+    deadline:'2026-11-22',
+    instructor:'Dr. Rivera',
+    ownerId:'demo',
+    members:hrmMembers,
+    created:Date.now()-86400000*6,
+    status:'active',
+  };
+  if(!projects.find(p=>p.id===pidHrm)){
+    projects.push(projHrm);
+    STORE.set('projects_demo',projects);
+  }
+  const hrmDocId='doc_hrm3130_main';
+  if(!(STORE.get('docs_'+pidHrm)||[]).length){
+    const hrmContent=
+      '<h1>HRM3130 — Weekly reflection (remote section)</h1>'+
+      '<p><strong>Student:</strong> Feyza Cim · <strong>Course:</strong> HRM3130 · <strong>Week:</strong> 8</p>'+
+      '<h2>1. Coordination in our distributed team</h2>'+
+      '<p>This week our group finalized the conflict-resolution role-play script for class. We split the work by sub-scenarios: one person drafted the opening, I took the escalation beats, and another teammate wrote the debrief questions. What worked was a shared outline in FairShare before we recorded; what was harder was aligning tone because two of us were async by 9 hours.</p>'+
+      '<h2>2. Link to course concepts</h2>'+
+      '<p>The textbook’s section on psychological safety helped me frame why we explicitly asked for “clarifying questions only” in the first five minutes. It reduced defensive reactions compared to our first rehearsal. I also applied the idea of goal-setting theory: we made the objective of the role-play measurable (“resolve without HR escalation”) so feedback was less subjective.</p>'+
+      '<h2>3. Personal takeaway</h2>'+
+      '<p>I am learning that remote facilitation is less about perfect tools and more about explicit norms. I still want to improve how I summarize decisions at the end of meetings so nobody leaves unsure of the next step.</p>';
+    STORE.set('docs_'+pidHrm,[
+      {
+        id:hrmDocId,
+        projectId:pidHrm,
+        kind:'document',
+        title:'HRM3130 — Feyza Cim — Week 8 reflection',
+        content:hrmContent,
+        created:Date.now()-86400000*2,
+        lastEditedBy:'feyzacim',
+        lastEditedAt:Date.now()-3600000*5,
+        wordCounts:{feyzacim:420,demo:40},
+      },
+    ]);
+  }
+  if(!(STORE.get('tasks_'+pidHrm)||[]).length){
+    STORE.set('tasks_'+pidHrm,[
+      {id:'ht1',projectId:pidHrm,name:'Read Ch. 9 — performance management',assignedTo:'feyzacim',priority:'medium',due:'2026-11-18',status:'done',created:Date.now()-86400000*4},
+      {id:'ht2',projectId:pidHrm,name:'Submit weekly reflection draft',assignedTo:'feyzacim',priority:'high',due:'2026-11-19',status:'in_progress',created:Date.now()-86400000},
+    ]);
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -3772,6 +3863,8 @@ function setWorkspaceKind(kind){
   if(sd)sd.style.display=kind==='document'?'flex':'none';
   if(ss)ss.style.display=kind==='slides'?'flex':'none';
   if(st)st.style.display=kind==='sheet'?'flex':'none';
+  const adb=document.getElementById('ai-detect-bar');
+  if(adb)adb.style.display=kind==='document'?'flex':'none';
 }
 
 function currentDocKind(){
@@ -3995,9 +4088,15 @@ function openDoc(docId){
   renderComments();
   renderDocPresence();
   renderWCByMember();
+  if(kind==='document'){
+    setTimeout(()=>scheduleAiDetectDebounced(),350);
+  }
 }
 
 function closeDocWorkspace(){
+  try{aiDetectAbort&&aiDetectAbort.abort();}catch(e){}
+  clearTimeout(aiDetectTimer);
+  aiDetectSeq++;
   deckDetachNavKeys();
   const b=document.getElementById('doc-kind-badge');
   if(b)b.style.display='none';
@@ -4055,6 +4154,84 @@ function saveDoc(){
 function onDocInput(){
   scheduleDocSave();
   updateDocStats();
+  scheduleAiDetectDebounced();
+}
+
+function scheduleAiDetectDebounced(){
+  if(currentDocKind()!=='document')return;
+  clearTimeout(aiDetectTimer);
+  aiDetectTimer=setTimeout(()=>runAiDetectScan(),850);
+}
+
+function offlineAiHeuristicScore(text){
+  const s=text.replace(/\s+/g,' ').trim();
+  const words=s.split(/\s+/).filter(Boolean);
+  if(!words.length)return{ai_percent:0,summary:'No text to score.'};
+  const sentences=s.split(/[.!?]+/).filter(x=>x.trim().length>8);
+  const avgWordsPerSent=sentences.length?words.length/sentences.length:words.length;
+  const uniqueRatio=new Set(words.map(w=>w.toLowerCase().replace(/[^a-z0-9'-]/gi,''))).size/Math.max(words.length,1);
+  const longW=words.filter(w=>w.length>9).length/Math.max(words.length,1);
+  const punctRatio=(s.match(/[,;:—\-]/g)||[]).length/Math.max(words.length,1);
+  let score=22;
+  if(avgWordsPerSent>28)score+=14;
+  if(avgWordsPerSent<9)score+=8;
+  if(longW>0.14)score+=12;
+  if(uniqueRatio<0.42)score+=16;
+  if(punctRatio<0.018)score+=10;
+  score+=Math.floor((Math.sin(words.length*0.07)+1)*7);
+  score=Math.min(86,Math.max(14,score));
+  return{ai_percent:score,summary:'Offline style heuristic — not a forensic verdict.'};
+}
+
+async function runAiDetectScan(){
+  if(currentDocKind()!=='document')return;
+  const seq=++aiDetectSeq;
+  const ed=document.getElementById('doc-editor');
+  if(!ed)return;
+  const text=ed.innerText||'';
+  const words=text.trim().split(/\s+/).filter(Boolean).length;
+  const pctEl=document.getElementById('ai-detect-pct');
+  const fill=document.getElementById('ai-detect-fill');
+  const metaEl=document.getElementById('ai-detect-meta');
+  if(words<28){
+    if(pctEl)pctEl.textContent='—';
+    if(fill)fill.style.width='0%';
+    if(metaEl)metaEl.textContent='Add a short paragraph or more for an AI-style estimate.';
+    return;
+  }
+  try{aiDetectAbort&&aiDetectAbort.abort();}catch(e){}
+  aiDetectAbort=new AbortController();
+  if(pctEl)pctEl.textContent='…';
+  if(metaEl)metaEl.textContent='Analyzing current text…';
+  const base=(window.FSB&&window.FSB.apiBase)?window.FSB.apiBase():'';
+  try{
+    const r=await fetch(base+'/api/ai/detect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:aiDetectAbort.signal});
+    if(seq!==aiDetectSeq)return;
+    if(r.ok){
+      const j=await r.json();
+      let p=Math.round(Number(j.ai_percent));
+      if(!Number.isFinite(p))p=40;
+      p=Math.max(0,Math.min(100,p));
+      if(pctEl)pctEl.textContent=p+'%';
+      if(fill)fill.style.width=p+'%';
+      const conf=j.confidence?` (${j.confidence} confidence)`:'';
+      const prov=j.provider==='claude'?' · Claude':'';
+      if(metaEl)metaEl.textContent=(j.summary||'Estimate updated.')+conf+prov;
+      return;
+    }
+    const h=offlineAiHeuristicScore(text);
+    if(pctEl)pctEl.textContent=Math.round(h.ai_percent)+'%';
+    if(fill)fill.style.width=Math.min(100,h.ai_percent)+'%';
+    const err=await r.json().catch(()=>({}));
+    if(metaEl)metaEl.textContent=h.summary+(err.error?' '+err.error:' Server AI unavailable — heuristic only.');
+  }catch(e){
+    if(e.name==='AbortError')return;
+    if(seq!==aiDetectSeq)return;
+    const h=offlineAiHeuristicScore(text);
+    if(pctEl)pctEl.textContent=Math.round(h.ai_percent)+'%';
+    if(fill)fill.style.width=Math.min(100,h.ai_percent)+'%';
+    if(metaEl)metaEl.textContent=h.summary+' (connect npm server + ANTHROPIC_API_KEY for model-based estimate).';
+  }
 }
 
 function updateDocStats(){
