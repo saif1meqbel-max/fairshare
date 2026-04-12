@@ -320,6 +320,17 @@ body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14
 .invite-row:last-child{border-bottom:none;padding-bottom:0}
 .invite-row-text{font-size:13px;color:var(--txt2)}
 .invite-row-text strong{color:var(--txt);font-weight:600}
+.projects-invite-hint{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 14px;margin-bottom:18px;border-radius:var(--r2);
+  background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);
+  font-size:13px;color:var(--txt2);
+}
+.projects-invite-hint strong{color:var(--txt)}
+.nav-pill-count{
+  margin-left:4px;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;
+  background:rgba(0,212,170,0.22);color:var(--teal);vertical-align:middle;
+}
 
 /* Avatars */
 .avatar{
@@ -1250,6 +1261,9 @@ textarea{resize:vertical;min-height:72px}
       <button class="nav-tab active" onclick="showPage('projects',this)" data-page="projects">
         <span class="tab-dot"></span>Projects
       </button>
+      <button class="nav-tab" id="nav-tab-invites" onclick="showPage('invites',this)" data-page="invites">
+        <span class="tab-dot"></span>Invites<span class="nav-pill-count" id="invites-nav-count" style="display:none" aria-live="polite">0</span>
+      </button>
       <button class="nav-tab" onclick="showPage('dashboard',this)" data-page="dashboard">
         <span class="tab-dot"></span>Dashboard
       </button>
@@ -1303,11 +1317,29 @@ textarea{resize:vertical;min-height:72px}
           <span>+</span> New Project
         </button>
       </div>
+      <div id="projects-invite-hint" class="projects-invite-hint" style="display:none"></div>
+      <div id="project-grid" class="grid3"></div>
+    </div>
+
+    <!-- ══ INVITES PAGE ══ -->
+    <div class="page" id="page-invites">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Invites</div>
+          <div class="page-sub">Projects you’ve been added to — open one to load it in your workspace</div>
+        </div>
+      </div>
       <div id="project-invites-wrap" class="invite-banner" style="display:none">
         <div class="invite-banner-title">📩 Invites to projects</div>
         <div id="project-invites-list"></div>
       </div>
-      <div id="project-grid" class="grid3"></div>
+      <div id="invites-empty" style="display:none">
+        <div class="empty" style="padding:48px 24px;text-align:center;grid-column:1/-1">
+          <div class="empty-icon">✉️</div>
+          <div class="empty-text">No pending invites</div>
+          <div class="empty-sub">When someone adds you to a project, it will show up here.</div>
+        </div>
+      </div>
     </div>
 
     <!-- ══ DASHBOARD PAGE ══ -->
@@ -2351,16 +2383,43 @@ function getInviteNotifications(){
 function renderProjectInvites(){
   const wrap=document.getElementById('project-invites-wrap');
   const list=document.getElementById('project-invites-list');
+  const emptyEl=document.getElementById('invites-empty');
+  const hint=document.getElementById('projects-invite-hint');
+  const countEl=document.getElementById('invites-nav-count');
   if(!wrap||!list||!currentUser)return;
   const invites=getInviteNotifications().sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!invites.length){wrap.style.display='none';list.innerHTML='';return}
+  const n=invites.length;
+
+  if(countEl){
+    countEl.textContent=n>9?'9+':String(n);
+    countEl.style.display=n?'inline':'none';
+  }
+
+  if(hint){
+    if(n){
+      hint.style.display='flex';
+      hint.innerHTML=`<span>You have <strong>${n}</strong> project invite${n===1?'':'s'}. Open the <strong>Invites</strong> tab to accept.</span>
+        <button type="button" class="btn btn-primary btn-sm" onclick="showPage('invites',document.querySelector('[data-page=invites]'))">Open Invites</button>`;
+    }else{
+      hint.style.display='none';
+      hint.innerHTML='';
+    }
+  }
+
+  if(!n){
+    wrap.style.display='none';
+    list.innerHTML='';
+    if(emptyEl)emptyEl.style.display='block';
+    return;
+  }
+  if(emptyEl)emptyEl.style.display='none';
   wrap.style.display='';
-  list.innerHTML=invites.map(n=>{
-    const pid=n.projectId||'';
-    const title=n.title||'Project invite';
+  list.innerHTML=invites.map(not=>{
+    const pid=not.projectId||'';
+    const title=not.title||'Project invite';
     return`<div class="invite-row">
-      <div class="invite-row-text"><strong>${esc(title)}</strong> · ${timeAgo(n.ts||Date.now())}</div>
-      <button type="button" class="btn btn-primary btn-sm" onclick="openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(n.id)})">Open project</button>
+      <div class="invite-row-text"><strong>${esc(title)}</strong> · ${timeAgo(not.ts||Date.now())}</div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})">Open project</button>
     </div>`;
   }).join('');
 }
@@ -3629,6 +3688,7 @@ function showPage(id,tabEl){
     activity:renderActivityPage,
     report:renderReport,
     projects:renderProjectList,
+    invites:renderProjectInvites,
     chat:renderChatChannels,
     notifications:renderNotifications,
     admin:()=>renderAdminOverview(),
