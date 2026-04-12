@@ -209,7 +209,11 @@
     const unread = list.filter((n) => !n.read).length;
     const btn = document.getElementById('notif-btn');
     if (btn) btn.classList.toggle('notif-dot', unread > 0);
-    if (typeof window.renderNotifications === 'function') window.renderNotifications();
+    /* Avoid rendering the notif panel until loginAs() sets currentUser (hydrateSession runs during signIn). */
+    const app = typeof document !== 'undefined' ? document.getElementById('app') : null;
+    if (app && app.classList.contains('visible') && typeof window.renderNotifications === 'function') {
+      window.renderNotifications();
+    }
   }
 
   function subscribeNotifications(userId) {

@@ -2151,6 +2151,7 @@ async function handleSignup(){
 }
 
 function loginAs(user){
+  if(!user||!user.id){console.warn('FairShare loginAs: invalid user',user);return}
   currentUser=user;
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
@@ -2317,6 +2318,7 @@ const PROJECT_BG_COLORS=[
 ];
 
 function loadProjects(){
+  if(!currentUser)return[];
   const projects=STORE.get('projects_'+currentUser.id)||[];
   return projects;
 }
@@ -3115,6 +3117,7 @@ async function startVideoCall(){
    NOTIFICATIONS
 ══════════════════════════════════════════════ */
 function addNotification(title,type='info'){
+  if(!currentUser)return;
   let notifs=STORE.get('notifs_'+currentUser.id)||[];
   notifs.unshift({id:genId('n'),title,type,ts:Date.now(),read:false});
   if(notifs.length>50)notifs=notifs.slice(0,50);
@@ -3127,6 +3130,7 @@ function addNotification(title,type='info'){
 }
 
 function renderNotifications(){
+  if(!currentUser)return;
   const notifs=STORE.get('notifs_'+currentUser.id)||[];
   const typeIcons={task_complete:'✅',doc_edit:'✏️',comment:'💬',task_assign:'📋',project_invite:'📁',info:'ℹ️'};
   const typeBg={task_complete:'rgba(0,212,170,0.1)',doc_edit:'rgba(79,124,255,0.1)',comment:'rgba(255,179,71,0.1)',task_assign:'rgba(155,109,255,0.1)',project_invite:'rgba(0,212,170,0.12)',info:'rgba(255,255,255,0.05)'};
@@ -3143,6 +3147,7 @@ function renderNotifications(){
 }
 
 function markRead(id){
+  if(!currentUser)return;
   let notifs=STORE.get('notifs_'+currentUser.id)||[];
   const n=notifs.find(n=>n.id===id);
   if(n)n.read=true;
@@ -3152,6 +3157,7 @@ function markRead(id){
 }
 
 function markAllRead(){
+  if(!currentUser)return;
   let notifs=STORE.get('notifs_'+currentUser.id)||[];
   notifs.forEach(n=>n.read=true);
   STORE.set('notifs_'+currentUser.id,notifs);
