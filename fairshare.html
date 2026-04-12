@@ -7,7 +7,9 @@
 <script>
 /* Supabase: Dashboard → Project Settings (gear) → API
    Google sign-in: Dashboard → Authentication → Providers → Google (Client ID + Secret from Google Cloud Console).
-   Add Site URL + Redirect URLs (e.g. http://localhost:3840/fairshare.html and your production URL). */
+   Add Site URL + Redirect URLs (e.g. http://localhost:3840/fairshare.html and your production URL).
+   Microsoft Word/Excel/PowerPoint: embedding the real Office apps needs a Microsoft 365 tenant, user sign-in,
+   and Office Online (iframe) or Microsoft Graph file APIs — not bundled here; export to .html/.csv or use OneDrive. */
 window.__FAIRSHARE__ = {
   supabaseUrl: 'https://qhsnlsioqcdwjlycqsrs.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoc25sc2lvcWNkd2pseWNxc3JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTg2MjUsImV4cCI6MjA5MDM3NDYyNX0.fVMXB3lcf2rMoXSJn_NzPOyjn_aBL1QXf_dtj06lXtI',
@@ -726,18 +728,82 @@ textarea{resize:vertical;min-height:72px}
 #doc-pane-slides .doc-kind-pill{background:rgba(155,109,255,0.15);color:var(--purple)}
 #doc-pane-sheet .doc-kind-pill{background:rgba(0,212,170,0.15);color:var(--teal)}
 .slides-toolbar .tb-btn,.sheet-toolbar .tb-btn{font-size:12px}
-.slide-block{
-  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);
-  padding:16px 18px;margin-bottom:14px;
+.deck-nav-btn{min-width:34px;font-size:14px}
+.deck-counter{font-size:12px;font-weight:600;color:var(--txt2);min-width:52px;text-align:center}
+.deck-body{display:flex;flex:1;min-height:0;overflow:hidden}
+.deck-filmstrip{
+  width:132px;flex-shrink:0;background:var(--ink2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;gap:8px;padding:10px 8px;
+  overflow-y:auto;overflow-x:hidden;
 }
-.slide-block-head{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
-.slide-title-input{
-  width:100%;padding:10px 12px;margin-bottom:10px;border-radius:var(--r);border:1px solid var(--border2);
-  background:var(--ink3);color:var(--txt);font-size:15px;font-weight:600;font-family:var(--font);
+.deck-thumb{
+  width:100%;border:none;border-radius:8px;cursor:pointer;text-align:left;
+  background:var(--surface);border:2px solid transparent;padding:0;overflow:hidden;
+  transition:border-color .15s,box-shadow .15s;
+  font-family:var(--font);color:var(--txt);
 }
-.slide-bullets-input{
-  width:100%;min-height:100px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--border2);
-  background:var(--ink3);color:var(--txt);font-size:14px;resize:vertical;font-family:var(--font);
+.deck-thumb:hover{border-color:var(--border3)}
+.deck-thumb-active{border-color:var(--purple)!important;box-shadow:0 0 0 1px rgba(155,109,255,0.35)}
+.deck-thumb-num{
+  display:block;font-size:10px;font-weight:700;color:var(--txt3);padding:5px 8px 2px;
+  background:rgba(0,0,0,0.2);
+}
+.deck-thumb-inner{padding:6px 8px 8px}
+.deck-thumb-title{font-size:11px;font-weight:600;line-height:1.25;max-height:2.5em;overflow:hidden;color:var(--txt)}
+.deck-thumb-sub{font-size:10px;color:var(--txt3);margin-top:3px}
+.deck-thumb-preview{
+  aspect-ratio:16/9;background:linear-gradient(145deg,#fff,#eef1f8);
+  border-radius:4px;margin:6px 6px 0;border:1px solid rgba(0,0,0,0.06);
+}
+.deck-stage{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(79,124,255,0.06) 0%, transparent 55%),
+    linear-gradient(180deg,#080a10 0%,#121826 100%);
+  padding:20px 24px 28px;min-width:0;
+}
+.deck-aspect-wrap{
+  width:100%;max-width:min(960px,92vw);
+  aspect-ratio:16/9;position:relative;
+}
+.deck-slide-card{
+  position:absolute;inset:0;
+  background:linear-gradient(165deg,#ffffff 0%,#f4f6fb 48%,#eef2fa 100%);
+  color:#141824;border-radius:6px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.06),
+    0 24px 64px rgba(0,0,0,0.45),
+    0 8px 24px rgba(0,0,0,0.25);
+  display:flex;flex-direction:column;padding:clamp(14px,4.2vh,42px) clamp(18px,5vw,56px) clamp(12px,3vh,28px);
+  overflow:hidden;
+}
+.deck-slide-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:linear-gradient(180deg,var(--teal),var(--blue));
+  border-radius:6px 0 0 6px;opacity:.9;
+}
+.deck-slide-title-input{
+  width:100%;border:none;background:transparent;outline:none;
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(1.15rem,3.6vw,2.05rem);
+  letter-spacing:-0.03em;text-align:center;color:#0f1219;
+  margin-bottom:clamp(8px,2vh,20px);line-height:1.15;
+}
+.deck-slide-title-input::placeholder{color:#a8b0c4}
+.deck-slide-body-input{
+  flex:1;width:100%;min-height:0;border:none;background:transparent;outline:none;resize:none;
+  font-family:var(--font);font-size:clamp(0.88rem,2.15vw,1.28rem);
+  line-height:1.6;color:#252a3a;
+  padding:6px 4px 6px 1.35em;
+  text-indent:-0.65em;
+  background-image:linear-gradient(transparent calc(1.6em - 1px),rgba(79,124,255,0.07) 1.6em);
+  background-size:100% 1.6em;background-repeat:repeat-y;
+}
+.deck-slide-body-input::placeholder{color:#8b93a8}
+.deck-slide-brand{
+  margin-top:auto;padding-top:8px;font-size:10px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:#b4bccf;text-align:right;
 }
 .slides-scroll{overflow-y:auto}
 .sheet-scroll{overflow:auto}
@@ -1835,15 +1901,27 @@ textarea{resize:vertical;min-height:72px}
       </div>
       </div>
 
-      <div id="doc-pane-slides" class="doc-kind-pane" style="display:none">
+      <div id="doc-pane-slides" class="doc-kind-pane deck-root" style="display:none">
         <div class="doc-toolbar slides-toolbar" id="doc-toolbar-slides">
           <span class="doc-kind-pill">Presentation</span>
           <div class="tb-sep"></div>
-          <button type="button" class="tb-btn" onclick="addSlideBlock()" title="Add slide">+ Slide</button>
+          <button type="button" class="tb-btn deck-nav-btn" onclick="deckPrev()" title="Previous slide">◀</button>
+          <span class="deck-counter" id="deck-counter">1 / 1</span>
+          <button type="button" class="tb-btn deck-nav-btn" onclick="deckNext()" title="Next slide">▶</button>
+          <div class="tb-sep"></div>
+          <button type="button" class="tb-btn" onclick="deckAddSlide()">+ Slide</button>
+          <button type="button" class="tb-btn" onclick="deckDeleteSlide()" title="Delete current slide">🗑</button>
         </div>
-        <div class="doc-editor-pane slides-scroll">
-          <div class="doc-editor-wrap">
-            <div id="slides-editor"></div>
+        <div class="deck-body">
+          <aside class="deck-filmstrip" id="deck-filmstrip" aria-label="Slide thumbnails"></aside>
+          <div class="deck-stage">
+            <div class="deck-aspect-wrap">
+              <div class="deck-slide-card" id="deck-slide-card">
+                <input type="text" class="deck-slide-title-input" id="deck-active-title" placeholder="Click to add title" autocomplete="off" />
+                <textarea class="deck-slide-body-input" id="deck-active-bullets" rows="5" spellcheck="true" placeholder="• One idea per line&#10;• Like real slide bullets&#10;• Use ◀ ▶ or thumbnails to move between slides"></textarea>
+                <div class="deck-slide-brand">FairShare</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1909,7 +1987,7 @@ textarea{resize:vertical;min-height:72px}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title">New file</div>
     <button class="modal-close" onclick="closeModal('modal-new-doc')">✕</button>
-    <p class="help-text" style="margin-bottom:4px">Choose what you want to work on with your team.</p>
+    <p class="help-text" style="margin-bottom:4px">Choose what you want to work on with your team. (Built-in editors — not the Microsoft Office desktop apps.)</p>
     <div class="modal-doc-kind-grid">
       <button type="button" class="doc-kind-choice" onclick="createDocWithKind('document')">
         <span class="dk-icon">📄</span>
@@ -1919,7 +1997,7 @@ textarea{resize:vertical;min-height:72px}
       <button type="button" class="doc-kind-choice" onclick="createDocWithKind('slides')">
         <span class="dk-icon">📊</span>
         <span class="dk-title">Presentation</span>
-        <span class="dk-sub">Slides with titles and bullets — like PowerPoint.</span>
+        <span class="dk-sub">16:9 slide deck: thumbnails, stage view, title + bullets per slide.</span>
       </button>
       <button type="button" class="doc-kind-choice" onclick="createDocWithKind('sheet')">
         <span class="dk-icon">▦</span>
@@ -2113,6 +2191,8 @@ textarea{resize:vertical;min-height:72px}
 ══════════════════════════════════════════════ */
 let currentUser=null, currentProject=null, activityInterval=null;
 let currentDocId=null, docSaveTimer=null;
+let deckSlideIndex=0;
+let _fsDeckSlides=null;
 let taskView='kanban'; // 'kanban' | 'list'
 let aiSuggestionText='';
 let currentChatChannel='general';
@@ -3028,53 +3108,156 @@ function slidesWordCount(slides){
   return t.trim().split(/\s+/).filter(Boolean).length;
 }
 
+function syncDeckInputsToData(){
+  if(!_fsDeckSlides||!_fsDeckSlides.length)return;
+  const i=deckSlideIndex;
+  const ti=document.getElementById('deck-active-title');
+  const ta=document.getElementById('deck-active-bullets');
+  if(!ti||!ta||!_fsDeckSlides[i])return;
+  _fsDeckSlides[i].title=ti.value||'';
+  const lines=ta.value.split('\n');
+  const bullets=lines.map(l=>l.trim()).filter(Boolean);
+  _fsDeckSlides[i].bullets=bullets.length?bullets:[''];
+}
+
 function gatherSlidesFromUI(){
-  const blocks=document.querySelectorAll('#slides-editor .slide-block');
-  const slides=[];
-  blocks.forEach(block=>{
-    const ti=block.querySelector('.slide-title-input');
-    const ta=block.querySelector('.slide-bullets-input');
-    const title=(ti&&ti.value)||'';
-    const raw=(ta&&ta.value)||'';
-    const bullets=raw.split('\n').map(l=>l.trim()).filter(Boolean);
-    slides.push({title:title||'Untitled slide',bullets:bullets.length?bullets:['']});
-  });
-  return slides.length?slides:[{title:'Slide 1',bullets:['']}];
+  syncDeckInputsToData();
+  if(_fsDeckSlides&&_fsDeckSlides.length){
+    return JSON.parse(JSON.stringify(_fsDeckSlides));
+  }
+  return[{title:'Slide 1',bullets:['']}];
+}
+
+function deckUpdateCounter(){
+  const el=document.getElementById('deck-counter');
+  if(el&&_fsDeckSlides&&_fsDeckSlides.length){
+    el.textContent=(deckSlideIndex+1)+' / '+_fsDeckSlides.length;
+  }
+}
+
+function renderFilmstrip(){
+  const strip=document.getElementById('deck-filmstrip');
+  if(!strip||!_fsDeckSlides)return;
+  strip.innerHTML=_fsDeckSlides.map((s,i)=>{
+    const active=i===deckSlideIndex?' deck-thumb-active':'';
+    const t=(s.title||'Untitled').trim().slice(0,32)||'—';
+    const n=(s.bullets||[]).filter(b=>String(b).trim()).length;
+    return`<button type="button" class="deck-thumb${active}" onclick="deckGoTo(${i})">
+      <div class="deck-thumb-preview"></div>
+      <span class="deck-thumb-num">${i+1}</span>
+      <div class="deck-thumb-inner">
+        <div class="deck-thumb-title">${esc(t)}</div>
+        <div class="deck-thumb-sub">${n} bullet${n===1?'':'s'}</div>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function deckApplySlideToInputs(){
+  const s=_fsDeckSlides&&_fsDeckSlides[deckSlideIndex];
+  const ti=document.getElementById('deck-active-title');
+  const ta=document.getElementById('deck-active-bullets');
+  if(!s||!ti||!ta)return;
+  ti.value=s.title||'';
+  ta.value=(s.bullets&&s.bullets.length?s.bullets:['']).join('\n');
+}
+
+function deckGoTo(i){
+  syncDeckInputsToData();
+  if(!_fsDeckSlides||!_fsDeckSlides.length)return;
+  deckSlideIndex=Math.max(0,Math.min(i,_fsDeckSlides.length-1));
+  deckApplySlideToInputs();
+  renderFilmstrip();
+  deckUpdateCounter();
+}
+
+function deckPrev(){
+  if(deckSlideIndex<=0)return;
+  deckGoTo(deckSlideIndex-1);
+}
+
+function deckNext(){
+  if(!_fsDeckSlides||deckSlideIndex>=_fsDeckSlides.length-1)return;
+  deckGoTo(deckSlideIndex+1);
+}
+
+function deckAddSlide(){
+  syncDeckInputsToData();
+  if(!_fsDeckSlides)_fsDeckSlides=[{title:'Slide 1',bullets:['']}];
+  _fsDeckSlides.splice(deckSlideIndex+1,0,{title:'New slide',bullets:['']});
+  deckSlideIndex++;
+  deckApplySlideToInputs();
+  renderFilmstrip();
+  deckUpdateCounter();
+  scheduleDocSave();
+  updateDocStats();
+}
+
+function deckDeleteSlide(){
+  if(!_fsDeckSlides||_fsDeckSlides.length<=1){toast('Keep at least one slide','error');return;}
+  syncDeckInputsToData();
+  _fsDeckSlides.splice(deckSlideIndex,1);
+  if(deckSlideIndex>=_fsDeckSlides.length)deckSlideIndex=_fsDeckSlides.length-1;
+  deckApplySlideToInputs();
+  renderFilmstrip();
+  deckUpdateCounter();
+  scheduleDocSave();
+  updateDocStats();
+}
+
+function deckWireInputs(){
+  const ti=document.getElementById('deck-active-title');
+  const ta=document.getElementById('deck-active-bullets');
+  if(ti){
+    ti.oninput=function(){
+      syncDeckInputsToData();
+      renderFilmstrip();
+      scheduleDocSave();
+      updateDocStats();
+    };
+  }
+  if(ta){
+    ta.oninput=function(){
+      syncDeckInputsToData();
+      scheduleDocSave();
+      updateDocStats();
+    };
+  }
+}
+
+function deckNavKeyHandler(e){
+  if(currentDocKind()!=='slides')return;
+  const t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'))return;
+  if(e.key==='ArrowLeft'){e.preventDefault();deckPrev();}
+  else if(e.key==='ArrowRight'){e.preventDefault();deckNext();}
+}
+
+function deckAttachNavKeys(){
+  if(deckAttachNavKeys._bound)return;
+  document.addEventListener('keydown',deckNavKeyHandler,true);
+  deckAttachNavKeys._bound=true;
+}
+
+function deckDetachNavKeys(){
+  if(!deckAttachNavKeys._bound)return;
+  document.removeEventListener('keydown',deckNavKeyHandler,true);
+  deckAttachNavKeys._bound=false;
 }
 
 function renderSlidesEditor(slides){
-  const el=document.getElementById('slides-editor');
-  if(!el)return;
-  el.innerHTML='';
-  const arr=slides&&slides.length?slides:[{title:'Slide 1',bullets:['']}];
-  arr.forEach((s,i)=>{
-    const wrap=document.createElement('div');
-    wrap.className='slide-block';
-    const head=document.createElement('div');
-    head.className='slide-block-head';
-    head.textContent='Slide '+(i+1);
-    const ti=document.createElement('input');
-    ti.type='text';
-    ti.className='slide-title-input';
-    ti.placeholder='Slide title';
-    ti.value=s.title||'';
-    ti.addEventListener('input',scheduleDocSave);
-    const ta=document.createElement('textarea');
-    ta.className='slide-bullets-input';
-    ta.placeholder='One bullet per line';
-    ta.value=(s.bullets&&s.bullets.length?s.bullets:['']).join('\n');
-    ta.addEventListener('input',scheduleDocSave);
-    wrap.appendChild(head);wrap.appendChild(ti);wrap.appendChild(ta);
-    el.appendChild(wrap);
-  });
-}
-
-function addSlideBlock(){
-  const slides=gatherSlidesFromUI();
-  slides.push({title:'New slide',bullets:['']});
-  renderSlidesEditor(slides);
-  scheduleDocSave();
-  updateDocStats();
+  const arr=slides&&slides.length
+    ?slides.map(s=>({
+        title:s.title||'',
+        bullets:Array.isArray(s.bullets)&&s.bullets.length?s.bullets.slice():[''],
+      }))
+    :[{title:'Slide 1',bullets:['']}];
+  _fsDeckSlides=arr;
+  deckSlideIndex=Math.min(Math.max(0,deckSlideIndex),_fsDeckSlides.length-1);
+  deckWireInputs();
+  deckApplySlideToInputs();
+  renderFilmstrip();
+  deckUpdateCounter();
 }
 
 function renderSheetEditor(sheet){
@@ -3216,6 +3399,7 @@ function openDoc(docId){
   const docs=STORE.get('docs_'+currentProject.id)||[];
   const doc=docs.find(d=>d.id===docId);
   if(!doc){toast('File not found','error');return}
+  deckDetachNavKeys();
   currentDocId=docId;
   const kind=docKindOf(doc);
   setWorkspaceKind(kind);
@@ -3223,7 +3407,9 @@ function openDoc(docId){
   if(kind==='document'){
     document.getElementById('doc-editor').innerHTML=doc.content||'<p>Start writing…</p>';
   }else if(kind==='slides'){
+    deckSlideIndex=0;
     renderSlidesEditor(doc.slides);
+    deckAttachNavKeys();
   }else{
     renderSheetEditor(doc.sheet);
   }
@@ -3235,6 +3421,7 @@ function openDoc(docId){
 }
 
 function closeDocWorkspace(){
+  deckDetachNavKeys();
   const b=document.getElementById('doc-kind-badge');
   if(b)b.style.display='none';
   document.getElementById('doc-workspace').classList.remove('open');
@@ -3491,8 +3678,9 @@ function exportDoc(format){
     const slides=doc.slides&&doc.slides.length?doc.slides:[{title:'',bullets:[]}];
     const plain=slidesToText(slides);
     if(format==='html'){
-      const body=slides.map((s,i)=>`<section style="margin-bottom:2rem"><h2>${esc(s.title||'Slide '+(i+1))}</h2><ul>${(s.bullets||[]).map(b=>'<li>'+esc(b)+'</li>').join('')}</ul></section>`).join('');
-      content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title></head><body><h1>${esc(title)}</h1>${body}</body></html>`;
+      const css=`:root{font-family:Segoe UI,system-ui,sans-serif}body{background:#0a0d12;color:#e8ecff;margin:0;padding:32px 20px 48px}.deck-title{text-align:center;font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.75;margin:0 0 28px}.slide-page{max-width:960px;margin:0 auto 32px}.slide-16x9{position:relative;aspect-ratio:16/9;background:linear-gradient(165deg,#fff 0%,#f0f3fb 100%);color:#12151f;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:clamp(16px,4vw,40px) clamp(20px,5vw,56px);display:flex;flex-direction:column;box-sizing:border-box;border:1px solid rgba(0,0,0,.06)}.slide-16x9::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#00d4aa,#4f7cff);border-radius:8px 0 0 8px}.slide-num{font-size:11px;color:#8892a8;margin-bottom:10px;font-weight:600}.slide-16x9 h2{margin:0 0 clamp(12px,3vh,24px);font-size:clamp(1.35rem,4vw,2.1rem);font-weight:800;text-align:center;line-height:1.15;letter-spacing:-.02em}.slide-16x9 ul{margin:0;padding-left:1.15em;font-size:clamp(.95rem,2.4vw,1.3rem);line-height:1.55;flex:1}.slide-16x9 li{margin-bottom:.35em}`;
+      const body=slides.map((s,i)=>`<div class="slide-page"><div class="slide-16x9"><div class="slide-num">Slide ${i+1} of ${slides.length}</div><h2>${esc(s.title||'Untitled slide')}</h2><ul>${(s.bullets||[]).filter(b=>String(b).trim()).map(b=>'<li>'+esc(b)+'</li>').join('')||'<li style="opacity:.4">Add bullet points in FairShare</li>'}</ul></div></div>`).join('');
+      content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title><style>${css}</style></head><body><p class="deck-title">${esc(title)}</p>${body}<p style="text-align:center;font-size:12px;opacity:.5;margin-top:24px">Exported from FairShare</p></body></html>`;
       mime='text/html';ext='html';
     }else if(format==='md'){
       content='# '+title+'\n\n'+slides.map((s,i)=>'## '+(s.title||'Slide '+(i+1))+'\n\n'+((s.bullets||[]).map(b=>'- '+b).join('\n'))).join('\n\n');
