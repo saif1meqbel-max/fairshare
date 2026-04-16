@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairShare — Fair group work for schools & universities</title>
-  <meta name="description" content="FairShare helps teams plan tasks, share documents, chat, and see contribution analytics — built for UK & UAE schools and universities.">
+  <meta name="description" content="FairShare helps teams plan tasks, share documents, chat, and see contribution analytics — built for UK schools and universities.">
   <link rel="icon" type="image/png" href="/assets/fairshare-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
@@ -22,6 +22,7 @@
       <a href="#product">Product</a>
       <a href="#compare">Compare</a>
       <a href="case-studies.html">Stories</a>
+      <a href="#roi">ROI</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
       <div class="nav-cta">
@@ -34,6 +35,506 @@
   <main id="main">
     <section class="hero" id="top">
       <div class="hero-inner">
+        <div class="hero-logo-wrap" aria-hidden="true">
+          <img class="hero-logo" src="/assets/fairshare-logo.png" width="72" height="72" alt="" decoding="async">
+        </div>
+        <span class="eyebrow">Group work, made fair</span>
+        <h1>One place for projects, tasks, docs, chat &amp; contribution insight</h1>
+        <p class="hero-lead">
+          FairShare is built for <strong style="color: var(--txt); font-weight: 600;">universities, sixth forms, and high schools</strong> in the UK and beyond — so group work is coordinated, visible, and fairer without replacing your LMS.
+        </p>
+        <p class="hero-sub">
+          Book a walkthrough for your department, or open the app to try a pilot. We align with institutional procurement: UK GDPR and data processing agreements on request.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="mailto:demo@fairshare.app?subject=FairShare%20—%20Book%20a%20demo">Book a demo</a>
+          <a class="btn btn-demo" data-app-link href="/fairshare.html">Open the platform</a>
+          <a class="btn btn-ghost" href="#product">See the product</a>
+        </div>
+        <p class="hero-cta-note">Replace <code style="font-size:11px;opacity:.85">demo@fairshare.app</code> with your real inbox when you go live.</p>
+      </div>
+    </section>
+
+    <section class="trusted-strip" aria-labelledby="trusted-heading">
+      <div class="wrap">
+        <p id="trusted-heading" class="trusted-label">Trusted by teams at</p>
+        <div class="trusted-logos" role="list">
+          <span class="trusted-placeholder" role="listitem">Your university (pilot)</span>
+          <span class="trusted-placeholder" role="listitem">Your school trust</span>
+          <span class="trusted-placeholder" role="listitem">Your sixth form college</span>
+        </div>
+        <p style="margin-top:20px;font-size:12px;color:var(--txt3);max-width:520px;margin-left:auto;margin-right:auto;">Swap these placeholders for authorised institution names or logos when you have permission.</p>
+      </div>
+    </section>
+
+    <section id="product" class="product-preview">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Inside the workspace</h2>
+          <p>A single interface for the work students actually do together — not another silo.</p>
+        </div>
+        <div class="workspace-gallery">
+          <figure class="workspace-shot workspace-shot--lead">
+            <img
+              src="img/workspace-dashboard.png"
+              alt="FairShare project dashboard: CS470 Research Paper with progress, task summary, contribution scores by member, and live activity feed."
+              width="1600"
+              height="900"
+              loading="eager"
+              decoding="async">
+            <figcaption>Project dashboard — deadlines, task status, contribution overview, and real-time activity in one view.</figcaption>
+          </figure>
+          <div class="workspace-gallery-row">
+            <figure class="workspace-shot">
+              <img
+                src="img/workspace-analytics-overview.png"
+                alt="FairShare Analytics: fairness index, individual contribution scores ranked by team member, and export options."
+                width="1600"
+                height="900"
+                loading="lazy"
+                decoding="async">
+              <figcaption>Analytics — fairness index, individual scores, and team performance at a glance.</figcaption>
+            </figure>
+            <figure class="workspace-shot">
+              <img
+                src="img/workspace-analytics-detail.png"
+                alt="FairShare Analytics detail: score breakdown by category, fairness flags, task distribution, and deadline performance."
+                width="1600"
+                height="900"
+                loading="lazy"
+                decoding="async">
+              <figcaption>Drill-down — score breakdown, fairness flags, workload split, and deadline metrics.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="education">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Built for how schools really run group work</h2>
+          <p>Three entry points — same platform. Positioning for your website and procurement decks.</p>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <div class="icon" aria-hidden="true">🎓</div>
+            <h3>Universities</h3>
+            <p>Module teams and labs need clear ownership of tasks and docs before submission to Moodle, Canvas, or Blackboard. FairShare sits beside the LMS for <em>execution</em>, not submission.</p>
+          </div>
+          <div class="card">
+            <div class="icon" aria-hidden="true">📚</div>
+            <h3>Sixth form &amp; college</h3>
+            <p>EPQ, BTEC, and A-level cohorts balance autonomy with oversight. Contribution signals help teachers coach groups before grades are at risk.</p>
+          </div>
+          <div class="card">
+            <div class="icon" aria-hidden="true">🏫</div>
+            <h3>High school</h3>
+            <p>Structured projects with safeguarding-aware chat and activity. Use school-mediated accounts where your policy requires it — we support institutional conversations, not consumer-only signup.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>What is FairShare?</h2>
+          <p>
+            A web workspace for coursework and team projects: shared tasks and documents, real-time chat, activity feeds, and contribution-oriented analytics — designed to reduce free-rider dynamics and make collaboration visible.
+          </p>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <div class="icon" aria-hidden="true">📂</div>
+            <h3>Project workspaces</h3>
+            <p>Members, deadlines, and everything for one group in one place.</p>
+          </div>
+          <div class="card">
+            <div class="icon" aria-hidden="true">📊</div>
+            <h3>Contribution awareness</h3>
+            <p>Dashboards highlight participation patterns — a signal for educators, not an automated verdict.</p>
+          </div>
+          <div class="card">
+            <div class="icon" aria-hidden="true">🔐</div>
+            <h3>Institution-ready</h3>
+            <p>Security, privacy, and subprocessors documented for IT and DPO review — see our <a href="security.html">Security &amp; trust</a> page.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>What you get</h2>
+          <p>Core capabilities teams use every week in one focused interface.</p>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Tasks &amp; boards</h3>
+            <p>Assignees, due dates, and views that match how the group plans.</p>
+          </div>
+          <div class="card">
+            <h3>Docs &amp; exports</h3>
+            <p>Rich documents in the workspace with export when work is handed in elsewhere.</p>
+          </div>
+          <div class="card">
+            <h3>Chat &amp; activity</h3>
+            <p>Project channels and feeds so coordination stays next to the work.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>How FairShare fits your stack</h2>
+          <p>We don’t replace your LMS or your chat tool — we focus on <strong style="color:var(--txt);font-weight:600;">fair, visible group execution</strong>.</p>
+        </div>
+        <div class="compare-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Typical LMS</th>
+                <th>Chat / files only</th>
+                <th>FairShare</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Submission &amp; grades</td>
+                <td class="yes">Core strength</td>
+                <td class="no">Not designed for it</td>
+                <td class="partial">Export / hand-in elsewhere</td>
+              </tr>
+              <tr>
+                <td>Group task ownership</td>
+                <td class="partial">Varies by tool</td>
+                <td class="no">Rarely structured</td>
+                <td class="yes">Built-in</td>
+              </tr>
+              <tr>
+                <td>Shared docs in context</td>
+                <td class="partial">Often separate</td>
+                <td class="partial">Docs without project glue</td>
+                <td class="yes">Per project</td>
+              </tr>
+              <tr>
+                <td>Contribution visibility</td>
+                <td class="no">Limited</td>
+                <td class="no">Not the focus</td>
+                <td class="yes">Analytics &amp; activity</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="testimonials" aria-labelledby="testimonials-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="testimonials-heading">What educators say</h2>
+          <p>Placeholder quotes — replace with real testimonials and consent.</p>
+        </div>
+        <div class="testimonial-grid">
+          <blockquote class="quote-card">
+            <p class="quote-text">“Finally something that shows who did what before the deadline panic — without us digging through five different tools.”</p>
+            <footer class="quote-meta">
+              <strong>Dr. A. Rahman</strong>
+              Module lead, UK university (pilot)
+            </footer>
+          </blockquote>
+          <blockquote class="quote-card">
+            <p class="quote-text">“We needed a clearer picture of group balance for EPQ — FairShare gave us a shared workspace and a starting point for conversations.”</p>
+            <footer class="quote-meta">
+              <strong>Head of Sixth Form</strong>
+              UK independent school (placeholder)
+            </footer>
+          </blockquote>
+          <blockquote class="quote-card">
+            <p class="quote-text">“Procurement asked about GDPR and PDPL alignment — having a written security page and DPA template made the conversation faster.”</p>
+            <footer class="quote-meta">
+              <strong>IT director</strong>
+              School group (placeholder)
+            </footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section id="stories">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Case studies</h2>
+          <p>Short narratives you can share with leadership — expand on the dedicated stories page.</p>
+        </div>
+        <div class="card case-teaser">
+          <div>
+            <h3 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:8px;">From pilot to department rollout</h3>
+            <p style="color:var(--txt2);font-size:14px;max-width:560px;">See how one cohort used FairShare for a term-long project — including setup, safeguarding notes, and outcomes (template content).</p>
+          </div>
+          <a class="btn btn-demo" href="case-studies.html">Read stories</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Pricing</h2>
+          <p>
+            Transparent tiers for pilots and departments; <strong style="color: var(--txt); font-weight: 600;">Campus</strong> is customised for cohort size, support SLAs, and UK legal alignment.
+          </p>
+        </div>
+        <div class="pricing-grid">
+          <div class="price-card">
+            <span class="tag">Pilot</span>
+            <h3>Starter</h3>
+            <p class="price-tier-desc">For a single class or evaluation — no card required.</p>
+            <div class="price">Free</div>
+            <ul>
+              <li>Up to <strong>25 seats</strong> per pilot (adjust in sales)</li>
+              <li>Projects, tasks, docs, chat, activity</li>
+              <li>Community email support (best-effort)</li>
+              <li>Data hosted per our <a href="security.html">security</a> practices</li>
+            </ul>
+            <a class="btn btn-ghost" style="width:100%" data-app-link href="/fairshare.html">Start in the app</a>
+            <p class="price-note">Upgrade path to Team when you’re ready.</p>
+          </div>
+          <div class="price-card featured">
+            <span class="tag">Departments</span>
+            <h3>Team</h3>
+            <p class="price-tier-desc">For faculties and school groups that need predictability and help.</p>
+            <div class="price">From <small>GBP — quote</small></div>
+            <ul>
+              <li><strong>Higher seat caps</strong> and fair-use limits agreed in contract</li>
+              <li><strong>Priority</strong> bug fixes &amp; onboarding call</li>
+              <li>Documentation for IT / DPO review</li>
+              <li>Optional: termly review with your admin</li>
+            </ul>
+            <a class="btn btn-primary" style="width:100%" href="mailto:sales@fairshare.app?subject=FairShare%20Team%20plan">Request a quote</a>
+            <p class="price-note">UK pricing focus; academic year billing available.</p>
+          </div>
+          <div class="price-card">
+            <span class="tag">Institutions</span>
+            <h3>Campus</h3>
+            <p class="price-tier-desc">Universities, trusts, and groups that need enterprise alignment.</p>
+            <div class="price">Custom</div>
+            <ul>
+              <li><strong>DPA</strong> &amp; UK transfer and governance discussions</li>
+              <li>SSO / domain strategy <em>(roadmap — confirm in contract)</em></li>
+              <li>Dedicated success &amp; training sessions</li>
+              <li>Custom reporting where agreed</li>
+            </ul>
+            <a class="btn btn-ghost" style="width:100%" href="mailto:campus@fairshare.app?subject=FairShare%20Campus">Contact campus sales</a>
+            <p class="price-note">Replace placeholder addresses with your real sales inboxes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="roi">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>ROI Calculator for Schools</h2>
+          <p>Estimate yearly staff time saved and intervention impact from a FairShare rollout.</p>
+        </div>
+        <div class="roi-wrap">
+          <div class="roi-inputs">
+            <div class="roi-grid">
+              <div class="roi-field">
+                <label for="roi-students">Students in group modules</label>
+                <input id="roi-students" type="number" min="10" step="10" value="400" oninput="updateRoiCalculator()">
+              </div>
+              <div class="roi-field">
+                <label for="roi-groupsize">Avg group size</label>
+                <input id="roi-groupsize" type="number" min="2" step="1" value="4" oninput="updateRoiCalculator()">
+              </div>
+              <div class="roi-field">
+                <label for="roi-projects">Projects per year</label>
+                <input id="roi-projects" type="number" min="1" step="1" value="3" oninput="updateRoiCalculator()">
+              </div>
+              <div class="roi-field">
+                <label for="roi-hourly">Staff blended hourly rate (£)</label>
+                <input id="roi-hourly" type="number" min="10" step="1" value="45" oninput="updateRoiCalculator()">
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--txt3);margin-top:12px">Assumptions: earlier issue detection and less manual reconciliation of group evidence. Adjust values to fit your institution.</p>
+          </div>
+          <div class="roi-results">
+            <div class="roi-metric"><span>Estimated groups</span><strong id="roi-groups">—</strong></div>
+            <div class="roi-metric"><span>Staff hours saved / year</span><strong id="roi-hours">—</strong></div>
+            <div class="roi-metric"><span>Value saved / year</span><strong id="roi-value">—</strong></div>
+            <div class="roi-metric"><span>At-risk groups flagged earlier</span><strong id="roi-risk">—</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="compliance-strip">
+      <div class="wrap">
+        <p>
+          <strong style="color:var(--txt);">Compliance posture:</strong> FairShare is designed to support institutions subject to
+          <strong>UK GDPR</strong> and the <strong>PDPL</strong>. We sign Data Processing Agreements where we act as processor,
+          document subprocessors, and work with your DPO on transfers and retention. This is not legal advice — your counsel confirms fit for your context.
+        </p>
+      </div>
+    </div>
+
+    <section class="contact-strip" id="contact">
+      <div class="wrap">
+        <div class="section-head" style="text-align:center;max-width:560px;margin-left:auto;margin-right:auto;">
+          <h2>Contact</h2>
+          <p>Use role-based inboxes so enquiries route correctly — update domains before launch.</p>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-card">
+            <strong>Demos &amp; pilots</strong>
+            <a href="mailto:demo@fairshare.app">demo@fairshare.app</a>
+          </div>
+          <div class="contact-card">
+            <strong>Schools &amp; colleges</strong>
+            <a href="mailto:schools@fairshare.app">schools@fairshare.app</a>
+          </div>
+          <div class="contact-card">
+            <strong>Universities</strong>
+            <a href="mailto:universities@fairshare.app">universities@fairshare.app</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>FAQ</h2>
+          <p>Educators, students, and procurement — including questions we hear in school procurement conversations.</p>
+        </div>
+        <details class="faq-item">
+          <summary>Who is FairShare for?</summary>
+          <div class="faq-body">Higher education, sixth form / college, and high school group work where you want clearer coordination and fairer visibility into contributions — without replacing your LMS overnight.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Does FairShare replace our LMS?</summary>
+          <div class="faq-body">No. FairShare focuses on <em>group project execution</em> — tasks, docs, chat, and contribution signals. Most institutions keep Moodle, Canvas, Blackboard, or Google Classroom for modules, submission, and grades.</div>
+        </details>
+        <details class="faq-item">
+          <summary>How do you handle UK GDPR?</summary>
+          <div class="faq-body">We document our role (often processor to your institution), list subprocessors, support Data Processing Agreements, and describe retention and security on our <a href="security.html">Security &amp; trust</a> page. Your DPO validates fit for your school.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What about PDPL and cross-border transfers?</summary>
+          <div class="faq-body">Institutions should assess transfers (e.g. UK/EU hosting or AI subprocessors) under applicable PDPL rules. We provide information for your transfer analysis; legal sign-off sits with your organisation.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Is student data safe?</summary>
+          <div class="faq-body">Run FairShare on a properly configured host, use strong authentication, and follow our security documentation. We do not market FairShare as a consumer toy — it is intended for institutional use with appropriate governance.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What does “contribution analytics” mean?</summary>
+          <div class="faq-body">Signals from activity and tasks — useful for coaching and spotting imbalance. They are not proof of misconduct; instructors remain responsible for academic judgment.</div>
+        </details>
+        <details class="faq-item">
+          <summary>SSO and school domains?</summary>
+          <div class="faq-body">Campus-tier customers can discuss SSO and domain allowlists as part of procurement. Roadmap items are confirmed in writing — not promised on this marketing page alone.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Can we export data if we leave?</summary>
+          <div class="faq-body">Institutional contracts should define export and deletion windows. The product includes export paths for key artefacts; confirm scope with sales for Campus agreements.</div>
+        </details>
+        <details class="faq-item">
+          <summary>How do we get started?</summary>
+          <div class="faq-body">Book a demo, run a Starter pilot with one cohort, then move to Team or Campus when procurement and safeguarding sign-off are in place.</div>
+        </details>
+      </div>
+    </section>
+
+    <div class="cta-band">
+      <h2>Ready to try FairShare?</h2>
+      <p>Open the workspace for a pilot, or talk to us about a department or campus rollout.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="mailto:demo@fairshare.app?subject=FairShare%20—%20Book%20a%20demo">Book a demo</a>
+        <a class="btn btn-demo" data-app-link href="/fairshare.html">Open the platform</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap foot-grid">
+      <div>
+        <div class="foot-brand">
+          <img src="/assets/fairshare-logo.png" width="32" height="32" alt="" decoding="async">
+          <strong style="color: var(--txt2); font-family: var(--font-display); font-size: 1.05rem;">FairShare</strong>
+        </div>
+        <p style="margin-top: 6px; max-width: 300px;">Fair group work for schools and universities. Not affiliated with your institution unless contracted.</p>
+      </div>
+      <div class="foot-col">
+        <strong>Product</strong>
+        <p><a data-app-link href="/fairshare.html">Platform</a></p>
+        <p><a href="#pricing">Pricing</a></p>
+        <p><a href="case-studies.html">Stories</a></p>
+        <p><a href="status.html">Status</a></p>
+      </div>
+      <div class="foot-col">
+        <strong>Trust</strong>
+        <p><a href="security.html">Security &amp; privacy</a></p>
+        <p><a href="privacy.html">Privacy policy</a></p>
+        <p><a href="terms.html">Terms of use</a></p>
+      </div>
+      <div class="foot-col">
+        <strong>Contact</strong>
+        <p><a href="mailto:demo@fairshare.app">demo@fairshare.app</a></p>
+        <p><a href="mailto:sales@fairshare.app">sales@fairshare.app</a></p>
+      </div>
+    </div>
+    <div class="wrap foot-bottom">
+      © <span id="y"></span> FairShare. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var APP = typeof window.FAIRSHARE_APP_URL === 'string' && window.FAIRSHARE_APP_URL
+        ? window.FAIRSHARE_APP_URL
+        : '/fairshare.html';
+      document.querySelectorAll('[data-app-link]').forEach(function (a) {
+        a.setAttribute('href', APP);
+      });
+      function num(id,fallback){
+        var el=document.getElementById(id);
+        var v=el?parseFloat(el.value):NaN;
+        return Number.isFinite(v)?v:fallback;
+      }
+      window.updateRoiCalculator=function(){
+        var students=Math.max(10,num('roi-students',400));
+        var groupSize=Math.max(2,num('roi-groupsize',4));
+        var projects=Math.max(1,num('roi-projects',3));
+        var hourly=Math.max(10,num('roi-hourly',45));
+        var groups=Math.round(students/groupSize)*projects;
+        var hrsPerGroup=1.6; // evidence collation + intervention prep saved
+        var hoursSaved=Math.round(groups*hrsPerGroup);
+        var valueSaved=Math.round(hoursSaved*hourly);
+        var earlyFlags=Math.round(groups*0.22);
+        var g=document.getElementById('roi-groups');
+        var h=document.getElementById('roi-hours');
+        var v=document.getElementById('roi-value');
+        var r=document.getElementById('roi-risk');
+        if(g)g.textContent=groups.toLocaleString();
+        if(h)h.textContent=hoursSaved.toLocaleString()+'h';
+        if(v)v.textContent=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(valueSaved);
+        if(r)r.textContent=earlyFlags.toLocaleString();
+      };
+      window.updateRoiCalculator();
+      var y = document.getElementById('y');
+      if (y) y.textContent = String(new Date().getFullYear());
+    })();
+  </script>
+</body>
+</html>
         <div class="hero-logo-wrap" aria-hidden="true">
           <img class="hero-logo" src="/assets/fairshare-logo.png" width="72" height="72" alt="" decoding="async">
         </div>
