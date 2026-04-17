@@ -639,6 +639,17 @@ html[data-theme="light"] .nav-search:focus{
   font-size:13px;color:var(--txt2);
 }
 .projects-invite-hint strong{color:var(--txt)}
+.team-member-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.team-member-row:last-child{border-bottom:none;padding-bottom:0}
+.team-member-meta{display:flex;align-items:center;gap:10px;min-width:0}
+.team-member-meta .team-email{font-size:12px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis}
+.team-status{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding:3px 8px;border-radius:6px}
+.team-status.joined{background:rgba(0,212,170,0.14);color:var(--teal)}
+.team-status.pending{background:rgba(255,179,71,0.14);color:var(--amber)}
+.team-status.lead{background:rgba(79,124,255,0.14);color:var(--blue)}
 .nav-pill-count{
   margin-left:4px;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;
   background:rgba(0,212,170,0.22);color:var(--teal);vertical-align:middle;
@@ -2135,15 +2146,30 @@ textarea{resize:vertical;min-height:72px}
               </div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" onclick="openModal('modal-new-task')">+ Add task</button>
             <button class="btn btn-outline btn-sm" onclick="showPage('report',document.querySelector('[data-page=report]'))">View analytics →</button>
+            <button type="button" class="btn btn-danger btn-sm" id="dash-delete-project-btn" style="display:none" onclick="deleteCurrentProject()">Delete project…</button>
           </div>
         </div>
       </div>
 
       <!-- Stats row -->
       <div class="grid4 mb-24" id="dash-stats"></div>
+
+      <!-- Team & invitations -->
+      <div class="card mb-24" id="dash-team-card">
+        <div class="card-pad">
+          <div class="card-title-wrap">
+            <span class="card-title">Team &amp; invitations</span>
+          </div>
+          <p style="margin:-6px 0 14px;font-size:12px;color:var(--txt2);line-height:1.45">
+            See who is on this project. <strong>Joined</strong> means they have a FairShare account on that email.
+            <strong>Pending</strong> means they are listed but have not registered yet (or the email does not match an account).
+          </p>
+          <div id="dash-team-list"></div>
+        </div>
+      </div>
 
       <!-- Two-col layout -->
       <div class="grid2" style="gap:20px">
@@ -2804,13 +2830,28 @@ textarea{resize:vertical;min-height:72px}
       <div class="help-text">You are automatically added as project lead.</div>
     </div>
     <div class="form-row">
-      <label>Invite by email (one email per line)</label>
-      <textarea id="np-invite-emails" placeholder="member1@university.edu&#10;member2@school.org" style="min-height:90px"></textarea>
-      <div class="help-text">FairShare will send a project invite email. Existing users also receive the invite live inside the platform.</div>
+      <label>Optional — extra emails only (one per line)</label>
+      <textarea id="np-invite-emails" placeholder="Optional: emails not already listed above…" style="min-height:72px"></textarea>
+      <div class="help-text">Everyone you list under team members gets an in-app invite if they already have an account. When your host has email configured (Resend), invite emails are sent to all teammate addresses (including this box). Duplicates are skipped.</div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-project')">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="createProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add team member (after project exists) -->
+<div class="modal-overlay" id="modal-add-team-member" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-title">➕ Add team member</div>
+    <button class="modal-close" onclick="closeModal('modal-add-team-member')">✕</button>
+    <p style="font-size:13px;color:var(--txt2);margin:0 0 14px;line-height:1.45">Add someone to <strong id="atm-project-label">this project</strong>. If they already have a FairShare account on that email, they’ll get an in-app invite after you save.</p>
+    <div class="form-row"><label>Name</label><input type="text" id="atm-name" placeholder="e.g. Maya Rodriguez" autocomplete="name"></div>
+    <div class="form-row"><label>Email</label><input type="email" id="atm-email" placeholder="maya@school.edu" autocomplete="email"></div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-team-member')">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="submitAddTeamMember()">Add to project</button>
     </div>
   </div>
 </div>
@@ -3852,7 +3893,12 @@ function loadProjects(){
 
 function getInviteNotifications(){
   if(!currentUser)return[];
-  return(STORE.get('notifs_'+currentUser.id)||[]).filter(n=>n.type==='project_invite');
+  return(STORE.get('notifs_'+currentUser.id)||[]).filter(n=>String(n.type||'').toLowerCase()==='project_invite');
+}
+
+function notificationProjectId(not){
+  if(!not)return'';
+  return String(not.projectId||not.project_id||'').trim();
 }
 
 function renderProjectInvites(){
@@ -3890,27 +3936,35 @@ function renderProjectInvites(){
   if(emptyEl)emptyEl.style.display='none';
   wrap.style.display='';
   list.innerHTML=invites.map(not=>{
-    const pid=not.projectId||'';
+    const pid=notificationProjectId(not);
     const title=not.title||'Project invite';
     return`<div class="invite-row">
       <div class="invite-row-text"><strong>${esc(title)}</strong> · ${timeAgo(not.ts||Date.now())}</div>
-      <button type="button" class="btn btn-primary btn-sm" onclick="openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})">Open project</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick='openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})'>Open project</button>
     </div>`;
   }).join('');
 }
 
 async function openProjectFromInvite(projectId, notifId){
-  if(!projectId){toast('Missing project','error');return}
+  const pid=String(projectId||'').trim();
+  if(!pid){toast('This invite is missing a project link. Ask the lead to send the invite again.','error');return}
   if(notifId) markRead(notifId);
-  let projects=loadProjects();
-  let p=projects.find(x=>x.id===projectId);
+  let p=loadProjects().find(x=>x.id===pid);
+  if(!p&&window.FSB&&typeof window.FSB.fetchProjectById==='function'){
+    try{p=await window.FSB.fetchProjectById(pid)}catch(e){console.warn('fetchProjectById',e)}
+  }
   if(!p&&window.FSB&&typeof window.FSB.reloadStores==='function'){
     try{await window.FSB.reloadStores()}catch(e){}
-    projects=loadProjects();
-    p=projects.find(x=>x.id===projectId);
+    p=loadProjects().find(x=>x.id===pid);
   }
-  if(!p){toast('Project not found yet — refresh the page or ask the owner to add you again.','error');return}
-  await openProject(projectId);
+  if(!p&&window.FSB&&typeof window.FSB.fetchProjectById==='function'){
+    try{p=await window.FSB.fetchProjectById(pid)}catch(e){}
+  }
+  if(!p){
+    toast('Could not load this project. Confirm your account email matches the one the lead added, then refresh the page.','error');
+    return
+  }
+  await openProject(pid);
 }
 
 function renderProjectList(){
@@ -3978,10 +4032,13 @@ function renderProjectList(){
 }
 
 async function openProject(id){
-  const projects=loadProjects();
-  const p=projects.find(p=>p.id===id);
+  let projects=loadProjects();
+  let p=projects.find(p=>p.id===id);
   if(!p){toast('Project not found','error');return}
   if(window.FSB&&window.FSB.enabled)await window.FSB.hydrateProject(id);
+  projects=loadProjects();
+  p=projects.find(x=>x.id===id);
+  if(!p){toast('Project not found','error');return}
   currentProject=p;
   try{if(currentUser&&currentUser.id)STORE.set('current_project_'+currentUser.id,id)}catch(e){}
   toast(`Opened: ${p.name}`,'success');
@@ -4007,10 +4064,19 @@ function parseInviteEmails(raw){
     .filter(x=>x&&isValidEmailFormat(x)&&!seen.has(x)&&seen.add(x));
 }
 
+function projectInviteEmailEndpoint(){
+  const base=(window.FSB&&typeof window.FSB.apiBase==='function')?String(window.FSB.apiBase()||'').replace(/\/$/,''):'';
+  if(base)return base+'/api/project-invite-email';
+  if(typeof location!=='undefined'&&location.origin&&!location.origin.startsWith('file:')){
+    try{return new URL('/api/project-invite-email',location.origin).href}catch(e){}
+  }
+  return '/api/project-invite-email';
+}
+
+/** Sends invite emails via deployed /api (Resend). Returns {sent} or {sent:0,skipped:true,message} when API is not configured. */
 async function sendProjectInviteEmails(project,emails){
   if(!Array.isArray(emails)||!emails.length)return {sent:0};
-  const base=(window.FSB&&typeof window.FSB.apiBase==='function')?window.FSB.apiBase():'';
-  const url=(base?base:'')+'/api/project-invite-email';
+  const url=projectInviteEmailEndpoint();
   const resp=await fetch(url,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -4024,6 +4090,13 @@ async function sendProjectInviteEmails(project,emails){
     })
   });
   const data=await resp.json().catch(()=>({}));
+  if(resp.status===503||/not configured/i.test(String(data.error||data.hint||''))){
+    return{
+      sent:0,
+      skipped:true,
+      message:'Project saved. Teammates with FairShare accounts get an in-app invite. Add RESEND_API_KEY on the server to send email as well.'
+    };
+  }
   if(!resp.ok)throw new Error(data.error||'Could not send invite emails');
   return data;
 }
@@ -4037,11 +4110,12 @@ async function createProject(){
   const inviteEmails=parseInviteEmails((document.getElementById('np-invite-emails')||{}).value||'');
   const templateKey=(document.getElementById('np-template')||{}).value||'blank';
   if(!name){toast('Please enter a project name','error');return}
-  const members=[{id:currentUser.id,name:currentUser.name,email:currentUser.email}];
+  const members=[{id:currentUser.id,name:currentUser.name,email:String(currentUser.email||'').trim().toLowerCase()}];
   if(membersRaw){
     membersRaw.split('\n').forEach(line=>{
       const parts=line.split(',');
-      if(parts[0].trim())members.push({id:genId('m'),name:parts[0].trim(),email:(parts[1]||'').trim()});
+      const em=String(parts[1]||'').trim().toLowerCase();
+      if(parts[0].trim())members.push({id:genId('m'),name:parts[0].trim(),email:em});
     });
   }
   let resolvedMembers=members;
@@ -4058,9 +4132,12 @@ async function createProject(){
   const byEmail=new Map();
   resolvedMembers.forEach(m=>{
     const email=String(m.email||'').trim().toLowerCase();
-    if(email&&!byEmail.has(email))byEmail.set(email,m);
+    if(email&&!byEmail.has(email))byEmail.set(email,{...m,email});
   });
-  const finalMembers=[...byEmail.values()];
+  const finalMembers=[...byEmail.values()].map(m=>({
+    ...m,
+    email:m.email?String(m.email).trim().toLowerCase():m.email
+  }));
   const proj={
     id:genId('proj'),
     name,desc,deadline,instructor,
@@ -4075,26 +4152,28 @@ async function createProject(){
   STORE.set('projects_'+currentUser.id,projects);
   applyProjectTemplateTasks(proj.id,templateKey,{deadline,ownerId:currentUser.id});
   let inviteToastShown=false;
+  const ownerEmailLc=String(currentUser.email||'').trim().toLowerCase();
+  const allEmailRecipients=[...new Set([
+    ...inviteEmails,
+    ...finalMembers.map(m=>String(m.email||'').trim().toLowerCase()).filter(e=>e&&e!==ownerEmailLc)
+  ])];
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
     try{
       if(typeof window.FSB.persistNow==='function')await window.FSB.persistNow();
-      if(typeof window.FSB.sendProjectInvites==='function'){
-        const sent=await window.FSB.sendProjectInvites(proj);
-        if(sent>0){
-          inviteToastShown=true;
-          toast(`Project created and ${sent} invite${sent===1?'':'s'} sent in real time.`,'success','Invites sent');
-        }
-      }
-      if(inviteEmails.length){
-        const emailResult=await sendProjectInviteEmails(proj,inviteEmails);
+      /* In-app invites: DB trigger on fs_projects inserts fs_notifications for registered member emails (apply migration 003). */
+      if(allEmailRecipients.length){
+        const emailResult=await sendProjectInviteEmails(proj,allEmailRecipients);
         if(emailResult.sent>0){
           inviteToastShown=true;
-          toast(`Invite email${emailResult.sent===1?' was':'s were'} sent to ${emailResult.sent} recipient${emailResult.sent===1?'':'s'}.`,'success','Emails sent');
+          toast(`Invite email${emailResult.sent===1?' was':'s were'} sent to ${emailResult.sent} address${emailResult.sent===1?'':'es'}.`,'success','Emails sent');
+        }else if(emailResult.skipped){
+          inviteToastShown=true;
+          toast(emailResult.message||'Project saved. In-app invites appear for teammates who already have accounts.','success','Invites');
         }
       }
     }catch(e){
-      console.warn('sendProjectInvites',e);
-      toast(e.message||'Project created, but some invites could not be sent.','error');
+      console.warn('project invites / email',e);
+      toast(e.message||'Project created, but some invite steps failed. Check the Team tab and try again.','error');
     }
   }
   closeModal('modal-new-project');
@@ -4108,8 +4187,212 @@ async function createProject(){
 /* ══════════════════════════════════════════════
    DASHBOARD
 ══════════════════════════════════════════════ */
+function isProjectLead(proj){
+  return !!(proj&&currentUser&&proj.ownerId===currentUser.id);
+}
+
+function memberInviteRowStatus(m,proj){
+  if(proj.ownerId===m.id)return'lead';
+  if(m.inviteUserId)return'joined';
+  return'pending';
+}
+
+function renderTeamSection(){
+  const el=document.getElementById('dash-team-list');
+  const card=document.getElementById('dash-team-card');
+  if(!el||!currentProject)return;
+  if(card)card.style.display='';
+  const p=currentProject;
+  const lead=isProjectLead(p);
+  const addBtn=lead
+    ?`<div style="margin-bottom:14px"><button type="button" class="btn btn-primary btn-sm" onclick="openAddTeamMemberModal()">+ Add member</button></div>`
+    :'';
+  const rows=!p.members||!p.members.length
+    ?'<p style="font-size:13px;color:var(--txt2)">No members listed yet.</p>'
+    :p.members.map((m,i)=>{
+      const st=memberInviteRowStatus(m,p);
+      const label=st==='lead'?'Lead':st==='joined'?'Joined':'Pending';
+      const cls=st==='lead'?'lead':st==='joined'?'joined':'pending';
+      const email=String(m.email||'').trim();
+      const canRemove=lead&&st!=='lead';
+      return`<div class="team-member-row">
+      <div class="team-member-meta">
+        <div class="avatar ${getAvatarClass(m.name)}" style="width:36px;height:36px;font-size:12px">${getInitials(m.name||email||'?')}</div>
+        <div style="min-width:0">
+          <div style="font-weight:600">${esc(m.name||email||'Member')}</div>
+          ${email?`<div class="team-email">${esc(email)}</div>`:''}
+        </div>
+        <span class="team-status ${cls}">${label}</span>
+      </div>
+      ${canRemove?`<button type="button" class="btn btn-ghost btn-sm" onclick="removeProjectMember(${i})">Remove</button>`:''}
+    </div>`;
+    }).join('');
+  el.innerHTML=addBtn+rows;
+}
+
+function openAddTeamMemberModal(){
+  if(!currentProject||!isProjectLead(currentProject)){toast('Only the project lead can add members.','error');return}
+  const lab=document.getElementById('atm-project-label');
+  if(lab)lab.textContent=currentProject.name||'this project';
+  const n=document.getElementById('atm-name');
+  const e=document.getElementById('atm-email');
+  if(n)n.value='';
+  if(e)e.value='';
+  openModal('modal-add-team-member');
+  setTimeout(()=>{(e||n)&&((e||n).focus())},100);
+}
+
+async function submitAddTeamMember(){
+  if(!currentProject||!currentUser)return;
+  if(!isProjectLead(currentProject)){toast('Only the project lead can add members.','error');return}
+  const name=String((document.getElementById('atm-name')||{}).value||'').trim();
+  const email=String((document.getElementById('atm-email')||{}).value||'').trim().toLowerCase();
+  if(!email){toast('Enter an email address.','error');return}
+  if(!isValidEmailFormat(email)){toast('Enter a valid email address.','error');return}
+  const ownerLc=String(currentUser.email||'').trim().toLowerCase();
+  if(email===ownerLc){toast('You’re already the project lead.','error');return}
+  const projects=loadProjects();
+  const ix=projects.findIndex(x=>x.id===currentProject.id);
+  if(ix<0){toast('Project not found.','error');return}
+  const existing=projects[ix].members||[];
+  if(existing.some(m=>String(m.email||'').trim().toLowerCase()===email)){
+    toast('That email is already on this project.','error');
+    return;
+  }
+  const displayName=name||email.split('@')[0];
+  let nextMembers=[...existing,{id:genId('m'),name:displayName,email}];
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.resolveProjectMembers==='function'){
+    try{
+      nextMembers=await window.FSB.resolveProjectMembers(nextMembers);
+    }catch(err){
+      console.warn('resolveProjectMembers',err);
+    }
+  }
+  const byEmail=new Map();
+  nextMembers.forEach(m=>{
+    const em=String(m.email||'').trim().toLowerCase();
+    if(em&&!byEmail.has(em))byEmail.set(em,m);
+  });
+  const merged=[...byEmail.values()];
+  const updated={...projects[ix],members:merged};
+  projects[ix]=updated;
+  STORE.set('projects_'+currentUser.id,projects);
+  currentProject=updated;
+  try{
+    if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.persistNow==='function'){
+      await window.FSB.persistNow();
+    }
+  }catch(err){
+    console.warn(err);
+    toast(err.message||'Could not save to the cloud.','error');
+    return;
+  }
+  closeModal('modal-add-team-member');
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
+    try{
+      const emailResult=await sendProjectInviteEmails(currentProject,[email]);
+      if(emailResult.sent>0)toast(`Member added. Invite email sent to ${email}.`,'success');
+      else if(emailResult.skipped)toast(emailResult.message||'Member added. Teammates with accounts also get an in-app invite.','success');
+      else toast('Member added to this project.','success');
+    }catch(err){
+      console.warn('sendProjectInviteEmails',err);
+      toast('Member saved. Invite email failed — they may still get an in-app notification.','success');
+    }
+  }else{
+    toast('Member added to this project.','success');
+  }
+  const ch=document.getElementById('chat-members-online');
+  if(ch)ch.textContent=`${currentProject.members.length} members in this project`;
+  renderDashboard();
+  renderProjectList();
+}
+
+async function deleteCurrentProject(){
+  if(!currentProject||!currentUser)return;
+  if(!isProjectLead(currentProject)){
+    toast('Only the project lead can delete this project.','error');
+    return;
+  }
+  const pid=currentProject.id;
+  const label=String(currentProject.name||'this project').trim()||'this project';
+  if(!confirm(`Delete “${label}” permanently? This cannot be undone. Tasks, documents, and chat for this project will be removed for everyone.`))return;
+  const cloud=window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo;
+  if(cloud&&typeof window.FSB.deleteProject==='function'){
+    const r=await window.FSB.deleteProject(pid);
+    if(!r||!r.ok){toast((r&&r.error)||'Could not delete project','error');return}
+  }else{
+    const projects=loadProjects().filter(p=>p.id!==pid);
+    STORE.set('projects_'+currentUser.id,projects);
+    if(typeof STORE.del==='function'){
+      STORE.del('tasks_'+pid);
+      STORE.del('docs_'+pid);
+      STORE.del('activity_'+pid);
+    }
+    try{
+      const pre='fs4_';
+      for(let i=localStorage.length-1;i>=0;i--){
+        const full=localStorage.key(i);
+        if(!full||full.indexOf(pre)!==0)continue;
+        const sk=full.slice(pre.length);
+        if(sk.indexOf('chat_'+pid+'_')===0)localStorage.removeItem(full);
+      }
+    }catch(e){}
+  }
+  try{
+    clearInterval(activityInterval);
+    activityInterval=null;
+    if(window.FSB&&typeof window.FSB.stopChatRealtime==='function')window.FSB.stopChatRealtime();
+    if(window.FSB&&typeof window.FSB.stopActivitiesRealtime==='function')window.FSB.stopActivitiesRealtime();
+  }catch(e){}
+  currentProject=null;
+  try{if(currentUser&&currentUser.id)STORE.del('current_project_'+currentUser.id)}catch(e){}
+  toast('Project deleted','success');
+  showPage('projects',document.querySelector('[data-page=projects]'));
+  renderProjectList();
+  const tpn=document.getElementById('tasks-project-name');
+  const dpn=document.getElementById('docs-project-name');
+  if(tpn)tpn.textContent='Select a project first';
+  if(dpn)dpn.textContent='Select a project first';
+  const ch=document.getElementById('chat-members-online');
+  if(ch)ch.textContent='Select a project to start chatting';
+}
+
+async function removeProjectMember(memberIndex){
+  if(!currentProject||!currentUser)return;
+  const p=currentProject;
+  if(p.ownerId!==currentUser.id){toast('Only the project lead can remove people.','error');return}
+  const m=p.members[memberIndex];
+  if(!m)return;
+  if(m.id===p.ownerId){toast('You can’t remove the project lead.','error');return}
+  const nm=String(m.name||m.email||'this person').trim();
+  if(!confirm(`Remove ${nm} from this project? They will lose access after syncing.`))return;
+  const projects=loadProjects();
+  const ix=projects.findIndex(x=>x.id===p.id);
+  if(ix<0)return;
+  const next={...projects[ix],members:projects[ix].members.filter((_,i)=>i!==memberIndex)};
+  projects[ix]=next;
+  STORE.set('projects_'+currentUser.id,projects);
+  currentProject=next;
+  try{
+    if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.persistNow==='function')await window.FSB.persistNow();
+  }catch(e){console.warn(e)}
+  toast('Member removed','success');
+  const ch=document.getElementById('chat-members-online');
+  if(ch)ch.textContent=`${currentProject.members.length} members in this project`;
+  renderDashboard();
+  renderProjectList();
+}
+
 function renderDashboard(){
-  if(!currentProject)return;
+  if(!currentProject){
+    const teamEl=document.getElementById('dash-team-list');
+    const teamCard=document.getElementById('dash-team-card');
+    if(teamEl)teamEl.innerHTML='';
+    if(teamCard)teamCard.style.display='none';
+    const delBtn=document.getElementById('dash-delete-project-btn');
+    if(delBtn)delBtn.style.display='none';
+    return;
+  }
   const p=currentProject;
   const tasks=STORE.get('tasks_'+p.id)||[];
   const done=tasks.filter(t=>t.status==='done').length;
@@ -4128,6 +4411,9 @@ function renderDashboard(){
     <span style="color:${dl!==null&&dl<7?'var(--amber)':'var(--txt2)'}">Due ${formatDateFull(p.deadline)||'no deadline'}</span>`;
   document.getElementById('dash-pct').textContent=pct+'%';
   document.getElementById('dash-progress').style.width=pct+'%';
+
+  const delBtn=document.getElementById('dash-delete-project-btn');
+  if(delBtn)delBtn.style.display=isProjectLead(p)?'inline-flex':'none';
 
   document.getElementById('dash-stats').innerHTML=`
     <div class="stat-card stat-card-accent">
@@ -4155,6 +4441,7 @@ function renderDashboard(){
   renderContributions();
   renderLiveFeed();
   renderUpcoming();
+  renderTeamSection();
 }
 
 /* ══════════════════════════════════════════════
@@ -6470,6 +6757,10 @@ function openModal(id){
   if(id==='modal-new-project'){
     const ts=document.getElementById('np-template');
     if(ts){ts.value='blank';applyNpTemplateHint()}
+  }
+  if(id==='modal-add-team-member'){
+    const lab=document.getElementById('atm-project-label');
+    if(lab&&currentProject)lab.textContent=currentProject.name||'this project';
   }
   if(id==='modal-export')renderWCByMember();
   document.getElementById(id).classList.add('open');

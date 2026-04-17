@@ -40,6 +40,7 @@
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce',
         storage,
       },
     });
@@ -81,6 +82,17 @@
     return o;
   }
 
+  /** Lowercase emails in members[] so RLS + triggers match profiles.email reliably. */
+  function normalizeProjectMembers(members) {
+    if (!Array.isArray(members)) return members;
+    return members.map((m) => {
+      if (!m || typeof m !== 'object') return m;
+      const raw = m.email;
+      if (raw == null || String(raw).trim() === '') return { ...m };
+      return { ...m, email: String(raw).trim().toLowerCase() };
+    });
+  }
+
   function memSet(k, v) {
     mem[k] = v === undefined ? null : JSON.parse(JSON.stringify(v));
     scheduleFlush();
@@ -113,8 +125,20 @@
     const b = r.body || {};
     return { ...b, id: r.id, projectId: r.project_id, channel: r.channel };
   }
+  function parseJsonBody(b) {
+    if (b == null) return {};
+    if (typeof b === 'string') {
+      try {
+        return JSON.parse(b);
+      } catch {
+        return {};
+      }
+    }
+    return typeof b === 'object' ? b : {};
+  }
+
   function rowNotif(r) {
-    const b = r.body || {};
+    const b = parseJsonBody(r.body);
     return { ...b, id: r.id };
   }
 
@@ -153,6 +177,43 @@
     }
   }
 
+  /**
+   * Load one project via RPC (authoritative membership check) or table fallback; merge into mem.
+   */
+  async function loadProjectRowForSession(projectId) {
+    if (!remote || !sb || !viewerId) return null;
+    const pid = String(projectId || '').trim();
+    if (!pid) return null;
+    let row = null;
+    const { data: rpcData, error: rpcErr } = await sb.rpc('fs_get_project_for_user', { project_id: pid });
+    if (!rpcErr && rpcData != null) {
+      const arr = Array.isArray(rpcData) ? rpcData : [rpcData];
+      row = arr.find((r) => r && (r.id === pid || r.body)) || arr[0] || null;
+    } else if (rpcErr) {
+      console.warn('[FSB] fs_get_project_for_user', pid, rpcErr.message || rpcErr);
+    }
+    if (!row) {
+      const { data: fb, error: fbErr } = await sb.from('fs_projects').select('*').eq('id', pid).maybeSingle();
+      if (fbErr) console.warn('[FSB] fs_projects fetch fallback', pid, fbErr.message || fbErr);
+      else row = fb;
+    }
+    if (!row) return null;
+    const b = parseJsonBody(row.body);
+    const proj = {
+      ...b,
+      id: row.id,
+      ownerId: b.ownerId || row.owner_id,
+      owner_id: row.owner_id,
+    };
+    const key = 'projects_' + viewerId;
+    const list = Array.isArray(mem[key]) ? [...mem[key]] : [];
+    const ix = list.findIndex((p) => p.id === pid);
+    if (ix >= 0) list[ix] = proj;
+    else list.unshift(proj);
+    mem[key] = list;
+    return proj;
+  }
+
   async function hydrateSession(uid) {
     let run = hydrateInflight.get(uid);
     if (run) return run;
@@ -177,7 +238,7 @@
       mem['_prof_' + uid] = prof || null;
 
       const projects = (prows || []).map((r) => {
-        const b = r.body || {};
+        const b = parseJsonBody(r.body);
         return {
           ...b,
           id: r.id,
@@ -190,7 +251,24 @@
       if (sets?.score_config) mem['score_config'] = sets.score_config;
       mem['notifs_' + uid] = (nrows || []).map(rowNotif);
 
-      const pids = projects.map((p) => p.id);
+      const have = new Set((mem['projects_' + uid] || []).map((p) => p.id));
+      const need = [
+        ...new Set(
+          (mem['notifs_' + uid] || [])
+            .filter((n) => String(n.type || '').toLowerCase() === 'project_invite' && n.projectId)
+            .map((n) => String(n.projectId).trim())
+            .filter((id) => id)
+        ),
+      ].filter((id) => !have.has(id));
+      for (const nid of need) {
+        try {
+          await loadProjectRowForSession(nid);
+        } catch (e) {
+          console.warn('[FSB] invite project merge', nid, e);
+        }
+      }
+
+      const pids = (mem['projects_' + uid] || []).map((p) => p.id);
       let allProf = null;
       if (prof?.role === 'admin' || prof?.role === 'instructor') {
         const { data: ap } = await sb.from('profiles').select('*');
@@ -296,12 +374,18 @@
         if (uid !== viewerId) continue;
         const arr = mem[k];
         if (!Array.isArray(arr)) continue;
+        /* Only persist rows this user owns. Shared projects (member view) must not be upserted with viewerId as owner. */
+        const owned = arr.filter((p) => {
+          const oid = p.ownerId || p.owner_id;
+          return oid === viewerId;
+        });
         const { data: existing } = await sb.from('fs_projects').select('id').eq('owner_id', viewerId);
-        const keep = new Set(arr.map((p) => p.id));
+        const keep = new Set(owned.map((p) => p.id));
         for (const row of existing || []) {
           if (!keep.has(row.id)) await sb.from('fs_projects').delete().eq('id', row.id);
         }
-        for (const p of arr) {
+        for (const p of owned) {
+          p.members = normalizeProjectMembers(p.members);
           const body = {
             name: p.name,
             desc: p.desc,
@@ -312,10 +396,11 @@
             status: p.status,
             ownerId: p.ownerId || viewerId,
           };
-          await sb.from('fs_projects').upsert(
+          const { error: upErr } = await sb.from('fs_projects').upsert(
             { id: p.id, owner_id: viewerId, body },
             { onConflict: 'id' }
           );
+          if (upErr) console.warn('[FSB] fs_projects upsert', p.id, upErr);
         }
       } else if (k.startsWith('tasks_')) {
         const pid = k.slice('tasks_'.length);
@@ -611,14 +696,26 @@
           }
           return;
         }
-        /* OAuth redirect: Supabase emits INITIAL_SESSION with the new session, not always SIGNED_IN. */
+        /* OAuth redirect: Supabase emits INITIAL_SESSION with the new session, not always SIGNED_IN.
+         * Apply JWT-backed user immediately; hydrate in background (same pattern as password signIn). */
         if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
           try {
-            await hydrateSession(session.user.id);
-            this.lastUser = await mapSessionUser(session);
+            this.lastUser = userFromSession(session);
             if (typeof window._fairShareApplyLogin === 'function') {
               window._fairShareApplyLogin(this.lastUser);
             }
+            void hydrateSession(session.user.id)
+              .then(async () => {
+                const {
+                  data: { session: s2 },
+                } = await sb.auth.getSession();
+                if (!s2?.user?.id) return;
+                this.lastUser = await mapSessionUser(s2);
+                if (typeof window._fairShareApplyLogin === 'function') {
+                  window._fairShareApplyLogin(this.lastUser);
+                }
+              })
+              .catch((e) => console.warn('[FSB] auth state hydrate', e));
           } catch (e) {
             console.warn('[FSB] auth state', event, e);
           }
@@ -642,15 +739,26 @@
         }
         if (session?.user) {
           try {
-            await hydrateSession(session.user.id);
+            this.lastUser = userFromSession(session);
           } catch (e) {
-            console.warn('[FSB] getSession hydrate', e);
+            console.warn('[FSB] userFromSession after getSession', e);
           }
-          try {
-            this.lastUser = await mapSessionUser(session);
-          } catch (e) {
-            console.warn('[FSB] mapSessionUser after session', e);
-          }
+          void hydrateSession(session.user.id)
+            .then(async () => {
+              const {
+                data: { session: s2 },
+              } = await sb.auth.getSession();
+              if (!s2?.user?.id) return;
+              try {
+                this.lastUser = await mapSessionUser(s2);
+                if (typeof window._fairShareRefreshAfterHydrate === 'function') {
+                  window._fairShareRefreshAfterHydrate(this.lastUser);
+                }
+              } catch (e) {
+                console.warn('[FSB] mapSessionUser after hydrate', e);
+              }
+            })
+            .catch((e) => console.warn('[FSB] getSession hydrate', e));
         }
       }
     },
@@ -826,6 +934,50 @@
       } = await sb.auth.getSession();
       if (!session?.user?.id) return;
       await hydrateSession(session.user.id);
+    },
+
+    /**
+     * Load one project by id (RLS must allow — e.g. invitee is a member) and merge into session project list.
+     * Used when opening a project from an invite if the list was stale.
+     */
+    async fetchProjectById(projectId) {
+      return loadProjectRowForSession(projectId);
+    },
+
+    /**
+     * Permanently delete a project (owner only). Cascades on DB; clears local mem + realtime channels.
+     */
+    async deleteProject(projectId) {
+      if (!sb || !viewerId) return { ok: false, error: 'Not signed in' };
+      const pid = String(projectId || '').trim();
+      if (!pid) return { ok: false, error: 'Missing project id' };
+      const key = 'projects_' + viewerId;
+      const list = mem[key] || [];
+      const p = list.find((x) => x.id === pid);
+      const oid = p?.ownerId || p?.owner_id;
+      if (oid !== viewerId) {
+        return { ok: false, error: 'Only the project lead can delete this project' };
+      }
+      if (remote && window.__FAIRSHARE_USE_REMOTE__) {
+        const { error } = await sb.from('fs_projects').delete().eq('id', pid);
+        if (error) {
+          console.warn('[FSB] deleteProject', error);
+          return { ok: false, error: error.message || 'Could not delete project' };
+        }
+      }
+      mem[key] = list.filter((x) => x.id !== pid);
+      delete mem['tasks_' + pid];
+      delete mem['docs_' + pid];
+      delete mem['activity_' + pid];
+      for (const mk of Object.keys(mem)) {
+        if (mk.startsWith('chat_' + pid + '_')) delete mem[mk];
+      }
+      releaseActivityChannel();
+      if (chatChannel && sb) {
+        sb.removeChannel(chatChannel);
+        chatChannel = null;
+      }
+      return { ok: true };
     },
 
     async updateProfile({ fullName }) {
