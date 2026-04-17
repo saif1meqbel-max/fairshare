@@ -842,6 +842,24 @@
       return rows.length;
     },
 
+    /**
+     * Notify other project members (with accounts) that a new document was added. Requires migration 006 (RPC).
+     */
+    async notifyDocumentShared(project, doc) {
+      if (!remote || !sb || !viewerId || !project || !doc) return;
+      if (this.localDemo) return;
+      const pid = String(project.id || '').trim();
+      const did = String(doc.id || '').trim();
+      if (!pid || !did) return;
+      const title = String(doc.title || 'Untitled').slice(0, 200);
+      const { error } = await sb.rpc('fs_notify_document_shared', {
+        p_project_id: pid,
+        p_document_id: did,
+        p_document_title: title,
+      });
+      if (error) console.warn('[FSB] notifyDocumentShared', error.message || error);
+    },
+
     async signIn(email, password) {
       if (!sb) throw new Error('Supabase not configured');
       this.localDemo = false;

@@ -3229,7 +3229,7 @@ function renderProjectInvites(){
     const title=not.title||'Project invite';
     return`<div class="invite-row">
       <div class="invite-row-text"><strong>${esc(title)}</strong> · ${timeAgo(not.ts||Date.now())}</div>
-      <button type="button" class="btn btn-primary btn-sm" onclick="openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})">Open project</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick='openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})'>Open project</button>
     </div>`;
   }).join('');
 }
@@ -4139,6 +4139,11 @@ async function handleDocImportFiles(input){
   imported.forEach(doc=>docs.push(doc));
   STORE.set('docs_'+currentProject.id,docs);
   imported.forEach(doc=>logActivity({type:'doc_edit',text:`imported document: ${doc.title}`}));
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.notifyDocumentShared==='function'){
+    imported.forEach(doc=>{
+      void window.FSB.notifyDocumentShared(currentProject,doc).catch(e=>console.warn('notifyDocumentShared',e));
+    });
+  }
   renderDocList();
   openDoc(imported[imported.length-1].id);
   if(imported.length>1)toast(imported.length+' documents imported — opened the last one.','success');
@@ -4162,6 +4167,9 @@ function createDocWithKind(kind){
   docs.push(doc);STORE.set('docs_'+currentProject.id,docs);
   const lab=kind==='document'?'document':kind==='slides'?'presentation':'spreadsheet';
   logActivity({type:'doc_edit',text:`created ${lab}`});
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.notifyDocumentShared==='function'){
+    void window.FSB.notifyDocumentShared(currentProject,doc).catch(e=>console.warn('notifyDocumentShared',e));
+  }
   openDoc(doc.id);
 }
 
@@ -5049,8 +5057,8 @@ function addNotification(title,type='info'){
 function renderNotifications(){
   if(!currentUser)return;
   const notifs=STORE.get('notifs_'+currentUser.id)||[];
-  const typeIcons={task_complete:'✅',doc_edit:'✏️',comment:'💬',task_assign:'📋',project_invite:'📁',info:'ℹ️'};
-  const typeBg={task_complete:'rgba(0,212,170,0.1)',doc_edit:'rgba(79,124,255,0.1)',comment:'rgba(255,179,71,0.1)',task_assign:'rgba(155,109,255,0.1)',project_invite:'rgba(0,212,170,0.12)',info:'rgba(255,255,255,0.05)'};
+  const typeIcons={task_complete:'✅',doc_edit:'✏️',comment:'💬',task_assign:'📋',project_invite:'📁',doc_shared:'📄',info:'ℹ️'};
+  const typeBg={task_complete:'rgba(0,212,170,0.1)',doc_edit:'rgba(79,124,255,0.1)',comment:'rgba(255,179,71,0.1)',task_assign:'rgba(155,109,255,0.1)',project_invite:'rgba(0,212,170,0.12)',doc_shared:'rgba(79,124,255,0.12)',info:'rgba(255,255,255,0.05)'};
   document.getElementById('notif-list').innerHTML=notifs.length?notifs.map(n=>`
     <div class="notif-item ${n.read?'':'unread'}" onclick="markRead('${n.id}')">
       <div class="notif-icon" style="background:${typeBg[n.type]||typeBg.info}">${typeIcons[n.type]||'📌'}</div>
