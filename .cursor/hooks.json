@@ -3,8 +3,8 @@
   "hooks": {
     "stop": [
       {
-        "command": ".cursor/hooks/git-sync.sh",
-        "timeout": 120
+        "command": ".cursor/hooks/on-stop-vercel.sh",
+        "timeout": 600
       }
     ]
   }

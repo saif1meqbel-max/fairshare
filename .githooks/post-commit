@@ -1,0 +1,8 @@
+#!/bin/sh
+# After each commit, sync working tree to Vercel production (same as Cursor stop hook).
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$ROOT" || exit 0
+if command -v npx >/dev/null 2>&1; then
+  npx vercel deploy --prod --yes || true
+fi
+exit 0

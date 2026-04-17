@@ -26,6 +26,7 @@ window.__FAIRSHARE__ = {
    Font pair: Syne (display) + DM Sans (body)
 ════════════════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0}
+body.mobile-nav-open{overflow:hidden}
 
 :root{
   /* Core palette */
@@ -155,11 +156,43 @@ html[data-theme="ocean"]{
   --nav-search-focus-bg:rgba(16,32,52,0.82);
   --app-footer-bg:rgba(6,14,24,0.45);
 }
+html[data-theme="pink"]{
+  --ink:#0f0a12;
+  --ink2:#160f1a;
+  --ink3:#1f1524;
+  --ink4:#2a1a32;
+  --surface:#180f1e;
+  --surface2:#1e1228;
+  --surface3:#261830;
+  --txt:#fdf2f8;
+  --txt2:#c4a8d4;
+  --txt3:#8a7498;
+  --teal:#ff4d9d;
+  --teal2:#e6338a;
+  --blue:#a78bfa;
+  --purple:#e879f9;
+  --amber:#fbbf24;
+  --red:#fb7185;
+  --green:#f472b6;
+  --border:rgba(255,120,200,0.1);
+  --border2:rgba(255,120,200,0.16);
+  --border3:rgba(255,140,210,0.24);
+  --shadow:0 4px 24px rgba(80,0,60,0.42);
+  --shadow-lg:0 22px 60px rgba(60,0,45,0.48);
+  --glow-teal:0 0 30px rgba(255,77,157,0.18),0 0 60px rgba(255,77,157,0.08);
+  --btn-primary-fg:#1a0510;
+  --skip-fg:#1a0510;
+  --topnav-bg:rgba(22,12,28,0.94);
+  --nav-search-bg:rgba(15,8,18,0.55);
+  --nav-search-focus-bg:rgba(35,18,42,0.88);
+  --app-footer-bg:rgba(12,6,14,0.5);
+}
 
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--ink);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(0,212,170,0.22);color:var(--txt)}
 html[data-theme="light"] ::selection{background:rgba(0,168,138,0.18);color:var(--txt)}
+html[data-theme="pink"] ::selection{background:rgba(255,77,157,0.28);color:var(--txt)}
 html[data-theme="light"] .kbd{box-shadow:0 1px 0 rgba(15,23,42,0.08)}
 .skip-link{
   position:absolute;left:12px;top:-100px;z-index:10000;
@@ -179,7 +212,7 @@ html[data-theme="light"] .kbd{box-shadow:0 1px 0 rgba(15,23,42,0.08)}
 ════════════════════════════════════════════════ */
 #auth-screen{
   display:none;align-items:center;justify-content:center;
-  min-height:100vh;padding:20px;
+  min-height:100vh;padding:28px;
   background:var(--ink);
   position:relative;overflow:hidden;
 }
@@ -214,16 +247,42 @@ html[data-theme="light"] .auth-grid{
     linear-gradient(90deg, rgba(15,23,42,0.05) 1px, transparent 1px);
 }
 
+.auth-shell{
+  position:relative;z-index:1;
+  width:100%;max-width:1080px;
+  display:grid;grid-template-columns:minmax(320px,1.05fr) minmax(360px,420px);
+  gap:24px;align-items:stretch;
+  animation:authIn 0.5s cubic-bezier(0.34,1.4,0.64,1);
+}
+.auth-side{
+  background:
+    radial-gradient(ellipse at top left, rgba(0,212,170,0.13), transparent 45%),
+    linear-gradient(160deg, rgba(21,28,42,0.96), rgba(10,13,18,0.96));
+  border:1px solid var(--border2);
+  border-radius:var(--r4);
+  box-shadow:var(--shadow-lg);
+  padding:40px 38px;
+  display:flex;flex-direction:column;justify-content:space-between;min-height:620px;
+}
 .auth-card{
   background:var(--surface);
   border:1px solid var(--border2);
   border-radius:var(--r4);
   box-shadow:var(--shadow-lg);
-  padding:44px;
-  width:100%;max-width:420px;
-  position:relative;z-index:1;
-  animation:authIn 0.5s cubic-bezier(0.34,1.4,0.64,1);
+  padding:38px 34px;
+  width:100%;
+  position:relative;
 }
+.auth-tabs{
+  display:flex;gap:6px;margin-bottom:18px;padding:4px;
+  background:var(--ink3);border:1px solid var(--border);border-radius:14px;
+}
+.auth-tab{
+  flex:1;padding:10px 14px;border:none;border-radius:10px;background:transparent;
+  color:var(--txt2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;
+}
+.auth-tab:hover{color:var(--txt)}
+.auth-tab.active{background:var(--surface2);color:var(--txt);box-shadow:inset 0 0 0 1px var(--border2)}
 @keyframes authIn{from{opacity:0;transform:translateY(24px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 .auth-logo-wrap{display:flex;align-items:center;gap:12px;margin-bottom:28px}
@@ -244,9 +303,62 @@ html[data-theme="light"] .auth-grid{
 }
 .auth-logo-text{font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:-0.5px;color:var(--txt)}
 .auth-logo-text span{color:var(--teal)}
+.auth-side-kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  width:fit-content;padding:8px 12px;border-radius:999px;
+  font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.16);color:var(--teal);
+  margin-bottom:18px;
+}
+.auth-side-title{
+  font-family:var(--font-display);font-size:40px;font-weight:800;letter-spacing:-1.6px;line-height:1.02;
+  margin-bottom:14px;max-width:12ch;
+}
+.auth-side-copy{font-size:15px;color:var(--txt2);line-height:1.7;max-width:58ch}
+.auth-side-points{display:grid;gap:12px;margin-top:24px}
+.auth-point{
+  display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+}
+.auth-point-icon{
+  width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,212,170,0.1);color:var(--teal);font-size:16px;flex-shrink:0
+}
+.auth-point-title{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px}
+.auth-point-sub{font-size:12px;color:var(--txt2);line-height:1.45}
+.auth-side-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}
+.auth-side-meta{font-size:12px;color:var(--txt3)}
+.auth-back-link{
+  display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--txt2);
+  text-decoration:none;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.02)
+}
+.auth-back-link:hover{color:var(--txt);border-color:var(--border3);text-decoration:none}
 
 .auth-headline{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:8px}
-.auth-sub{font-size:14px;color:var(--txt2);margin-bottom:30px;line-height:1.5}
+.auth-sub{font-size:14px;color:var(--txt2);margin-bottom:26px;line-height:1.5}
+.auth-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px}
+.auth-card-badge{
+  font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal);
+  background:rgba(0,212,170,0.07);border:1px solid rgba(0,212,170,0.14);padding:8px 10px;border-radius:999px;white-space:nowrap
+}
+.auth-link-row{
+  display:flex;justify-content:space-between;align-items:center;margin:-2px 0 8px;flex-wrap:wrap;gap:8px
+}
+.auth-link-btn{
+  background:none;border:none;padding:0;color:var(--txt2);font-size:12px;font-weight:500;cursor:pointer
+}
+.auth-link-btn:hover{color:var(--teal);text-decoration:underline}
+.auth-actions{display:grid;gap:12px}
+.auth-aux{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+.auth-aux-title{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+.auth-status{
+  display:none;margin-bottom:14px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.5;
+  border:1px solid var(--border2);background:var(--ink3);color:var(--txt2)
+}
+.auth-status.show{display:block}
+.auth-status.error{border-color:rgba(255,92,122,0.25);background:rgba(255,92,122,0.08);color:#ffc6d2}
+.auth-status.success{border-color:rgba(0,212,170,0.22);background:rgba(0,212,170,0.08);color:#b9fff0}
+.auth-status.loading{border-color:rgba(79,124,255,0.22);background:rgba(79,124,255,0.08);color:#c9d8ff}
 
 /* Auth panels */
 .auth-panel{display:none}
@@ -268,6 +380,13 @@ html[data-theme="light"] .auth-grid{
   box-shadow:0 0 0 3px rgba(0,212,170,0.12);
 }
 .field select option{background:var(--ink3)}
+.field-password{position:relative}
+.field-password input{padding-right:48px}
+.password-toggle{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  border:none;background:none;color:var(--txt3);font-size:12px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px
+}
+.password-toggle:hover{color:var(--txt);background:rgba(255,255,255,0.04)}
 
 /* Buttons */
 .btn{
@@ -309,6 +428,7 @@ html[data-theme="light"] .auth-grid{
 .btn-xs{padding:4px 10px;font-size:11px;border-radius:6px}
 .btn-danger{background:rgba(255,92,122,0.12);color:var(--red);border:1px solid rgba(255,92,122,0.2)}
 .btn-danger:hover{background:rgba(255,92,122,0.2)}
+.btn[disabled]{opacity:0.62;cursor:wait;transform:none !important;box-shadow:none !important}
 
 .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--txt3);font-size:12px}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -317,7 +437,7 @@ html[data-theme="light"] .auth-grid{
 .auth-switch a{color:var(--teal);cursor:pointer;font-weight:500;text-decoration:none}
 .auth-switch a:hover{text-decoration:underline}
 .auth-trust{
-  margin-top:20px;padding-top:18px;border-top:1px solid var(--border);
+  margin-top:18px;padding-top:18px;border-top:1px solid var(--border);
   font-size:11px;color:var(--txt3);line-height:1.45;text-align:center;
 }
 .auth-remember{display:flex;align-items:center;gap:10px;margin:12px 0 16px;font-size:13px;color:var(--txt2);cursor:pointer;user-select:none}
@@ -355,6 +475,12 @@ html[data-theme="light"] .auth-grid{
 html[data-theme="light"] .topnav{
   box-shadow:0 1px 0 rgba(15,23,42,0.06),0 4px 24px rgba(15,23,42,0.06);
 }
+.mobile-nav-toggle{
+  display:none;
+  width:38px;height:38px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--txt);font-size:18px;cursor:pointer;flex-shrink:0
+}
+.mobile-nav-toggle:hover{background:var(--surface3)}
 
 .nav-logo{display:flex;align-items:center;gap:9px;margin-right:6px;text-decoration:none}
 .nav-logo-icon{
@@ -422,6 +548,37 @@ html[data-theme="light"] .nav-search:focus{
 }
 
 .nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.mobile-nav-drawer{
+  position:fixed;left:0;top:0;bottom:0;width:min(320px,84vw);
+  background:var(--surface);border-right:1px solid var(--border2);
+  transform:translateX(-100%);transition:transform 0.22s ease;z-index:160;
+  box-shadow:24px 0 56px rgba(0,0,0,0.42);display:flex;flex-direction:column
+}
+.mobile-nav-drawer.open{transform:translateX(0)}
+.mobile-nav-overlay{
+  position:fixed;inset:0;background:rgba(5,8,14,0.58);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity 0.2s ease;z-index:150
+}
+.mobile-nav-overlay.open{opacity:1;pointer-events:auto}
+.mobile-nav-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 18px 14px;border-bottom:1px solid var(--border)
+}
+.mobile-nav-brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;color:var(--txt)}
+.mobile-nav-close{
+  width:34px;height:34px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--txt2);cursor:pointer
+}
+.mobile-nav-list{padding:14px 12px 20px;display:grid;gap:6px;overflow:auto}
+.mobile-nav-link{
+  width:100%;display:flex;align-items:center;justify-content:flex-start;gap:10px;
+  padding:13px 14px;border-radius:12px;border:1px solid transparent;background:none;
+  color:var(--txt2);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;text-align:left
+}
+.mobile-nav-link:hover,.mobile-nav-link.active{background:var(--surface2);border-color:var(--border2);color:var(--txt)}
+.mobile-nav-link .tab-dot{margin-right:0}
+.mobile-nav-foot{margin-top:auto;padding:14px 12px 18px;border-top:1px solid var(--border);display:grid;gap:8px}
+.mobile-nav-foot .btn,.mobile-nav-foot .nav-text-btn{width:100%;justify-content:center}
 
 .nav-icon-btn{
   width:34px;height:34px;border-radius:9px;
@@ -688,6 +845,91 @@ textarea{resize:vertical;min-height:72px}
 .theme-card-title{font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:4px;color:var(--txt)}
 .theme-card-desc{font-size:12px;color:var(--txt2);line-height:1.4}
 .theme-swatch{height:10px;border-radius:5px;margin-top:12px;border:1px solid var(--border2)}
+
+/* Theme spectrum (modal) */
+.theme-spectrum-wrap{
+  margin:18px 0 22px;
+  padding:16px 18px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--r3);
+}
+.theme-spectrum-label{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--txt3);
+  margin-bottom:12px;
+}
+.theme-spectrum-visual{
+  position:relative;
+  height:28px;
+  border-radius:10px;
+  overflow:visible;
+  box-shadow:inset 0 0 0 1px var(--border2);
+}
+.theme-spectrum-visual:focus-within{
+  outline:2px solid var(--teal);
+  outline-offset:3px;
+  border-radius:12px;
+}
+.theme-spectrum-gradient{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,
+    #00d4aa 0%,
+    #94a3b8 22%,
+    #00e6bb 44%,
+    #22d3ee 66%,
+    #ff4d9d 100%);
+  pointer-events:none;
+}
+.theme-spectrum-range{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  margin:0;
+  opacity:0;
+  cursor:pointer;
+  z-index:2;
+}
+.theme-spectrum-thumb-ui{
+  position:absolute;
+  top:50%;
+  left:0%;
+  width:22px;
+  height:22px;
+  margin:0;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:var(--surface);
+  border:3px solid var(--txt);
+  box-shadow:0 2px 10px rgba(0,0,0,0.45),0 0 0 1px var(--border3);
+  pointer-events:none;
+  z-index:1;
+  transition:left 0.12s ease-out;
+}
+.theme-spectrum-ticks{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  font-size:10px;
+  color:var(--txt3);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  gap:4px;
+}
+.theme-spectrum-ticks span{
+  flex:1;
+  text-align:center;
+  line-height:1.2;
+}
+@media (max-width:480px){
+  .theme-spectrum-ticks{font-size:9px}
+}
 
 /* ════════════════════════════════════════════════
    PROJECT CARDS
@@ -1483,6 +1725,28 @@ textarea{resize:vertical;min-height:72px}
 .export-icon{font-size:24px}
 .export-label{font-size:13px;font-weight:600;color:var(--txt)}
 .export-sub{font-size:11px;color:var(--txt3)}
+.template-market-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.template-market-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;
+  cursor:pointer;transition:all 0.15s var(--ease-out)
+}
+.template-market-card:hover{transform:translateY(-1px);border-color:var(--border3)}
+.template-market-card.active{border-color:var(--teal);box-shadow:0 0 0 1px rgba(0,212,170,0.25)}
+.template-market-title{font-size:13px;font-weight:700;color:var(--txt)}
+.template-market-meta{font-size:11px;color:var(--txt3);margin-top:2px}
+.template-market-desc{font-size:12px;color:var(--txt2);margin-top:6px;line-height:1.4}
+.report-summary-box{font-size:13px;color:var(--txt2);line-height:1.6;white-space:pre-line}
+.health-timeline-row{display:flex;align-items:flex-end;gap:8px;height:120px;margin-top:12px}
+.health-timeline-bar{
+  flex:1;min-width:0;border-radius:10px 10px 6px 6px;background:linear-gradient(180deg,var(--teal),var(--blue));
+  box-shadow:inset 0 0 0 1px var(--border2);position:relative
+}
+.health-timeline-bar span{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:-20px;font-size:10px;color:var(--txt3);white-space:nowrap
+}
+.health-timeline-bar b{
+  position:absolute;left:50%;transform:translateX(-50%);top:6px;font-size:10px;color:var(--ink);font-weight:700
+}
 
 /* ── WC ROWS ── */
 .wc-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -1499,16 +1763,44 @@ textarea{resize:vertical;min-height:72px}
   .kanban{grid-template-columns:1fr}
   .chat-sidebar{width:220px}
   .doc-comment-pane{display:none}
+  .auth-shell{grid-template-columns:1fr}
+  .auth-side{min-height:auto;padding:28px 24px}
+  .auth-side-title{font-size:30px;max-width:none}
 }
 @media(max-width:640px){
   .grid2,.grid3,.grid4{grid-template-columns:1fr}
   .dash-hero{padding:20px}
   .dash-hero-title{font-size:22px}
   .main{padding:18px 16px 60px}
-  .topnav{padding:0 14px}
-  .nav-tab{padding:5px 10px;font-size:12px}
+  .topnav{padding:0 12px;gap:8px}
+  .mobile-nav-toggle{display:inline-flex;align-items:center;justify-content:center}
+  .nav-tabs{display:none}
+  .nav-logo-text{font-size:15px}
+  .nav-right{gap:6px}
+  .nav-text-btn{display:none}
+  .user-pill{padding:4px 8px 4px 4px}
+  .user-pill #nav-name{display:none}
+  .nav-search-wrap{display:none}
+  .page-title{font-size:22px}
+  .page-sub{font-size:13px}
+  .page-header .btn{width:100%}
+  .card-pad{padding:16px}
+  .stat-card{padding:16px}
+  .invite-banner{padding:16px}
+  .view-toggle{width:100%}
+  .view-toggle button{flex:1}
+  .data-table,.help-shortcuts-table{min-width:640px}
+  .sheet-wrap,#sheet-table-host, .compare-wrap{overflow:auto}
   .chat-sidebar{display:none}
-  .doc-editor-wrap{padding:28px 24px 80px}
+  .doc-editor-wrap{padding:22px 16px 88px}
+  .doc-toolbar{overflow:auto;padding-bottom:6px}
+  .doc-toolbar::-webkit-scrollbar{display:none}
+  .modal{padding:18px 12px}
+  .modal-content{width:min(100%,96vw);max-height:88vh}
+  #auth-screen{padding:16px}
+  .auth-card{padding:26px 22px}
+  .auth-side{padding:24px 20px}
+  .auth-card-top{flex-direction:column;align-items:flex-start}
 }
 
 /* ── UTIL ── */
@@ -1527,7 +1819,7 @@ textarea{resize:vertical;min-height:72px}
 (function(){
   try{
     var t=localStorage.getItem('fairshare_theme');
-    if(t==='light'||t==='midnight'||t==='ocean')document.documentElement.setAttribute('data-theme',t);
+    if(t==='light'||t==='midnight'||t==='ocean'||t==='pink')document.documentElement.setAttribute('data-theme',t);
   }catch(e){}
 })();
 </script>
@@ -1542,84 +1834,146 @@ textarea{resize:vertical;min-height:72px}
   <div class="auth-bg"></div>
   <div class="auth-grid"></div>
 
-  <div class="auth-card">
-    <div class="auth-logo-wrap">
-      <div class="auth-logo-icon" aria-hidden="true"><img src="assets/fairshare-logo.png" alt=""></div>
+  <div class="auth-shell">
+    <aside class="auth-side" aria-label="FairShare overview">
       <div>
-        <div class="auth-logo-text">Fair<span>Share</span></div>
+        <div class="auth-logo-wrap">
+          <div class="auth-logo-icon" aria-hidden="true"><img src="assets/fairshare-logo.png" alt=""></div>
+          <div>
+            <div class="auth-logo-text">Fair<span>Share</span></div>
+          </div>
+        </div>
+        <div class="auth-side-kicker">Built for transparent group work</div>
+        <div class="auth-side-title">Fairer teamwork starts with one shared workspace.</div>
+        <div class="auth-side-copy">Tasks, documents, chat, activity, and contribution insight in one place for students, instructors, and project teams.</div>
+        <div class="auth-side-points">
+          <div class="auth-point">
+            <div class="auth-point-icon" aria-hidden="true">📊</div>
+            <div>
+              <div class="auth-point-title">Contribution visibility</div>
+              <div class="auth-point-sub">See workload balance early, not only at submission week.</div>
+            </div>
+          </div>
+          <div class="auth-point">
+            <div class="auth-point-icon" aria-hidden="true">🧩</div>
+            <div>
+              <div class="auth-point-title">One connected workflow</div>
+              <div class="auth-point-sub">Projects, tasks, docs, chat, and analytics stay linked to the same team.</div>
+            </div>
+          </div>
+          <div class="auth-point">
+            <div class="auth-point-icon" aria-hidden="true">🔐</div>
+            <div>
+              <div class="auth-point-title">Role-aware access</div>
+              <div class="auth-point-sub">Students, instructors, and admins see what they need without extra clutter.</div>
+            </div>
+          </div>
+        </div>
       </div>
+      <div class="auth-side-footer">
+        <div class="auth-side-meta">Secure sessions · Saved preferences · Designed for professional collaboration</div>
+        <a class="auth-back-link" href="/website/">← Back to website</a>
+      </div>
+    </aside>
+
+    <div class="auth-card">
+      <div class="auth-tabs" role="tablist" aria-label="Authentication">
+        <button type="button" class="auth-tab active" id="auth-tab-login" role="tab" aria-selected="true" aria-controls="login-panel" onclick="showLogin()">Sign in</button>
+        <button type="button" class="auth-tab" id="auth-tab-signup" role="tab" aria-selected="false" aria-controls="signup-panel" onclick="showSignup()">Create account</button>
+      </div>
+      <div id="auth-status" class="auth-status" role="status" aria-live="polite"></div>
+      <!-- Login panel -->
+      <div class="auth-panel active" id="login-panel">
+        <div class="auth-card-top">
+          <div>
+            <div class="auth-headline">Welcome back</div>
+            <div class="auth-sub">Sign in to continue to your workspace, tasks, documents, and fairness insights.</div>
+          </div>
+          <div class="auth-card-badge">Sign in</div>
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@university.edu" autocomplete="email" onkeydown="if(event.key==='Enter')handleLogin()">
+        </div>
+        <div class="field field-password">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
+          <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePasswordVisibility('login-password',this)">Show</button>
+        </div>
+        <div class="auth-link-row">
+          <button type="button" class="auth-link-btn" onclick="handleForgotPassword()">Forgot password?</button>
+          <button type="button" class="auth-link-btn" onclick="handleResendFromLogin()">Resend confirmation email</button>
+        </div>
+        <label class="auth-remember"><input type="checkbox" id="login-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
+        <div class="auth-actions">
+          <button type="button" class="btn btn-primary" id="btn-login-submit" onclick="handleLogin()">Sign in</button>
+        </div>
+
+        <div class="auth-aux">
+          <div class="auth-aux-title">Other ways in</div>
+          <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-login">
+            <span class="btn-google-icon">G</span> Continue with Google
+          </button>
+
+          <div class="divider">or</div>
+          <button type="button" class="btn btn-demo" onclick="demoLogin()">✨ &nbsp;Try Demo — no signup needed</button>
+        </div>
+
+        <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Create one</a></div>
+      </div>
+
+      <!-- Signup panel -->
+      <div class="auth-panel" id="signup-panel">
+        <div class="auth-card-top">
+          <div>
+            <div class="auth-headline">Create account</div>
+            <div class="auth-sub">Set up your workspace in minutes and start collaborating with your team.</div>
+          </div>
+          <div class="auth-card-badge">New account</div>
+        </div>
+
+        <div class="field">
+          <label>Full name</label>
+          <input type="text" id="su-name" placeholder="Jamie Liu" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="su-email" placeholder="you@university.edu" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>I am a</label>
+          <select id="su-role">
+            <option value="student">Student</option>
+            <option value="instructor">Instructor / Lecturer</option>
+            <option value="admin">Platform Admin</option>
+          </select>
+        </div>
+        <div class="field field-password">
+          <label>Password</label>
+          <input type="password" id="su-password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignup()">
+          <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePasswordVisibility('su-password',this)">Show</button>
+          <div class="help-text">Use at least 8 characters. A mix of letters and numbers is stronger.</div>
+        </div>
+        <label class="auth-remember"><input type="checkbox" id="su-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
+        <div class="auth-actions">
+          <button type="button" class="btn btn-primary" id="btn-signup-submit" onclick="handleSignup()">Create account</button>
+        </div>
+
+        <div class="auth-aux">
+          <div class="auth-aux-title">Alternative signup</div>
+          <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-signup">
+            <span class="btn-google-icon">G</span> Sign up with Google
+          </button>
+        </div>
+
+        <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+      </div>
+      <div style="text-align:center;margin-top:10px">
+        <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="openThemeModal()">Theme &amp; appearance</button>
+      </div>
+      <div class="auth-trust" role="note">Secure sessions · Role-aware workspaces · Designed for transparent collaboration</div>
     </div>
-
-    <!-- Login panel -->
-    <div class="auth-panel active" id="login-panel">
-      <div class="auth-headline">Welcome back</div>
-      <div class="auth-sub">One workspace for fair group work — tasks, docs, chat, and contribution insight.</div>
-
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="you@university.edu" autocomplete="email" onkeydown="if(event.key==='Enter')handleLogin()">
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 8px;flex-wrap:wrap;gap:8px">
-        <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleForgotPassword()">Forgot password?</button>
-        <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 0;font-size:12px" onclick="handleResendFromLogin()">Resend confirmation email</button>
-      </div>
-      <label class="auth-remember"><input type="checkbox" id="login-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
-      <button type="button" class="btn btn-primary" onclick="handleLogin()">Sign in</button>
-
-      <div class="divider">or</div>
-      <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-login">
-        <span class="btn-google-icon">G</span> Continue with Google
-      </button>
-
-      <div class="divider">or</div>
-      <button type="button" class="btn btn-demo" onclick="demoLogin()">✨ &nbsp;Try Demo — no signup needed</button>
-
-      <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Create one</a></div>
-    </div>
-
-    <!-- Signup panel -->
-    <div class="auth-panel" id="signup-panel">
-      <div class="auth-headline">Create account</div>
-      <div class="auth-sub">Set up your team workspace in minutes — built for courses and cross-functional projects.</div>
-
-      <div class="field">
-        <label>Full name</label>
-        <input type="text" id="su-name" placeholder="Jamie Liu" autocomplete="name">
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="su-email" placeholder="you@university.edu" autocomplete="email">
-      </div>
-      <div class="field">
-        <label>I am a</label>
-        <select id="su-role">
-          <option value="student">Student</option>
-          <option value="instructor">Instructor / Lecturer</option>
-          <option value="admin">Platform Admin</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="su-password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignup()">
-        <div class="help-text">Use at least 8 characters. A mix of letters and numbers is stronger.</div>
-      </div>
-      <label class="auth-remember"><input type="checkbox" id="su-remember" checked onchange="syncRememberPair(this)"> Keep me signed in on this browser</label>
-      <button type="button" class="btn btn-primary" onclick="handleSignup()">Create account</button>
-
-      <div class="divider">or</div>
-      <button type="button" class="btn btn-google" onclick="handleGoogleSignIn()" id="btn-google-signup">
-        <span class="btn-google-icon">G</span> Sign up with Google
-      </button>
-      <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
-    </div>
-    <div style="text-align:center;margin-top:8px">
-      <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="openThemeModal()">Theme &amp; appearance</button>
-    </div>
-    <div class="auth-trust" role="note">Secure sessions · Role-aware workspaces · Designed for transparent collaboration</div>
   </div>
 </div>
 
@@ -1629,6 +1983,7 @@ textarea{resize:vertical;min-height:72px}
 <div id="app">
   <!-- Top navigation -->
   <nav class="topnav" aria-label="Main">
+    <button type="button" class="mobile-nav-toggle" aria-label="Open navigation" aria-controls="mobile-nav-drawer" aria-expanded="false" onclick="toggleMobileNav(true)">☰</button>
     <div class="nav-logo">
       <div class="nav-logo-icon" aria-hidden="true"><img src="assets/fairshare-logo.png" alt=""></div>
       <span class="nav-logo-text">FairShare</span>
@@ -1690,6 +2045,32 @@ textarea{resize:vertical;min-height:72px}
       </div>
     </div>
   </nav>
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+  <aside class="mobile-nav-drawer" id="mobile-nav-drawer" aria-label="Mobile navigation">
+    <div class="mobile-nav-head">
+      <div class="mobile-nav-brand">
+        <div class="nav-logo-icon" aria-hidden="true"><img src="assets/fairshare-logo.png" alt=""></div>
+        <span>FairShare</span>
+      </div>
+      <button type="button" class="mobile-nav-close" aria-label="Close navigation" onclick="closeMobileNav()">✕</button>
+    </div>
+    <div class="mobile-nav-list">
+      <button class="mobile-nav-link active" onclick="showPage('projects',this)" data-page="projects"><span class="tab-dot"></span>Projects</button>
+      <button class="mobile-nav-link" onclick="showPage('invites',this)" data-page="invites"><span class="tab-dot"></span>Invites</button>
+      <button class="mobile-nav-link" onclick="showPage('dashboard',this)" data-page="dashboard"><span class="tab-dot"></span>Dashboard</button>
+      <button class="mobile-nav-link" onclick="showPage('tasks',this)" data-page="tasks"><span class="tab-dot"></span>Tasks</button>
+      <button class="mobile-nav-link" onclick="showPage('documents',this)" data-page="documents"><span class="tab-dot"></span>Docs</button>
+      <button class="mobile-nav-link" onclick="showPage('chat',this)" data-page="chat"><span class="tab-dot"></span>Chat</button>
+      <button class="mobile-nav-link" onclick="showPage('activity',this)" data-page="activity"><span class="tab-dot"></span>Activity</button>
+      <button class="mobile-nav-link" onclick="showPage('report',this)" data-page="report"><span class="tab-dot"></span>Analytics</button>
+      <button class="mobile-nav-link" id="mobile-admin-tab" style="display:none" onclick="showPage('admin',this)" data-page="admin"><span class="tab-dot"></span>Admin</button>
+      <button class="mobile-nav-link" onclick="showPage('notifications',this)" data-page="notifications"><span class="tab-dot"></span>Notifications</button>
+    </div>
+    <div class="mobile-nav-foot">
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeMobileNav();openThemeModal()">Theme</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeMobileNav();openModal('modal-help')">Help</button>
+    </div>
+  </aside>
 
   <div class="main" id="main-scroll">
 
@@ -1912,6 +2293,7 @@ textarea{resize:vertical;min-height:72px}
           <div class="page-sub" id="report-sub">Contribution insights and fairness analysis</div>
         </div>
         <div style="display:flex;gap:10px">
+          <button class="btn btn-outline btn-sm" onclick="renderSmartSummary(true)">✨ Smart summary</button>
           <button class="btn btn-ghost btn-sm" onclick="exportReport()">⬇ Export PDF</button>
           <button class="btn btn-primary btn-sm" onclick="openModal('modal-export-report')">📊 Full Report</button>
         </div>
@@ -1926,6 +2308,25 @@ textarea{resize:vertical;min-height:72px}
             <div style="font-size:12px;color:var(--txt2);margin-top:4px">Fairness Index</div>
           </div>
           <div class="grid3" id="report-stats" style="gap:20px"></div>
+        </div>
+      </div>
+
+      <div class="grid2 mb-24" style="gap:20px">
+        <div class="card">
+          <div class="card-pad">
+            <div class="card-title">Group Health Score Timeline</div>
+            <div style="font-size:12px;color:var(--txt3)">Recent weekly health index based on completion, balance, and activity consistency.</div>
+            <div id="report-health-timeline"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-pad">
+            <div class="section-head" style="margin-bottom:8px">
+              <span class="card-title" style="margin-bottom:0">Smart Summary</span>
+              <span id="report-summary-time" style="font-size:11px;color:var(--txt3)"></span>
+            </div>
+            <div id="report-summary" class="report-summary-box">Generate a summary to get key points for tutors and team check-ins.</div>
+          </div>
         </div>
       </div>
 
@@ -2381,6 +2782,10 @@ textarea{resize:vertical;min-height:72px}
     <button class="modal-close" onclick="closeModal('modal-new-project')">✕</button>
     <div class="form-row">
       <label>Starter template</label>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--txt3)">Pick a starter or browse marketplace packs.</span>
+        <button type="button" class="btn btn-ghost btn-xs" onclick="openTemplateMarketplace()">Browse marketplace</button>
+      </div>
       <select id="np-template" onchange="applyNpTemplateHint()">
         <option value="blank">Blank — start from scratch</option>
         <option value="research">Research paper — literature → draft → final</option>
@@ -2398,9 +2803,28 @@ textarea{resize:vertical;min-height:72px}
       <textarea id="np-members" placeholder="Maya Rodriguez, maya@uni.edu&#10;Alex Singh, alex@uni.edu" style="min-height:90px"></textarea>
       <div class="help-text">You are automatically added as project lead.</div>
     </div>
+    <div class="form-row">
+      <label>Invite by email (one email per line)</label>
+      <textarea id="np-invite-emails" placeholder="member1@university.edu&#10;member2@school.org" style="min-height:90px"></textarea>
+      <div class="help-text">FairShare will send a project invite email. Existing users also receive the invite live inside the platform.</div>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-project')">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="createProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Template Marketplace -->
+<div class="modal-overlay" id="modal-template-market" onclick="overlayClose(event,this)">
+  <div class="modal modal-wide">
+    <div class="modal-title">Template Marketplace</div>
+    <button class="modal-close" onclick="closeModal('modal-template-market')">✕</button>
+    <p class="help-lead">Choose a project starter pack. This pre-fills milestones so teams can begin faster.</p>
+    <div class="template-market-grid" id="template-market-grid"></div>
+    <div class="form-actions" style="margin-top:18px">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('modal-template-market')">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="applyMarketplaceTemplate()">Use this template</button>
     </div>
   </div>
 </div>
@@ -2439,6 +2863,21 @@ textarea{resize:vertical;min-height:72px}
         <span class="export-icon">📎</span>
         <span class="export-label">Word + report</span>
         <span class="export-sub">.docx + HTML page in .zip</span>
+      </button>
+      <button class="export-btn" onclick="exportDoc('docx_submission')">
+        <span class="export-icon">📝</span>
+        <span class="export-label">Word (submission)</span>
+        <span class="export-sub">Clean .docx without ZIP</span>
+      </button>
+      <button class="export-btn" onclick="exportDoc('xlsx_bundle')">
+        <span class="export-icon">📊</span>
+        <span class="export-label">Excel workbook</span>
+        <span class="export-sub">Tasks + scores + activity (.xlsx)</span>
+      </button>
+      <button class="export-btn" onclick="exportDoc('ppt_outline')">
+        <span class="export-icon">📽️</span>
+        <span class="export-label">PowerPoint outline</span>
+        <span class="export-sub">Auto slides (.pptx)</span>
       </button>
       <button class="export-btn" onclick="exportDoc('html')">
         <span class="export-icon">🌐</span>
@@ -2587,6 +3026,8 @@ textarea{resize:vertical;min-height:72px}
     <p class="help-lead">Type <strong style="color:var(--teal)">@Name</strong> to highlight mentions in messages (styling only — everyone still sees the channel).</p>
     <div class="help-section-title">Trust &amp; data</div>
     <p class="help-lead">Sign-in uses your configured identity provider (email/password or Google via Supabase). Project data syncs when cloud mode is enabled; demo mode stays on this browser only.</p>
+    <div class="help-section-title">Contact</div>
+    <p class="help-lead">Questions, bugs, or feedback? Email <a href="mailto:admin@fairsharework.space" style="color:var(--teal);font-weight:600">admin@fairsharework.space</a>.</p>
     <div class="form-actions" style="margin-top:18px">
       <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-help')">Done</button>
     </div>
@@ -2599,6 +3040,23 @@ textarea{resize:vertical;min-height:72px}
     <div class="modal-title">Theme</div>
     <button type="button" class="modal-close" onclick="closeModal('modal-theme')">✕</button>
     <p class="help-lead">Choose an appearance for FairShare. Your choice is saved on this device.</p>
+
+    <div class="theme-spectrum-wrap">
+      <label class="theme-spectrum-label" for="theme-spectrum-slider">Accent spectrum</label>
+      <p class="help-lead" style="margin-top:-4px;margin-bottom:10px;font-size:12px;">Slide across the gradient to switch themes — from teal (dark) through light, midnight, ocean, to pink.</p>
+      <div class="theme-spectrum-visual">
+        <div class="theme-spectrum-gradient" aria-hidden="true"></div>
+        <div class="theme-spectrum-thumb-ui" id="theme-spectrum-thumb" aria-hidden="true"></div>
+        <input type="range" id="theme-spectrum-slider" class="theme-spectrum-range" min="0" max="4" step="1" value="0"
+          aria-label="Theme accent: slide from FairShare dark to Pink"
+          aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" aria-valuetext="FairShare dark theme"
+          oninput="onThemeSpectrumChange(this.value)">
+      </div>
+      <div class="theme-spectrum-ticks" aria-hidden="true">
+        <span>Dark</span><span>Light</span><span>Midnight</span><span>Ocean</span><span>Pink</span>
+      </div>
+    </div>
+
     <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Color theme">
       <button type="button" class="theme-card" data-theme-id="dark" onclick="setFairShareTheme('dark')">
         <div class="theme-card-title">FairShare dark</div>
@@ -2619,6 +3077,11 @@ textarea{resize:vertical;min-height:72px}
         <div class="theme-card-title">Ocean</div>
         <div class="theme-card-desc">Cool navy blues with cyan highlights.</div>
         <div class="theme-swatch" style="background:linear-gradient(90deg,#162a40,#061018)"></div>
+      </button>
+      <button type="button" class="theme-card" data-theme-id="pink" onclick="setFairShareTheme('pink')">
+        <div class="theme-card-title">Pink</div>
+        <div class="theme-card-desc">Plum surfaces with magenta and rose accents.</div>
+        <div class="theme-swatch" style="background:linear-gradient(90deg,#ff4d9d,#1e1228)"></div>
       </button>
     </div>
     <div class="form-actions" style="margin-top:20px">
@@ -2709,12 +3172,74 @@ const PROJECT_TEMPLATES={
     tasks:['Week 1–2: readings & intro','Midterm prep & checkpoint','Group milestone','Final project / exam prep']
   }
 };
+const TEMPLATE_MARKETPLACE=[
+  {id:'blank',title:'Blank',category:'General',complexity:'Low',desc:'Start clean with no preloaded tasks.'},
+  {id:'research',title:'Research Paper',category:'Academic writing',complexity:'Medium',desc:'Literature → thesis → draft → peer review → final paper.'},
+  {id:'sprint',title:'Agile Sprint',category:'Software / product',complexity:'Medium',desc:'Planning, standups, review, and retro rhythm for short cycles.'},
+  {id:'course',title:'Course Milestones',category:'Term planning',complexity:'Low',desc:'Weekly checkpoints with review gates for taught modules.'},
+  {id:'capstone',title:'Capstone Build',category:'University',complexity:'High',desc:'Discovery, architecture, prototype, testing, and final showcase.'},
+  {id:'lab',title:'Lab Report',category:'Science',complexity:'Medium',desc:'Method, data collection, analysis, visuals, and discussion milestones.'},
+  {id:'debate',title:'Policy Debate',category:'Humanities',complexity:'Low',desc:'Position research, source checks, argument map, and rebuttal prep.'}
+];
+const MARKETPLACE_TEMPLATE_TASKS={
+  capstone:['Problem framing & success criteria','Architecture proposal','Prototype build','Usability test + findings','Final demo + report'],
+  lab:['Experimental plan','Data collection log','Data analysis notebook','Draft results/discussion','Final report & references'],
+  debate:['Research policy context','Build argument map','Evidence verification','Rebuttal prep session','Final debate rehearsal']
+};
+let selectedMarketTemplate='blank';
+
 function applyNpTemplateHint(){
   const sel=document.getElementById('np-template');
   const hint=document.getElementById('np-template-hint');
   if(!sel||!hint)return;
   const meta=PROJECT_TEMPLATES[sel.value];
   hint.textContent=meta?meta.hint:'';
+}
+function ensureTemplateRegistered(templateId){
+  if(PROJECT_TEMPLATES[templateId])return;
+  const market=TEMPLATE_MARKETPLACE.find(t=>t.id===templateId);
+  if(!market)return;
+  const tasks=MARKETPLACE_TEMPLATE_TASKS[templateId]||[];
+  PROJECT_TEMPLATES[templateId]={
+    hint:market.desc,
+    tasks,
+  };
+  const sel=document.getElementById('np-template');
+  if(sel&&!sel.querySelector(`option[value="${templateId}"]`)){
+    const opt=document.createElement('option');
+    opt.value=templateId;
+    opt.textContent=`${market.title} — marketplace pack`;
+    sel.appendChild(opt);
+  }
+}
+function renderTemplateMarketplace(){
+  const box=document.getElementById('template-market-grid');
+  if(!box)return;
+  box.innerHTML=TEMPLATE_MARKETPLACE.map(t=>`
+    <button type="button" class="template-market-card ${selectedMarketTemplate===t.id?'active':''}" onclick="selectMarketplaceTemplate('${t.id}')">
+      <div class="template-market-title">${esc(t.title)}</div>
+      <div class="template-market-meta">${esc(t.category)} · ${esc(t.complexity)}</div>
+      <div class="template-market-desc">${esc(t.desc)}</div>
+    </button>
+  `).join('');
+}
+function selectMarketplaceTemplate(id){
+  selectedMarketTemplate=id;
+  renderTemplateMarketplace();
+}
+function openTemplateMarketplace(){
+  const sel=document.getElementById('np-template');
+  selectedMarketTemplate=(sel&&sel.value)||'blank';
+  ensureTemplateRegistered(selectedMarketTemplate);
+  renderTemplateMarketplace();
+  openModal('modal-template-market');
+}
+function applyMarketplaceTemplate(){
+  ensureTemplateRegistered(selectedMarketTemplate);
+  const sel=document.getElementById('np-template');
+  if(sel)sel.value=selectedMarketTemplate;
+  applyNpTemplateHint();
+  closeModal('modal-template-market');
 }
 function templateTaskDue(deadline,index,total){
   if(deadline){
@@ -2752,8 +3277,32 @@ function onNavProjectSearch(){
   if(page&&page.classList.contains('active'))renderProjectList();
 }
 
+const FAIRSHARE_THEME_ORDER=['dark','light','midnight','ocean','pink'];
+const FAIRSHARE_THEME_LABELS=['FairShare dark','White','Midnight','Ocean','Pink'];
+
 function getFairShareTheme(){
   return document.documentElement.getAttribute('data-theme')||'dark';
+}
+function themeIndexFromName(name){
+  const i=FAIRSHARE_THEME_ORDER.indexOf(name);
+  return i>=0?i:0;
+}
+function updateThemeSpectrumThumb(){
+  const thumb=document.getElementById('theme-spectrum-thumb');
+  const slider=document.getElementById('theme-spectrum-slider');
+  if(!thumb||!slider)return;
+  const v=Math.max(0,Math.min(4,parseInt(slider.value,10)||0));
+  thumb.style.left=(v/4*100)+'%';
+}
+function onThemeSpectrumChange(val){
+  const idx=Math.max(0,Math.min(4,parseInt(val,10)||0));
+  const el=document.getElementById('theme-spectrum-slider');
+  if(el){
+    el.setAttribute('aria-valuenow',String(idx));
+    el.setAttribute('aria-valuetext',(FAIRSHARE_THEME_LABELS[idx]||'Theme')+' theme');
+  }
+  setFairShareTheme(FAIRSHARE_THEME_ORDER[idx]);
+  updateThemeSpectrumThumb();
 }
 function syncThemeModalUI(){
   const cur=getFairShareTheme();
@@ -2763,10 +3312,17 @@ function syncThemeModalUI(){
     el.classList.toggle('active',on);
     el.setAttribute('aria-pressed',on?'true':'false');
   });
+  const slider=document.getElementById('theme-spectrum-slider');
+  if(slider){
+    const idx=themeIndexFromName(cur);
+    slider.value=String(idx);
+    slider.setAttribute('aria-valuenow',String(idx));
+    slider.setAttribute('aria-valuetext',(FAIRSHARE_THEME_LABELS[idx]||'Theme')+' theme');
+  }
+  updateThemeSpectrumThumb();
 }
 function setFairShareTheme(name){
-  const ok=['dark','light','midnight','ocean'];
-  if(!ok.includes(name))return;
+  if(!FAIRSHARE_THEME_ORDER.includes(name))return;
   try{localStorage.setItem('fairshare_theme',name)}catch(e){}
   if(name==='dark')document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme',name);
@@ -2784,17 +3340,63 @@ function showLogin(){
   if(window.FSB)window.FSB.localDemo=false;
   document.getElementById('login-panel').classList.add('active');
   document.getElementById('signup-panel').classList.remove('active');
+  document.getElementById('auth-tab-login')?.classList.add('active');
+  document.getElementById('auth-tab-signup')?.classList.remove('active');
+  document.getElementById('auth-tab-login')?.setAttribute('aria-selected','true');
+  document.getElementById('auth-tab-signup')?.setAttribute('aria-selected','false');
+  clearAuthStatus();
   if(window.FSB&&typeof window.FSB.syncRememberCheckboxes==='function')window.FSB.syncRememberCheckboxes();
 }
 function showSignup(){
   if(window.FSB)window.FSB.localDemo=false;
   document.getElementById('login-panel').classList.remove('active');
   document.getElementById('signup-panel').classList.add('active');
+  document.getElementById('auth-tab-login')?.classList.remove('active');
+  document.getElementById('auth-tab-signup')?.classList.add('active');
+  document.getElementById('auth-tab-login')?.setAttribute('aria-selected','false');
+  document.getElementById('auth-tab-signup')?.setAttribute('aria-selected','true');
+  clearAuthStatus();
   if(window.FSB&&typeof window.FSB.syncRememberCheckboxes==='function')window.FSB.syncRememberCheckboxes();
 }
 
+function setAuthStatus(msg,type='default'){
+  const box=document.getElementById('auth-status');
+  if(!box)return;
+  box.className='auth-status show'+(type==='error'?' error':type==='success'?' success':type==='loading'?' loading':'');
+  box.textContent=msg||'';
+}
+function clearAuthStatus(){
+  const box=document.getElementById('auth-status');
+  if(!box)return;
+  box.className='auth-status';
+  box.textContent='';
+}
+function setAuthLoading(mode,on,label){
+  const id=mode==='signup'?'btn-signup-submit':'btn-login-submit';
+  const btn=document.getElementById(id);
+  if(!btn)return;
+  if(on){
+    btn.dataset.originalLabel=btn.textContent;
+    btn.disabled=true;
+    btn.textContent=label||'Working…';
+    setAuthStatus(mode==='signup'?'Creating your account…':'Signing you in…','loading');
+  }else{
+    btn.disabled=false;
+    btn.textContent=btn.dataset.originalLabel||btn.textContent;
+  }
+}
+function togglePasswordVisibility(inputId,btn){
+  const input=document.getElementById(inputId);
+  if(!input||!btn)return;
+  const show=input.type==='password';
+  input.type=show?'text':'password';
+  btn.textContent=show?'Hide':'Show';
+  btn.setAttribute('aria-label',show?'Hide password':'Show password');
+  btn.setAttribute('aria-pressed',show?'true':'false');
+}
+
 function syncRememberPair(el){
-  const c=el.checked;
+  const c=true;
   const a=document.getElementById('login-remember');
   const b=document.getElementById('su-remember');
   if(a)a.checked=c;
@@ -2802,22 +3404,46 @@ function syncRememberPair(el){
   try{localStorage.setItem('fairshare_remember_me',c?'1':'0')}catch(e){}
 }
 
+function setGoogleButtonsLoading(on){
+  ['btn-google-login','btn-google-signup'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn)return;
+    if(on){
+      btn.dataset.originalLabel=btn.textContent;
+      btn.disabled=true;
+      btn.textContent='Connecting to Google…';
+    }else{
+      btn.disabled=false;
+      btn.textContent=btn.dataset.originalLabel||btn.textContent;
+    }
+  });
+}
+
 async function handleGoogleSignIn(){
+  setAuthStatus('Connecting to Google…','loading');
+  setGoogleButtonsLoading(true);
   if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   if(!window.FSB||!window.FSB.hasCloud){
+    setGoogleButtonsLoading(false);
+    setAuthStatus('Google sign-in requires cloud auth to be configured.','error');
     toast('Connect Supabase for Google sign-in','error');
     return;
   }
   if(typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(typeof location!=='undefined'&&(location.protocol==='file:'||!location.origin)){
+    setGoogleButtonsLoading(false);
+    setAuthStatus('Open FairShare over http://localhost or https before using Google sign-in.','error');
     toast('Open this app over http://localhost or https (not file://) for Google sign-in','error');
     return;
   }
   if(typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
   try{
+    setAuthStatus('Redirecting to Google sign-in…','loading');
     toast('Redirecting to Google…','default');
     await window.FSB.signInWithGoogle();
   }catch(e){
+    setGoogleButtonsLoading(false);
+    setAuthStatus(e.message||'Google sign-in failed','error');
     toast(e.message||'Google sign-in failed','error');
   }
 }
@@ -2829,60 +3455,73 @@ function isValidEmailFormat(email){
 async function handleForgotPassword(){
   if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
-  if(!email||!isValidEmailFormat(email)){toast('Enter your email above first (correct format)','error');return}
-  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){toast('Password reset uses email — sign in with Supabase (not demo mode)','error');return}
+  if(!email||!isValidEmailFormat(email)){setAuthStatus('Enter your email above first in the correct format.','error');toast('Enter your email above first (correct format)','error');return}
+  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){setAuthStatus('Password reset is available for cloud accounts only.','error');toast('Password reset uses email — sign in with Supabase (not demo mode)','error');return}
   try{
+    setAuthStatus('Sending password reset email…','loading');
     await window.FSB.sendPasswordResetEmail(email);
+    setAuthStatus('Password reset email sent. Check your inbox.','success');
     toast('Check your email for a reset link.','success');
-  }catch(e){toast(e.message||'Could not send reset email','error')}
+  }catch(e){setAuthStatus(e.message||'Could not send reset email','error');toast(e.message||'Could not send reset email','error')}
 }
 
 async function handleResendFromLogin(){
   if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
-  if(!email||!isValidEmailFormat(email)){toast('Enter the email you signed up with','error');return}
-  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){toast('Confirmation emails are for cloud accounts only','error');return}
+  if(!email||!isValidEmailFormat(email)){setAuthStatus('Enter the email you signed up with first.','error');toast('Enter the email you signed up with','error');return}
+  if(!window.FSB||!window.FSB.hasCloud||window.FSB.localDemo){setAuthStatus('Confirmation emails are for cloud accounts only.','error');toast('Confirmation emails are for cloud accounts only','error');return}
   try{
+    setAuthStatus('Sending a new confirmation email…','loading');
     await window.FSB.resendConfirmationEmail(email);
+    setAuthStatus('If an account exists, a new confirmation email was sent.','success');
     toast('If an account exists, a new confirmation link was sent.','success');
-  }catch(e){toast(e.message||'Could not resend','error')}
+  }catch(e){setAuthStatus(e.message||'Could not resend','error');toast(e.message||'Could not resend','error')}
 }
 
 async function handleLogin(){
   if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   if(window.FSB&&typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
+  clearAuthStatus();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
-  if(!email||!pass){toast('Please fill all fields','error');return}
-  if(!isValidEmailFormat(email)){toast('Please enter a valid email address','error');return}
+  if(!email||!pass){setAuthStatus('Please fill in both email and password.','error');toast('Please fill all fields','error');return}
+  if(!isValidEmailFormat(email)){setAuthStatus('Please enter a valid email address.','error');toast('Please enter a valid email address','error');return}
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
+    setAuthLoading('login',true,'Signing in…');
     try{
       const user=await window.FSB.signIn(email,pass);
       if(!user||!user.id){
+        setAuthLoading('login',false);
+        setAuthStatus('Sign in did not return a user profile. Refresh and try again.','error');
         toast('Sign in did not return a user profile. Refresh the page and try again.','error');
         return;
       }
+      setAuthStatus('Signed in successfully. Redirecting…','success');
       loginAs(user);
     }catch(e){
+      setAuthLoading('login',false);
       const code=e?.code||e?.name;
       let m=e?.message||'Sign in failed';
       if(code==='invalid_credentials'||/invalid login credentials/i.test(m))m='Wrong email or password.';
       else if(code==='email_not_confirmed'||/email not confirmed/i.test(m))m='Confirm your email from the link we sent, then try signing in.';
       console.error('FairShare signIn:',code,e);
+      setAuthStatus(m,'error');
       toast(m,'error');
     }
     return
   }
   const users=STORE.get('users')||[];
   const user=users.find(u=>u.email===email);
-  if(!user){toast('No account found — create one first','error');return}
-  if(user.password!==pass){toast('Incorrect password','error');return}
+  if(!user){setAuthStatus('No account found — create one first.','error');toast('No account found — create one first','error');return}
+  if(user.password!==pass){setAuthStatus('Incorrect password.','error');toast('Incorrect password','error');return}
+  setAuthStatus('Signed in successfully. Redirecting…','success');
   loginAs(user);
 }
 
 function demoLogin(){
   if(window.FSB&&typeof window.FSB.useLocalDemo==='function')window.FSB.useLocalDemo();
+  setAuthStatus('Loading demo workspace…','loading');
   let users=STORE.get('users')||[];
   let demo=users.find(u=>u.email==='demo@fairshare.app');
   if(!demo){
@@ -2897,23 +3536,29 @@ async function handleSignup(){
   if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   if(window.FSB&&typeof window.FSB.exitLocalDemoForAuth==='function')window.FSB.exitLocalDemoForAuth();
   if(window.FSB&&typeof window.FSB.applyRememberPreferenceFromForm==='function')window.FSB.applyRememberPreferenceFromForm();
+  clearAuthStatus();
   const name=document.getElementById('su-name').value.trim();
   const email=document.getElementById('su-email').value.trim().toLowerCase();
   const role=document.getElementById('su-role').value;
   const pass=document.getElementById('su-password').value;
-  if(!name||!email||!pass){toast('Please fill all fields','error');return}
-  if(!isValidEmailFormat(email)){toast('Please enter a valid email address','error');return}
-  if(pass.length<8){toast('Password must be at least 8 characters','error');return}
+  if(!name||!email||!pass){setAuthStatus('Please complete all required fields.','error');toast('Please fill all fields','error');return}
+  if(!isValidEmailFormat(email)){setAuthStatus('Please enter a valid email address.','error');toast('Please enter a valid email address','error');return}
+  if(pass.length<8){setAuthStatus('Password must be at least 8 characters.','error');toast('Password must be at least 8 characters','error');return}
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
+    setAuthLoading('signup',true,'Creating account…');
     try{
       const user=await window.FSB.signUp(email,pass,name,role);
       if(user){
+        setAuthStatus('Account created. Welcome to FairShare.','success');
         loginAs(user);
         toast('Account created! Welcome to FairShare ✦','success');
       }else{
+        setAuthLoading('signup',false);
+        setAuthStatus('Check your email to confirm your account, then sign in.','success');
         toast('Check your email to confirm your account, then sign in.','success');
       }
     }catch(e){
+      setAuthLoading('signup',false);
       const code=e?.code||'';
       let msg=e?.message||e?.error_description||String(e)||'Sign up failed';
       if(/Database error|saving new user|trigger/i.test(msg)){
@@ -2928,14 +3573,16 @@ async function handleSignup(){
         msg='Sign up is disabled in this project’s Supabase settings.';
       }
       console.error('FairShare signUp:',code,msg,e);
+      setAuthStatus(msg,'error');
       toast(msg,'error');
     }
     return
   }
   let users=STORE.get('users')||[];
-  if(users.find(u=>u.email===email)){toast('Email already registered','error');return}
+  if(users.find(u=>u.email===email)){setAuthStatus('That email already has an account. Sign in instead.','error');toast('Email already registered','error');return}
   const user={id:genId('u'),name,email,password:pass,role,created:Date.now()};
   users.push(user);STORE.set('users',users);
+  setAuthStatus('Account created. Redirecting…','success');
   loginAs(user);
   toast('Account created! Welcome to FairShare ✦','success');
 }
@@ -2946,7 +3593,12 @@ function loginAs(user){
     toast('Could not complete sign-in (missing user id). Try again or refresh.','error');
     return;
   }
+  const appEl=document.getElementById('app');
+  if(currentUser&&currentUser.id===user.id&&appEl&&appEl.classList.contains('visible')){
+    return;
+  }
   currentUser=user;
+  document.body.setAttribute('data-role',user.role||'student');
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
   document.getElementById('app').classList.add('visible');
@@ -2961,10 +3613,10 @@ function loginAs(user){
   av.className='avatar '+getAvatarClass(user.name);
   document.getElementById('nav-name').textContent=user.name.split(' ')[0];
 
-  // Show admin tab if admin/instructor
-  if(user.role==='admin'||user.role==='instructor'){
-    document.getElementById('admin-tab').style.display='';
-  }
+  // Role-based navigation visibility
+  document.getElementById('admin-tab').style.display=(user.role==='admin'||user.role==='instructor')?'':'none';
+  const mobileAdminTab=document.getElementById('mobile-admin-tab');
+  if(mobileAdminTab)mobileAdminTab.style.display=(user.role==='admin'||user.role==='instructor')?'':'none';
 
   loadProjects();
   showPage('projects',document.querySelector('[data-page=projects]'));
@@ -2987,6 +3639,20 @@ function toggleUserMenu(ev){
 function closeUserMenu(){
   const d=document.getElementById('user-menu-dropdown');
   if(d)d.classList.remove('open');
+}
+function toggleMobileNav(forceOpen){
+  const drawer=document.getElementById('mobile-nav-drawer');
+  const overlay=document.getElementById('mobile-nav-overlay');
+  const toggle=document.querySelector('.mobile-nav-toggle');
+  if(!drawer||!overlay)return;
+  const open=typeof forceOpen==='boolean'?forceOpen:!drawer.classList.contains('open');
+  drawer.classList.toggle('open',open);
+  overlay.classList.toggle('open',open);
+  if(toggle)toggle.setAttribute('aria-expanded',open?'true':'false');
+  document.body.classList.toggle('mobile-nav-open',open);
+}
+function closeMobileNav(){
+  toggleMobileNav(false);
 }
 function openAccountModal(){
   closeUserMenu();
@@ -3045,6 +3711,7 @@ async function handleLogout(){
   if(window.FSB&&typeof window.FSB.stopNotificationsRealtime==='function')window.FSB.stopNotificationsRealtime();
   document.getElementById('app').classList.remove('visible');
   document.getElementById('auth-screen').classList.add('visible');
+  clearAuthStatus();
   showLogin();
 }
 
@@ -3316,6 +3983,7 @@ async function openProject(id){
   if(!p){toast('Project not found','error');return}
   if(window.FSB&&window.FSB.enabled)await window.FSB.hydrateProject(id);
   currentProject=p;
+  try{if(currentUser&&currentUser.id)STORE.set('current_project_'+currentUser.id,id)}catch(e){}
   toast(`Opened: ${p.name}`,'success');
 
   // Update UI hints
@@ -3327,15 +3995,46 @@ async function openProject(id){
   startLiveActivity();
   renderChatChannels();
   if(window.FSB&&window.FSB.enabled)window.FSB.startChatRealtime(id,currentChatChannel);
-  showPage('dashboard',document.querySelector('[data-page=dashboard]'));
+  const landing=(currentUser&&currentUser.role==='instructor')?'report':'dashboard';
+  showPage(landing,document.querySelector('[data-page='+landing+']'));
 }
 
-function createProject(){
+function parseInviteEmails(raw){
+  const seen=new Set();
+  return String(raw||'')
+    .split('\n')
+    .map(x=>x.trim().toLowerCase())
+    .filter(x=>x&&isValidEmailFormat(x)&&!seen.has(x)&&seen.add(x));
+}
+
+async function sendProjectInviteEmails(project,emails){
+  if(!Array.isArray(emails)||!emails.length)return {sent:0};
+  const base=(window.FSB&&typeof window.FSB.apiBase==='function')?window.FSB.apiBase():'';
+  const url=(base?base:'')+'/api/project-invite-email';
+  const resp=await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      projectName:project.name,
+      inviterName:currentUser?.name||'A FairShare user',
+      inviterEmail:currentUser?.email||'',
+      recipientEmails:emails,
+      appUrl:(typeof location!=='undefined'&&location.origin)?`${location.origin}/fairshare.html`:'/fairshare.html',
+      websiteUrl:(typeof location!=='undefined'&&location.origin)?`${location.origin}/`:'/'
+    })
+  });
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok)throw new Error(data.error||'Could not send invite emails');
+  return data;
+}
+
+async function createProject(){
   const name=document.getElementById('np-name').value.trim();
   const desc=document.getElementById('np-desc').value.trim();
   const deadline=document.getElementById('np-deadline').value;
   const instructor=document.getElementById('np-instructor').value.trim();
   const membersRaw=document.getElementById('np-members').value.trim();
+  const inviteEmails=parseInviteEmails((document.getElementById('np-invite-emails')||{}).value||'');
   const templateKey=(document.getElementById('np-template')||{}).value||'blank';
   if(!name){toast('Please enter a project name','error');return}
   const members=[{id:currentUser.id,name:currentUser.name,email:currentUser.email}];
@@ -3345,15 +4044,63 @@ function createProject(){
       if(parts[0].trim())members.push({id:genId('m'),name:parts[0].trim(),email:(parts[1]||'').trim()});
     });
   }
-  const proj={id:genId('proj'),name,desc,deadline,instructor,ownerId:currentUser.id,members,created:Date.now(),status:'active'};
+  let resolvedMembers=members;
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.resolveProjectMembers==='function'){
+    try{
+      resolvedMembers=await window.FSB.resolveProjectMembers([
+        ...members,
+        ...inviteEmails.map(email=>({id:genId('m'),name:email.split('@')[0],email}))
+      ]);
+    }catch(e){
+      console.warn('resolveProjectMembers',e);
+    }
+  }
+  const byEmail=new Map();
+  resolvedMembers.forEach(m=>{
+    const email=String(m.email||'').trim().toLowerCase();
+    if(email&&!byEmail.has(email))byEmail.set(email,m);
+  });
+  const finalMembers=[...byEmail.values()];
+  const proj={
+    id:genId('proj'),
+    name,desc,deadline,instructor,
+    ownerId:currentUser.id,
+    ownerName:currentUser.name,
+    members:finalMembers,
+    created:Date.now(),
+    status:'active'
+  };
   let projects=loadProjects();
   projects.unshift(proj);
   STORE.set('projects_'+currentUser.id,projects);
   applyProjectTemplateTasks(proj.id,templateKey,{deadline,ownerId:currentUser.id});
+  let inviteToastShown=false;
+  if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
+    try{
+      if(typeof window.FSB.persistNow==='function')await window.FSB.persistNow();
+      if(typeof window.FSB.sendProjectInvites==='function'){
+        const sent=await window.FSB.sendProjectInvites(proj);
+        if(sent>0){
+          inviteToastShown=true;
+          toast(`Project created and ${sent} invite${sent===1?'':'s'} sent in real time.`,'success','Invites sent');
+        }
+      }
+      if(inviteEmails.length){
+        const emailResult=await sendProjectInviteEmails(proj,inviteEmails);
+        if(emailResult.sent>0){
+          inviteToastShown=true;
+          toast(`Invite email${emailResult.sent===1?' was':'s were'} sent to ${emailResult.sent} recipient${emailResult.sent===1?'':'s'}.`,'success','Emails sent');
+        }
+      }
+    }catch(e){
+      console.warn('sendProjectInvites',e);
+      toast(e.message||'Project created, but some invites could not be sent.','error');
+    }
+  }
   closeModal('modal-new-project');
   renderProjectList();
-  toast('Project created with your workspace ready.','success','Project created');
-  ['np-name','np-desc','np-deadline','np-instructor','np-members'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  if(!inviteToastShown)toast('Project created with your workspace ready.','success','Project created');
+  ['np-name','np-desc','np-deadline','np-instructor','np-members','np-invite-emails'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
   const ts=document.getElementById('np-template');
   if(ts){ts.value='blank';applyNpTemplateHint()}
 }
@@ -3543,10 +4290,22 @@ function setTaskView(view,btn){
 }
 
 function renderTasks(){
+  if(!currentProject&&currentUser){
+    try{
+      const rememberedId=STORE.get('current_project_'+currentUser.id);
+      const projects=loadProjects();
+      const remembered=projects.find(p=>p.id===rememberedId);
+      if(remembered)currentProject=remembered;
+      else if(projects.length===1)currentProject=projects[0];
+    }catch(e){}
+  }
+  const tasksTitle=document.getElementById('tasks-project-name');
   if(!currentProject){
+    if(tasksTitle)tasksTitle.textContent='Select a project first';
     document.getElementById('kanban-board').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📋</div><div class="empty-text">Open a project first</div></div>';
     return;
   }
+  if(tasksTitle)tasksTitle.textContent=currentProject.name;
   const filter=document.getElementById('task-filter').value;
   let tasks=STORE.get('tasks_'+currentProject.id)||[];
 
@@ -4717,6 +5476,75 @@ async function exportDocPdf(){
   toast('PDF downloaded.','success');
 }
 
+async function exportDocxSubmission(){
+  if(!currentDocId||!currentProject)return;
+  const docs=STORE.get('docs_'+currentProject.id)||[];
+  const doc=docs.find(d=>d.id===currentDocId);
+  if(!doc||docKindOf(doc)!=='document'){toast('Open a text document first.','error');return;}
+  const title=(document.getElementById('doc-title-input').value||doc.title||'Document').trim();
+  const html=document.getElementById('doc-editor').innerHTML;
+  const blob=await buildDocxBlobFromEditor(html,title+' — Submission');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=safeExportFileBase(title)+'_submission.docx';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('Word submission file downloaded.','success');
+}
+
+async function exportProjectXlsx(){
+  if(!currentProject){toast('Open a project first','error');return;}
+  const XLSX=await import('https://esm.sh/xlsx@0.18.5');
+  const tasks=STORE.get('tasks_'+currentProject.id)||[];
+  const acts=STORE.get('activity_'+currentProject.id)||[];
+  const scores=computeScores();
+  const taskRows=tasks.map(t=>({
+    Task:t.name,Status:t.status,Priority:t.priority||'medium',
+    AssignedTo:(currentProject.members.find(m=>m.id===t.assignedTo)||{}).name||t.assignedTo||'',
+    Due:t.due||'',CompletedAt:t.completedAt?new Date(t.completedAt).toLocaleString():'',
+  }));
+  const scoreRows=scores.map((s,i)=>({
+    Rank:i+1,Member:s.member.name,SharePct:s.pct,Points:s.total,
+    TasksDone:s.taskCount,DocEdits:s.editCount,WordPoints:s.wcPoints,
+  }));
+  const actRows=acts.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).map(a=>({
+    Time:new Date(a.ts||Date.now()).toLocaleString(),Member:a.userName||'',Type:a.type||'',Event:a.text||'',
+  }));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(taskRows.length?taskRows:[{Task:'No tasks'}]),'Tasks');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(scoreRows.length?scoreRows:[{Member:'No data'}]),'Scores');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(actRows.length?actRows:[{Event:'No activity'}]),'Activity');
+  XLSX.writeFile(wb,safeExportFileBase(currentProject.name)+'_fairshare.xlsx');
+  toast('Excel workbook downloaded.','success');
+}
+
+async function exportPptxOutline(){
+  if(!currentDocId||!currentProject){toast('Open a document first','error');return;}
+  const docs=STORE.get('docs_'+currentProject.id)||[];
+  const doc=docs.find(d=>d.id===currentDocId);
+  if(!doc){toast('Document not found','error');return;}
+  const PptxGenJS=(await import('https://esm.sh/pptxgenjs@3.12.0')).default;
+  const pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_WIDE';
+  const title=(document.getElementById('doc-title-input').value||doc.title||'Presentation').trim();
+  const slides=docKindOf(doc)==='slides'
+    ? (doc.slides&&doc.slides.length?doc.slides:[{title,bullets:[]}])
+    : [{title,bullets:(document.getElementById('doc-editor').innerText||'').split(/\n+/).map(s=>s.trim()).filter(Boolean).slice(0,8)}];
+  slides.slice(0,10).forEach((s,idx)=>{
+    const slide=pptx.addSlide();
+    slide.background={color:'0F172A'};
+    slide.addText(s.title||('Slide '+(idx+1)),{x:0.5,y:0.35,w:12.2,h:0.8,fontSize:30,bold:true,color:'E2E8F0',fontFace:'Calibri'});
+    const bullets=(s.bullets||[]).filter(Boolean).slice(0,7).map(b=>({text:String(b),options:{bullet:{indent:18}}}));
+    if(bullets.length){
+      slide.addText(bullets,{x:0.75,y:1.4,w:11.8,h:5.0,fontSize:22,color:'D1D5DB',fontFace:'Calibri',breakLine:true});
+    }else{
+      slide.addText('Add talking points in FairShare before exporting.',{x:0.75,y:1.8,w:11.2,h:1,fontSize:18,color:'94A3B8'});
+    }
+  });
+  await pptx.writeFile({fileName:safeExportFileBase(title)+'_outline.pptx'});
+  toast('PowerPoint outline downloaded.','success');
+}
+
 function exportDoc(format){
   if(!currentDocId||!currentProject)return;
   const docs=STORE.get('docs_'+currentProject.id)||[];
@@ -4734,6 +5562,30 @@ function exportDoc(format){
     exportWordAndReportZip().catch(e=>{
       console.error(e);
       toast(e.message||'Word export failed','error');
+    });
+    return;
+  }
+  if(format==='docx_submission'){
+    closeModal('modal-export');
+    exportDocxSubmission().catch(e=>{
+      console.error(e);
+      toast(e.message||'Word submission export failed','error');
+    });
+    return;
+  }
+  if(format==='xlsx_bundle'){
+    closeModal('modal-export');
+    exportProjectXlsx().catch(e=>{
+      console.error(e);
+      toast(e.message||'Excel export failed','error');
+    });
+    return;
+  }
+  if(format==='ppt_outline'){
+    closeModal('modal-export');
+    exportPptxOutline().catch(e=>{
+      console.error(e);
+      toast(e.message||'PowerPoint export failed','error');
     });
     return;
   }
@@ -5085,6 +5937,75 @@ function markAllRead(){
 /* ══════════════════════════════════════════════
    REPORT / ANALYTICS
 ══════════════════════════════════════════════ */
+function computeHealthTimeline(tasks,acts,members){
+  const out=[];
+  const now=Date.now();
+  const memberCount=Math.max(1,members.length||1);
+  for(let i=5;i>=0;i--){
+    const end=now-i*7*86400000;
+    const start=end-7*86400000;
+    const wTasks=tasks.filter(t=>t.created>=start&&t.created<end);
+    const wDone=wTasks.filter(t=>t.status==='done').length;
+    const wActs=acts.filter(a=>a.ts>=start&&a.ts<end);
+    const byUser={};
+    wActs.forEach(a=>{byUser[a.userId]=(byUser[a.userId]||0)+1;});
+    const counts=Object.values(byUser);
+    const avg=(counts.reduce((a,b)=>a+b,0)/(counts.length||1))||0;
+    const variance=counts.reduce((a,b)=>a+(b-avg)*(b-avg),0)/(counts.length||1);
+    const balance=1-Math.min(1,Math.sqrt(variance)/(avg+1));
+    const completion=wTasks.length?Math.min(1,wDone/wTasks.length):0.45;
+    const activeUsers=Object.keys(byUser).length;
+    const engagement=Math.min(1,activeUsers/memberCount);
+    const index=Math.max(0,Math.min(1,completion*0.45+balance*0.35+engagement*0.2));
+    const label=new Date(end).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    out.push({label,score:Math.round(index*100)});
+  }
+  return out;
+}
+function renderHealthTimeline(tasks,acts,members){
+  const box=document.getElementById('report-health-timeline');
+  if(!box)return;
+  const points=computeHealthTimeline(tasks,acts,members);
+  const avg=Math.round(points.reduce((a,b)=>a+b.score,0)/(points.length||1));
+  box.innerHTML=`
+    <div style="font-size:12px;color:var(--txt2);margin-top:10px">Average health: <strong style="color:var(--txt)">${avg}%</strong></div>
+    <div class="health-timeline-row">
+      ${points.map(p=>`<div class="health-timeline-bar" style="height:${Math.max(14,p.score)}%"><b>${p.score}</b><span>${esc(p.label)}</span></div>`).join('')}
+    </div>
+  `;
+}
+function buildSmartSummary(scores,tasks,acts,fairnessIndex){
+  const done=tasks.filter(t=>t.status==='done').length;
+  const overdue=tasks.filter(t=>t.status!=='done'&&t.due&&daysLeft(t.due)<0).length;
+  const top=scores[0];
+  const low=scores[scores.length-1];
+  const expected=100/Math.max(1,scores.length);
+  const imbalanced=scores.filter(s=>s.pct<expected*0.5).length;
+  const activeRecent=acts.filter(a=>Date.now()-a.ts<7*86400000).length;
+  const lines=[
+    `Fairness index: ${fairnessIndex}. Completion: ${done}/${tasks.length||0} tasks. Overdue: ${overdue}.`,
+    top?`Top contributor: ${top.member.name} (${top.pct}%).`:null,
+    low?`Lowest share: ${low.member.name} (${low.pct}%).`:null,
+    `${activeRecent} activity event${activeRecent===1?'':'s'} logged in the last 7 days.`,
+    imbalanced?`Action: ${imbalanced} member${imbalanced===1?'':'s'} are under half the expected share — schedule a workload rebalance check-in.`:'Action: workload appears balanced this week; keep responsibilities explicit and review at next checkpoint.'
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+function renderSmartSummary(force){
+  if(!currentProject)return;
+  const tasks=STORE.get('tasks_'+currentProject.id)||[];
+  const acts=STORE.get('activity_'+currentProject.id)||[];
+  const scores=computeScores();
+  const pcts=scores.map(s=>s.pct);
+  const mean=pcts.reduce((a,b)=>a+b,0)/(pcts.length||1);
+  const variance=pcts.reduce((a,b)=>a+(b-mean)**2,0)/(pcts.length||1);
+  const fairnessIndex=Math.max(0,Math.min(1,1-Math.sqrt(variance)/100)).toFixed(2);
+  const text=buildSmartSummary(scores,tasks,acts,fairnessIndex);
+  const box=document.getElementById('report-summary');
+  if(box&&(force||!box.textContent||/Generate a summary/i.test(box.textContent)))box.textContent=text;
+  const ts=document.getElementById('report-summary-time');
+  if(ts)ts.textContent='Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
 function renderReport(){
   if(!currentProject){
     document.getElementById('report-scores').innerHTML='<div class="empty" style="grid-column:1/-1;padding:40px"><div class="empty-icon">📊</div><div class="empty-text">Open a project first</div></div>';
@@ -5117,6 +6038,8 @@ function renderReport(){
       <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--purple);letter-spacing:-1px">${p.members.length}</div>
       <div style="font-size:11px;color:var(--txt2);margin-top:3px">Members</div>
     </div>`;
+  renderHealthTimeline(tasks,acts,p.members);
+  renderSmartSummary(false);
 
   document.getElementById('report-scores').innerHTML=scores.map((s,i)=>`
     <div class="score-card">
@@ -5504,14 +6427,19 @@ async function runPlagiarismCheck(){
    NAVIGATION
 ══════════════════════════════════════════════ */
 function showPage(id,tabEl){
+  if(id==='admin'&&(!currentUser||!['admin','instructor'].includes(currentUser.role||''))){
+    toast('Admin view is limited to instructors/admins.','error');
+    id='projects';
+    tabEl=document.querySelector('[data-page=projects]');
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const page=document.getElementById('page-'+id);
   if(page)page.classList.add('active');
 
-  if(tabEl){
-    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-    tabEl.classList.add('active');
-  }
+  document.querySelectorAll('.nav-tab,.mobile-nav-link').forEach(t=>t.classList.remove('active'));
+  if(tabEl)tabEl.classList.add('active');
+  document.querySelectorAll('[data-page="'+id+'"]').forEach(t=>t.classList.add('active'));
+  closeMobileNav();
 
   // Scroll to top
   const main=document.getElementById('main-scroll');
@@ -5556,11 +6484,38 @@ document.addEventListener('click',function(ev){
   if(ev.target.closest&&ev.target.closest('#user-menu-wrap'))return;
   closeUserMenu();
 });
+window.addEventListener('resize',function(){
+  if(window.innerWidth>640)closeMobileNav();
+});
+
+window._fairShareRefreshAfterHydrate=function(user){
+  if(!user)return;
+  if(!currentUser||currentUser.id!==user.id)return;
+  currentUser=user;
+  document.body.setAttribute('data-role',user.role||'student');
+  const av=document.getElementById('nav-avatar');
+  if(av){
+    av.textContent=getInitials(user.name);
+    av.className='avatar '+getAvatarClass(user.name);
+  }
+  const nn=document.getElementById('nav-name');
+  if(nn) nn.textContent=(user.name||'User').split(' ')[0];
+  const adminTab=document.getElementById('admin-tab');
+  if(adminTab) adminTab.style.display=(user.role==='admin'||user.role==='instructor')?'':'none';
+  const mobileAdminTab=document.getElementById('mobile-admin-tab');
+  if(mobileAdminTab) mobileAdminTab.style.display=(user.role==='admin'||user.role==='instructor')?'':'none';
+  renderProjectList();
+  renderNotifications();
+  renderProjectInvites();
+};
 
 window._fairShareApplyLogin=function(user){
   if(!user)return;
   const app=document.getElementById('app');
-  if(app&&app.classList.contains('visible')&&currentUser&&currentUser.id===user.id)return;
+  if(app&&app.classList.contains('visible')&&currentUser&&currentUser.id===user.id){
+    if(typeof window._fairShareRefreshAfterHydrate==='function') window._fairShareRefreshAfterHydrate(user);
+    return;
+  }
   loginAs(user);
 };
 

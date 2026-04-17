@@ -1,22 +1,18 @@
 ---
-description: Keep index.html identical to fairshare.html for GitHub/static hosting
+description: FairShare — no automatic index sync or git; user handles both manually
 alwaysApply: true
 ---
 
-# FairShare → index.html sync
+# FairShare — manual `index.html` and Git
 
-The canonical single-page app is **`fairshare.html`**. The repo also uses **`index.html`** at the project root for hosts that default to `index.html` (e.g. GitHub Pages).
+The main app file is **`fairshare.html`**. The repo may also have **`index.html`** for hosts that default to it (e.g. GitHub Pages).
 
-## Required behavior
+## Required behavior for the agent
 
-1. **Whenever you edit `fairshare.html`**, before finishing the task **copy the entire file contents into `index.html`** (overwrite `index.html` so it matches byte-for-byte unless the user explicitly asks otherwise).
+1. **Do not** copy or sync **`fairshare.html`** → **`index.html`** automatically. The user updates **`index.html`** when they choose.
 
-2. Use the same tool/write flow you use for other files (e.g. read `fairshare.html`, then write to `index.html`). Do **not** claim this cannot be done or defer to the user for manual copy-paste.
+2. **Do not** run **`git add`**, **`git commit`**, **`git push`**, or invoke **`.cursor/hooks/git-sync.sh`** as part of FairShare tasks unless the user explicitly asks for a git operation in that message.
 
-3. If you only change other files (`js/`, `server/`, `supabase/`, etc.) and **do not** touch `fairshare.html`, you do **not** need to update `index.html`.
+3. Edit **`fairshare.html`** (and other files) as requested; treat **`index.html`** as separate unless the user says to align them.
 
-4. Do not add a separate manual step for “paste into GitHub”; syncing **`index.html` in the workspace** is what gets committed and pushed to GitHub like any other file.
-
-5. **Deploy**: Pushing to **`main`** triggers **`.github/workflows/deploy-pages.yml`**, which publishes `index.html`, `fairshare.html`, `js/`, and `assets/` to **GitHub Pages**. In the repo, set **Settings → Pages → Build and deployment → Source: GitHub Actions** (one-time).
-
-6. The **stop hook** (`.cursor/hooks/git-sync.sh`) copies **`fairshare.html` → `index.html`** before staging, then commits and pushes when there are changes—so a synced tree on `main` leads to an automatic Pages deploy without a separate deploy step.
+4. GitHub Pages (if **`.github/workflows/deploy-pages.yml`** exists) still deploys when **the user** pushes to **`main`**; the agent does not push for them.

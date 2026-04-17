@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security & trust — FairShare</title>
+  <meta name="description" content="How FairShare approaches security, privacy, subprocessors, and institutional alignment for UK GDPR and PDPL.">
+  <link rel="icon" type="image/png" href="/assets/fairshare-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-nav">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="/assets/fairshare-logo.png" width="36" height="36" alt="" decoding="async">
+      <span>FairShare</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html#education">For schools</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a class="btn btn-demo" href="mailto:admin@fairsharework.space?subject=FairShare%20—%20Security%20question">Contact</a>
+      <a class="btn btn-primary" data-app-link href="/fairshare.html">Open app</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="page-hero">
+      <h1>Security &amp; trust</h1>
+      <p class="lead">Plain-language summary for IT, data protection, and procurement teams. Replace placeholders with your final vendor names, regions, and legal entity before publication.</p>
+    </div>
+
+    <article class="prose">
+      <div class="callout">
+        <strong>Not legal advice.</strong> This page helps you start technical and contractual conversations. Your counsel and DPO confirm compliance for your institution.
+      </div>
+
+      <h2>What FairShare does</h2>
+      <p>FairShare provides a web application for group projects: accounts, projects, tasks, documents, chat, notifications, and related analytics. Depending on your contract, we may act as a <strong>processor</strong> processing personal data on behalf of your school or university (the <strong>controller</strong>), or in other cases as a controller — your agreement and privacy assessment define the role.</p>
+
+      <h2>Data locations &amp; transfers</h2>
+      <p>Document where your production database and application run (e.g. region of your Supabase project or cloud host). If personal data moves between the UK, EU, or other countries, describe the transfer mechanism (e.g. Standard Contractual Clauses, UK Addendum, adequacy decisions) in your DPA and privacy policy.</p>
+
+      <h2>Subprocessors</h2>
+      <p>Maintain a current list of vendors that process personal data on your behalf (hosting, database, authentication, email, analytics, AI if applicable). Link to their trust pages and notify customers of material changes per your DPA.</p>
+      <ul>
+        <li><strong>Example:</strong> Database &amp; auth — document provider and region.</li>
+        <li><strong>Example:</strong> AI features — if student text is sent to an external model, disclose purpose, retention, and opt-in/institutional policy.</li>
+      </ul>
+
+      <h2>Security measures</h2>
+      <p>Summarise controls appropriate to your deployment: encryption in transit (HTTPS), access control, least-privilege credentials, separation of environments (staging vs production), logging and alerting, vulnerability handling, and incident response including breach notification timelines in your customer agreement.</p>
+
+      <h2>Retention &amp; deletion</h2>
+      <p>Define how long accounts and project data are kept, how leavers are handled, and how institutions request deletion at contract end. Implement export paths where promised.</p>
+
+      <h2>UK GDPR</h2>
+      <p>For UK institutions, address lawful basis, records of processing, DPIAs where required, children’s data if applicable, and cooperation with your DPO. ICO guidance applies to your organisation’s use of FairShare.</p>
+
+      <h2>PDPL</h2>
+      <p>Address lawful processing, cross-border transfers, and any registration or local representative requirements per current law and guidance. Your legal team interprets PDPL for your deployment.</p>
+
+      <h2>Contact</h2>
+      <p>Security questions: <a href="mailto:admin@fairsharework.space">admin@fairsharework.space</a>. Data protection: route through your institutional DPO as agreed in contract.</p>
+      <p style="margin-top:24px;"><a href="index.html">← Back to home</a></p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="wrap foot-grid">
+      <div class="foot-brand">
+        <img src="/assets/fairshare-logo.png" width="28" height="28" alt="" decoding="async">
+        <strong style="color:var(--txt2);font-family:var(--font-display);">FairShare</strong>
+      </div>
+      <div class="foot-col">
+        <strong>Trust</strong>
+        <p><a href="privacy.html">Privacy</a></p>
+        <p><a href="terms.html">Terms</a></p>
+        <p><a href="status.html">Status</a></p>
+      </div>
+    </div>
+    <div class="wrap foot-bottom">© <span id="y"></span> FairShare</div>
+  </footer>
+  <script>
+    (function(){var APP=window.FAIRSHARE_APP_URL||'/fairshare.html';document.querySelectorAll('[data-app-link]').forEach(function(a){a.setAttribute('href',APP);});document.getElementById('y').textContent=String(new Date().getFullYear());})();
+  </script>
+</body>
+</html>

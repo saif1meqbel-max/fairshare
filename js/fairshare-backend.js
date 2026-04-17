@@ -16,18 +16,20 @@
   let chatChannel = null;
   let activityChannel = null;
   let notifChannel = null;
+  /** Coalesce concurrent hydrations (e.g. signIn + onAuthStateChange). */
+  const hydrateInflight = new Map();
 
   function cfg() {
     return window.__FAIRSHARE__ || {};
   }
 
-  /** localStorage key '1' = keep signed in (survives browser restart). '0' = this browser session only. */
+  /** FairShare now always keeps users signed in until manual logout. */
   function getRememberPreference() {
-    return localStorage.getItem(REMEMBER_KEY) !== '0';
+    return true;
   }
 
   function getAuthStorage() {
-    return getRememberPreference() ? window.localStorage : window.sessionStorage;
+    return window.localStorage;
   }
 
   function buildSupabaseClient(createClient) {
@@ -152,56 +154,82 @@
   }
 
   async function hydrateSession(uid) {
-    viewerId = uid;
-    mem['session'] = uid;
-    const { data: prows, error: pe } = await sb.from('fs_projects').select('*');
-    if (pe) console.warn('[FSB] projects', pe);
-    const projects = (prows || []).map((r) => {
-      const b = r.body || {};
-      return {
-        ...b,
-        id: r.id,
-        ownerId: b.ownerId || r.owner_id,
-        owner_id: r.owner_id,
-      };
-    });
-    mem['projects_' + uid] = projects;
+    let run = hydrateInflight.get(uid);
+    if (run) return run;
 
-    const { data: sets } = await sb.from('fs_user_settings').select('*').eq('user_id', uid).maybeSingle();
-    if (sets?.score_config) mem['score_config'] = sets.score_config;
+    run = (async () => {
+      viewerId = uid;
+      mem['session'] = uid;
 
-    const { data: nrows } = await sb.from('fs_notifications').select('*').eq('user_id', uid);
-    mem['notifs_' + uid] = (nrows || []).map(rowNotif);
+      const [
+        { data: prows, error: pe },
+        { data: sets },
+        { data: nrows },
+        { data: prof },
+      ] = await Promise.all([
+        sb.from('fs_projects').select('*'),
+        sb.from('fs_user_settings').select('*').eq('user_id', uid).maybeSingle(),
+        sb.from('fs_notifications').select('*').eq('user_id', uid),
+        sb.from('profiles').select('*').eq('id', uid).maybeSingle(),
+      ]);
+      if (pe) console.warn('[FSB] projects', pe);
 
-    const pids = projects.map((p) => p.id);
-    await loadProjectGraph(pids);
+      mem['_prof_' + uid] = prof || null;
 
-    const { data: prof } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
-    const { data: allProf } = await sb.from('profiles').select('*');
-    if (prof?.role === 'admin' || prof?.role === 'instructor') {
-      mem['users'] = (allProf || []).map((p) => ({
-        id: p.id,
-        name: p.full_name,
-        email: p.email,
-        role: p.role,
-        created: new Date(p.created_at).getTime(),
-      }));
-    } else {
-      mem['users'] = prof
-        ? [
-            {
-              id: prof.id,
-              name: prof.full_name,
-              email: prof.email,
-              role: prof.role,
-              created: new Date(prof.created_at).getTime(),
-            },
-          ]
-        : [];
+      const projects = (prows || []).map((r) => {
+        const b = r.body || {};
+        return {
+          ...b,
+          id: r.id,
+          ownerId: b.ownerId || r.owner_id,
+          owner_id: r.owner_id,
+        };
+      });
+      mem['projects_' + uid] = projects;
+
+      if (sets?.score_config) mem['score_config'] = sets.score_config;
+      mem['notifs_' + uid] = (nrows || []).map(rowNotif);
+
+      const pids = projects.map((p) => p.id);
+      let allProf = null;
+      if (prof?.role === 'admin' || prof?.role === 'instructor') {
+        const { data: ap } = await sb.from('profiles').select('*');
+        allProf = ap;
+      }
+      await loadProjectGraph(pids);
+
+      if (prof?.role === 'admin' || prof?.role === 'instructor') {
+        mem['users'] = (allProf || []).map((p) => ({
+          id: p.id,
+          name: p.full_name,
+          email: p.email,
+          role: p.role,
+          created: new Date(p.created_at).getTime(),
+        }));
+      } else {
+        mem['users'] = prof
+          ? [
+              {
+                id: prof.id,
+                name: prof.full_name,
+                email: prof.email,
+                role: prof.role,
+                created: new Date(prof.created_at).getTime(),
+              },
+            ]
+          : [];
+      }
+
+      subscribeNotifications(uid);
+      refreshNotifBadgeFromMem();
+    })();
+
+    hydrateInflight.set(uid, run);
+    try {
+      await run;
+    } finally {
+      if (hydrateInflight.get(uid) === run) hydrateInflight.delete(uid);
     }
-
-    subscribeNotifications(uid);
-    refreshNotifBadgeFromMem();
   }
 
   function refreshNotifBadgeFromMem() {
@@ -217,6 +245,7 @@
     if (app && app.classList.contains('visible') && typeof window.renderNotifications === 'function') {
       window.renderNotifications();
     }
+    if (typeof window.renderProjectInvites === 'function') window.renderProjectInvites();
   }
 
   function subscribeNotifications(userId) {
@@ -479,9 +508,26 @@
       .subscribe();
   }
 
+  function userFromSession(session) {
+    const u = session.user;
+    const meta = u.user_metadata || {};
+    return {
+      id: u.id,
+      name: meta.full_name || meta.name || u.email?.split('@')[0] || 'User',
+      email: u.email,
+      role: meta.role || 'student',
+      created: Date.now(),
+    };
+  }
+
   async function mapSessionUser(session) {
     const uid = session.user.id;
-    const { data: prof } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+    let prof = mem['_prof_' + uid];
+    if (!prof) {
+      const { data } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+      prof = data;
+      mem['_prof_' + uid] = prof || null;
+    }
     const meta = session.user.user_metadata || {};
     return {
       id: uid,
@@ -632,26 +678,60 @@
      * (Storage engine is chosen once at page load; changing this takes effect next visit.)
      */
     applyRememberPreferenceFromForm() {
-      if (typeof document === 'undefined') return false;
-      const lr = document.getElementById('login-remember');
-      const sr = document.getElementById('su-remember');
-      const loginOn = document.getElementById('login-panel')?.classList.contains('active');
-      const signupOn = document.getElementById('signup-panel')?.classList.contains('active');
-      let checked = true;
-      if (loginOn && lr) checked = lr.checked;
-      else if (signupOn && sr) checked = sr.checked;
-      else if (lr) checked = lr.checked;
-      else if (sr) checked = sr.checked;
-      localStorage.setItem(REMEMBER_KEY, checked ? '1' : '0');
+      localStorage.setItem(REMEMBER_KEY, '1');
       return false;
     },
 
     syncRememberCheckboxes() {
-      const remembered = localStorage.getItem(REMEMBER_KEY) !== '0';
       ['login-remember', 'su-remember'].forEach((id) => {
         const el = typeof document !== 'undefined' ? document.getElementById(id) : null;
-        if (el) el.checked = remembered;
+        if (el) el.checked = true;
       });
+    },
+
+    async resolveProjectMembers(members) {
+      if (!sb || !Array.isArray(members) || !members.length) return members || [];
+      const emails = [...new Set(members.map((m) => String(m.email || '').trim().toLowerCase()).filter(Boolean))];
+      if (!emails.length) return members;
+      const { data, error } = await sb.from('profiles').select('id,email,full_name,role').in('email', emails);
+      if (error) throw error;
+      const byEmail = new Map((data || []).map((p) => [String(p.email || '').trim().toLowerCase(), p]));
+      return members.map((m) => {
+        const hit = byEmail.get(String(m.email || '').trim().toLowerCase());
+        if (!hit) return m;
+        return {
+          ...m,
+          id: hit.id,
+          inviteUserId: hit.id,
+          name: hit.full_name || m.name,
+          email: hit.email || m.email,
+          role: hit.role || m.role,
+        };
+      });
+    },
+
+    async sendProjectInvites(project) {
+      if (!sb || !project || !Array.isArray(project.members) || !viewerId) return 0;
+      const recipients = project.members.filter((m) => m && m.inviteUserId && m.inviteUserId !== viewerId);
+      if (!recipients.length) return 0;
+      const now = Date.now();
+      const rows = recipients.map((m) => ({
+        id: `inv_${project.id}_${m.inviteUserId}_${now}_${Math.random().toString(36).slice(2, 8)}`,
+        user_id: m.inviteUserId,
+        body: {
+          title: `Project invite: ${project.name}`,
+          type: 'project_invite',
+          projectId: project.id,
+          projectName: project.name,
+          ownerId: viewerId,
+          ownerName: project.ownerName || '',
+          ts: now,
+          read: false,
+        },
+      }));
+      const { error } = await sb.from('fs_notifications').insert(rows);
+      if (error) throw error;
+      return rows.length;
     },
 
     async signIn(email, password) {
@@ -677,13 +757,25 @@
         );
       }
 
-      await hydrateSession(session.user.id);
-      this.lastUser = await mapSessionUser(session);
-      if (!this.lastUser?.id) throw new Error('Could not load your profile after sign-in.');
+      /* Return immediately from JWT/metadata; load data in background (deduped with onAuthStateChange). */
+      const userFast = userFromSession(session);
+      this.lastUser = userFast;
       try {
         if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
       } catch (e) {}
-      return this.lastUser;
+      void hydrateSession(session.user.id)
+        .then(async () => {
+          const {
+            data: { session: s2 },
+          } = await sb.auth.getSession();
+          if (!s2?.user?.id) return;
+          this.lastUser = await mapSessionUser(s2);
+          if (typeof window._fairShareApplyLogin === 'function') {
+            window._fairShareApplyLogin(this.lastUser);
+          }
+        })
+        .catch((e) => console.warn('[FSB] hydrate after password sign-in', e));
+      return userFast;
     },
 
     async signUp(email, password, fullName, role) {

@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server/index.mjs",
     "dev": "node --watch server/index.mjs",
-    "sync": "bash .cursor/hooks/git-sync.sh"
+    "sync": "echo 'sync script disabled — copy fairshare.html to index.html and use git yourself if needed.' && exit 0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",

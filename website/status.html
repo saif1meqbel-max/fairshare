@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System status — FairShare</title>
+  <meta name="description" content="FairShare service status and uptime information.">
+  <link rel="icon" type="image/png" href="/assets/fairshare-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-nav">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="/assets/fairshare-logo.png" width="36" height="36" alt="" decoding="async">
+      <span>FairShare</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a class="btn btn-primary" data-app-link href="/fairshare.html">Open app</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="page-hero" style="text-align:center;">
+      <h1>System status</h1>
+      <p class="lead">Operational visibility for institutions. Update this page when you have a formal incident process.</p>
+    </div>
+
+    <div class="wrap" style="padding-bottom:80px;">
+      <div class="status-card">
+        <div class="status-badge">All systems operational</div>
+        <p style="color:var(--txt2);font-size:14px;margin-bottom:8px;">Web app, API, and authentication are responding normally.</p>
+        <p style="font-size:12px;color:var(--txt3);" id="status-updated">Last checked: —</p>
+      </div>
+
+      <div class="prose" style="padding-top:0;">
+        <h2>What we monitor</h2>
+        <p>Replace this list with your real checks: application host, Node API <code style="font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:6px;">/api/health</code>, database availability, authentication provider, and third-party services (email, AI, video) if you expose them to users.</p>
+
+        <h2>Incidents</h2>
+        <p>When you move to production, post incident summaries here or link to an external status provider (e.g. status page vendor). Until then, this page is a template.</p>
+
+        <h2>Contact</h2>
+        <p>Urgent production issues: <a href="mailto:admin@fairsharework.space">admin@fairsharework.space</a>.</p>
+
+        <p style="margin-top:28px;"><a href="index.html">← Back to home</a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap foot-bottom">
+      © <span id="y"></span> FairShare · <a href="security.html">Security</a>
+    </div>
+  </footer>
+  <script>
+    (function(){
+      document.getElementById('status-updated').textContent = 'Last checked: ' + new Date().toISOString().replace('T',' ').slice(0,19) + ' UTC';
+      var APP=window.FAIRSHARE_APP_URL||'/fairshare.html';
+      document.querySelectorAll('[data-app-link]').forEach(function(a){a.setAttribute('href',APP);});
+      document.getElementById('y').textContent=String(new Date().getFullYear());
+    })();
+  </script>
+</body>
+</html>

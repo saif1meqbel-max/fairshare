@@ -1,0 +1,19 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/website/",
+      "permanent": false
+    },
+    {
+      "source": "/app",
+      "destination": "/fairshare.html",
+      "permanent": false
+    },
+    {
+      "source": "/platform",
+      "destination": "/fairshare.html",
+      "permanent": false
+    }
+  ]
+}

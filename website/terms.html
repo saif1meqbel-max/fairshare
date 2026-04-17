@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of use — FairShare</title>
+  <meta name="description" content="FairShare terms of use — placeholder for your legal review.">
+  <link rel="icon" type="image/png" href="/assets/fairshare-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-nav">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="/assets/fairshare-logo.png" width="36" height="36" alt="" decoding="async">
+      <span>FairShare</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a class="btn btn-primary" data-app-link href="/fairshare.html">Open app</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="page-hero">
+      <h1>Terms of use</h1>
+      <p class="lead"><strong>Draft / placeholder.</strong> Have your lawyer review before publishing. Governing law and venue should match your company and customers (UK, or as advised).</p>
+    </div>
+
+    <article class="prose">
+      <div class="callout">
+        Outline only: acceptable use, account rules, intellectual property, disclaimers (especially for analytics/AI features), limitation of liability, indemnity, termination, and dispute resolution.
+      </div>
+
+      <h2>1. Agreement</h2>
+      <p>Who may use the service; age and institutional eligibility; acceptance of these terms and the privacy policy.</p>
+
+      <h2>2. The service</h2>
+      <p>Description of FairShare; beta or pilot features; right to modify or discontinue features with notice where required.</p>
+
+      <h2>3. Acceptable use</h2>
+      <p>No unlawful content, harassment, cheating, or attempts to break security. Consequences including suspension.</p>
+
+      <h2>4. Institutional customers</h2>
+      <p>If schools subscribe under a separate agreement, state how these terms interact with the master services agreement.</p>
+
+      <h2>5. Intellectual property</h2>
+      <p>Your IP in the platform; user content ownership and licence to operate the service.</p>
+
+      <h2>6. Disclaimers</h2>
+      <p>Service provided “as is” to the extent permitted by law; analytics are not academic misconduct findings.</p>
+
+      <h2>7. Limitation of liability</h2>
+      <p>Caps and exclusions as permitted in your jurisdictions — lawyer-drafted.</p>
+
+      <h2>8. Governing law</h2>
+      <p>Specify England &amp; Wales, or other as appropriate for your entity.</p>
+
+      <p style="margin-top:28px;"><a href="index.html">← Back to home</a> · <a href="privacy.html">Privacy policy</a></p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="wrap foot-bottom">© <span id="y"></span> FairShare</div>
+  </footer>
+  <script>
+    (function(){
+      var APP=window.FAIRSHARE_APP_URL||'/fairshare.html';
+      document.querySelectorAll('[data-app-link]').forEach(function(a){a.setAttribute('href',APP);});
+      document.getElementById('y').textContent=String(new Date().getFullYear());
+    })();
+  </script>
+</body>
+</html>

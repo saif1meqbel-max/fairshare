@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy policy — FairShare</title>
+  <meta name="description" content="FairShare privacy policy — placeholder for your legal review.">
+  <link rel="icon" type="image/png" href="/assets/fairshare-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-nav">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="/assets/fairshare-logo.png" width="36" height="36" alt="" decoding="async">
+      <span>FairShare</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a class="btn btn-primary" data-app-link href="/fairshare.html">Open app</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="page-hero">
+      <h1>Privacy policy</h1>
+      <p class="lead"><strong>Draft / placeholder.</strong> Have your lawyer review and replace before publishing. Last updated: <span id="privacy-date"></span></p>
+    </div>
+
+    <article class="prose">
+      <div class="callout">
+        This is a structural outline only — not a complete privacy policy. Insert your legal entity name, contact details, jurisdictions, and accurate processing descriptions.
+      </div>
+
+      <h2>1. Who we are</h2>
+      <p>Describe the data controller (your company name, address, registration). Provide a contact email for privacy requests.</p>
+
+      <h2>2. What data we process</h2>
+      <p>Account data (name, email, role), project content, messages, usage and analytics as applicable, technical logs, and any data from optional integrations.</p>
+
+      <h2>3. Why we process it (lawful bases)</h2>
+      <p>For UK GDPR: contract, legitimate interests, legal obligation, consent where required — specify per processing activity. For PDPL: align with applicable articles after legal review.</p>
+
+      <h2>4. How long we keep data</h2>
+      <p>Retention periods for accounts, projects, backups, and logs. Deletion after contract end or user request subject to exceptions.</p>
+
+      <h2>5. Sharing and subprocessors</h2>
+      <p>List categories of recipients and link to a current subprocessor list. Describe international transfers and safeguards.</p>
+
+      <h2>6. Your rights</h2>
+      <p>Access, rectification, erasure, restriction, portability, objection, and complaint to a supervisory authority — as applicable under UK GDPR / PDPL and your role as controller or processor.</p>
+
+      <h2>7. Children</h2>
+      <p>If the service is used in schools, describe age thresholds, institutional consent, and parental involvement per your policy.</p>
+
+      <h2>8. Changes</h2>
+      <p>How you notify users of material changes to this policy.</p>
+
+      <p style="margin-top:28px;"><a href="index.html">← Back to home</a> · <a href="security.html">Security &amp; trust</a></p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="wrap foot-bottom">© <span id="y"></span> FairShare</div>
+  </footer>
+  <script>
+    (function(){
+      document.getElementById('privacy-date').textContent = new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'});
+      var APP=window.FAIRSHARE_APP_URL||'/fairshare.html';
+      document.querySelectorAll('[data-app-link]').forEach(function(a){a.setAttribute('href',APP);});
+      document.getElementById('y').textContent=String(new Date().getFullYear());
+    })();
+  </script>
+</body>
+</html>
