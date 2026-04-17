@@ -15,6 +15,10 @@
   let flushTimer = null;
   let chatChannel = null;
   let activityChannel = null;
+  let tasksChannel = null;
+  let docsChannel = null;
+  /** Realtime Broadcast: peers refetch graph when anyone saves (works if postgres_changes does not). */
+  let projectBroadcastChannel = null;
   let notifChannel = null;
   /** Coalesce concurrent hydrations (e.g. signIn + onAuthStateChange). */
   const hydrateInflight = new Map();
@@ -119,7 +123,9 @@
   }
   function rowAct(r) {
     const b = r.body || {};
-    return { ...b, id: r.id, projectId: r.project_id };
+    const ts =
+      b.ts != null ? Number(b.ts) : r.created_ms != null ? Number(r.created_ms) : Date.now();
+    return { ...b, id: r.id, projectId: r.project_id, ts };
   }
   function rowChat(r) {
     const b = r.body || {};
@@ -142,6 +148,26 @@
     return { ...b, id: r.id };
   }
 
+  /**
+   * Merge local rows with server before flush so one member cannot wipe another's tasks/docs/activity
+   * with an empty or stale copy (local mem is per-tab).
+   */
+  async function mergeProjectChildRows(table, pid, locals, rowMapper) {
+    const { data: remote, error } = await sb.from(table).select('*').eq('project_id', pid);
+    if (error) console.warn('[FSB] merge fetch', table, pid, error.message || error);
+    const byId = Object.create(null);
+    for (const r of remote || []) {
+      const o = rowMapper(r);
+      if (o && o.id) byId[o.id] = o;
+    }
+    for (const t of locals || []) {
+      if (t && t.id) {
+        byId[t.id] = byId[t.id] ? { ...byId[t.id], ...t, id: t.id, projectId: pid } : { ...t, projectId: pid };
+      }
+    }
+    return Object.values(byId);
+  }
+
   async function loadProjectGraph(pids) {
     if (!pids.length) return;
     const [tasks, docs, acts, chats] = await Promise.all([
@@ -150,10 +176,17 @@
       sb.from('fs_activities').select('*').in('project_id', pids),
       sb.from('fs_chat_messages').select('*').in('project_id', pids),
     ]);
+    if (tasks.error) console.warn('[FSB] fs_tasks load', tasks.error.message || tasks.error);
+    if (docs.error) console.warn('[FSB] fs_documents load', docs.error.message || docs.error);
+    if (acts.error) console.warn('[FSB] fs_activities load', acts.error.message || acts.error);
+    if (chats.error) console.warn('[FSB] fs_chat_messages load', chats.error.message || chats.error);
     for (const pid of pids) {
       mem['tasks_' + pid] = (tasks.data || []).filter((r) => r.project_id === pid).map(rowTask);
       mem['docs_' + pid] = (docs.data || []).filter((r) => r.project_id === pid).map(rowDoc);
-      mem['activity_' + pid] = (acts.data || []).filter((r) => r.project_id === pid).map(rowAct);
+      mem['activity_' + pid] = (acts.data || [])
+        .filter((r) => r.project_id === pid)
+        .map(rowAct)
+        .sort((a, b) => (a.ts || 0) - (b.ts || 0));
     }
     for (const pid of pids) {
       const msgs = (chats.data || []).filter((r) => r.project_id === pid);
@@ -214,6 +247,56 @@
     return proj;
   }
 
+  /**
+   * Match stored members[] (often email-only) to profiles so inviteUserId is set after refresh.
+   */
+  async function resolveProjectMembersCore(members) {
+    if (!sb || !Array.isArray(members) || !members.length) return members || [];
+    const emails = [...new Set(members.map((m) => String(m.email || '').trim().toLowerCase()).filter(Boolean))];
+    if (!emails.length) return members;
+    const { data, error } = await sb.from('profiles').select('id,email,full_name,role').in('email', emails);
+    if (error) throw error;
+    const byEmail = new Map((data || []).map((p) => [String(p.email || '').trim().toLowerCase(), p]));
+    return members.map((m) => {
+      const hit = byEmail.get(String(m.email || '').trim().toLowerCase());
+      if (!hit) return m;
+      return {
+        ...m,
+        id: hit.id,
+        inviteUserId: hit.id,
+        name: hit.full_name || m.name,
+        email: hit.email || m.email,
+        role: hit.role || m.role,
+      };
+    });
+  }
+
+  /** Ensure the signed-in user's row is linked even if profile email casing differs from member.email. */
+  function mergeViewerIntoMembers(members, prof) {
+    if (!prof || !prof.id || !prof.email || !Array.isArray(members)) return members || [];
+    const le = String(prof.email).trim().toLowerCase();
+    return members.map((m) => {
+      const em = String(m.email || '').trim().toLowerCase();
+      if (em && em === le) {
+        return {
+          ...m,
+          id: prof.id,
+          inviteUserId: prof.id,
+          name: prof.full_name || m.name,
+          email: prof.email || m.email,
+          role: prof.role || m.role,
+        };
+      }
+      return m;
+    });
+  }
+
+  async function enrichProjectMembers(members, prof) {
+    const base = Array.isArray(members) ? members : [];
+    const resolved = await resolveProjectMembersCore(base);
+    return mergeViewerIntoMembers(resolved, prof);
+  }
+
   async function hydrateSession(uid) {
     let run = hydrateInflight.get(uid);
     if (run) return run;
@@ -252,10 +335,11 @@
       mem['notifs_' + uid] = (nrows || []).map(rowNotif);
 
       const have = new Set((mem['projects_' + uid] || []).map((p) => p.id));
+      /* Any notification with projectId can recover a shared row when SELECT was empty (RPC still allows). */
       const need = [
         ...new Set(
           (mem['notifs_' + uid] || [])
-            .filter((n) => String(n.type || '').toLowerCase() === 'project_invite' && n.projectId)
+            .filter((n) => n && n.projectId && String(n.projectId).trim())
             .map((n) => String(n.projectId).trim())
             .filter((id) => id)
         ),
@@ -266,6 +350,22 @@
         } catch (e) {
           console.warn('[FSB] invite project merge', nid, e);
         }
+      }
+
+      if (remote && sb) {
+        const profForEnrich = mem['_prof_' + uid] || null;
+        const plist = mem['projects_' + uid] || [];
+        for (let i = 0; i < plist.length; i++) {
+          try {
+            plist[i] = {
+              ...plist[i],
+              members: await enrichProjectMembers(plist[i].members || [], profForEnrich),
+            };
+          } catch (e) {
+            console.warn('[FSB] enrich members hydrate', plist[i]?.id, e);
+          }
+        }
+        mem['projects_' + uid] = plist;
       }
 
       const pids = (mem['projects_' + uid] || []).map((p) => p.id);
@@ -365,9 +465,49 @@
     }
   }
 
+  /**
+   * Notify other browsers on the same project to reload tasks/docs/activity from Postgres.
+   * Uses Realtime Broadcast (topic fairshare-project-{id}), not postgres replication.
+   */
+  async function broadcastGraphRefreshToPeers(projectId) {
+    if (!sb || !remote || !projectId) return;
+    return new Promise((resolve) => {
+      const ch = sb.channel('fairshare-project-' + projectId, {
+        config: { broadcast: { self: false } },
+      });
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        try {
+          sb.removeChannel(ch);
+        } catch (e) {}
+        resolve();
+      };
+      const timer = setTimeout(finish, 8000);
+      ch.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(timer);
+          ch
+            .send({
+              type: 'broadcast',
+              event: 'graph_refresh',
+              payload: { projectId },
+            })
+            .then(() => finish())
+            .catch(() => finish());
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          clearTimeout(timer);
+          finish();
+        }
+      });
+    });
+  }
+
   async function flushToSupabase() {
     if (!remote || !viewerId) return;
     const keys = Object.keys(mem);
+    const broadcastPids = new Set();
     for (const k of keys) {
       if (k.startsWith('projects_')) {
         const uid = k.slice('projects_'.length);
@@ -401,43 +541,52 @@
             { onConflict: 'id' }
           );
           if (upErr) console.warn('[FSB] fs_projects upsert', p.id, upErr);
+          else broadcastPids.add(p.id);
         }
       } else if (k.startsWith('tasks_')) {
         const pid = k.slice('tasks_'.length);
         const tasks = mem[k];
         if (!Array.isArray(tasks)) continue;
+        const merged = await mergeProjectChildRows('fs_tasks', pid, tasks, rowTask);
+        mem[k] = merged;
         await sb.from('fs_tasks').delete().eq('project_id', pid);
-        if (tasks.length) {
+        if (merged.length) {
           await sb.from('fs_tasks').insert(
-            tasks.map((t) => ({
+            merged.map((t) => ({
               id: t.id,
               project_id: pid,
               body: stripForBody(t, ['id', 'projectId']),
             }))
           );
         }
+        broadcastPids.add(pid);
       } else if (k.startsWith('docs_')) {
         const pid = k.slice('docs_'.length);
         const docs = mem[k];
         if (!Array.isArray(docs)) continue;
+        const merged = await mergeProjectChildRows('fs_documents', pid, docs, rowDoc);
+        mem[k] = merged;
         await sb.from('fs_documents').delete().eq('project_id', pid);
-        if (docs.length) {
+        if (merged.length) {
           await sb.from('fs_documents').insert(
-            docs.map((d) => ({
+            merged.map((d) => ({
               id: d.id,
               project_id: pid,
               body: stripForBody(d, ['id', 'projectId']),
             }))
           );
         }
+        broadcastPids.add(pid);
       } else if (k.startsWith('activity_')) {
         const pid = k.slice('activity_'.length);
         const acts = mem[k];
         if (!Array.isArray(acts)) continue;
+        const merged = await mergeProjectChildRows('fs_activities', pid, acts, rowAct);
+        mem[k] = merged;
         await sb.from('fs_activities').delete().eq('project_id', pid);
-        if (acts.length) {
+        if (merged.length) {
           await sb.from('fs_activities').insert(
-            acts.map((a) => ({
+            merged.map((a) => ({
               id: a.id,
               project_id: pid,
               body: stripForBody(a, ['id', 'projectId']),
@@ -445,6 +594,7 @@
             }))
           );
         }
+        broadcastPids.add(pid);
       } else if (k.startsWith('chat_')) {
         const rest = k.slice('chat_'.length);
         const idx = rest.lastIndexOf('_');
@@ -463,6 +613,7 @@
             channel,
             body: { userId: m.userId, userName: m.userName, text: m.text, ts: m.ts },
           });
+          broadcastPids.add(pid);
         }
       } else if (k.startsWith('notifs_')) {
         const uid = k.slice('notifs_'.length);
@@ -501,6 +652,9 @@
         );
       }
     }
+    for (const pid of broadcastPids) {
+      void broadcastGraphRefreshToPeers(pid).catch((e) => console.warn('[FSB] graph broadcast', pid, e));
+    }
   }
 
   function attachRemoteStore() {
@@ -525,34 +679,140 @@
     }
   }
 
+  function releaseTasksChannel() {
+    if (tasksChannel && sb) {
+      sb.removeChannel(tasksChannel);
+      tasksChannel = null;
+    }
+  }
+
+  function releaseDocsChannel() {
+    if (docsChannel && sb) {
+      sb.removeChannel(docsChannel);
+      docsChannel = null;
+    }
+  }
+
+  function releaseProjectBroadcastChannel() {
+    if (projectBroadcastChannel && sb) {
+      sb.removeChannel(projectBroadcastChannel);
+      projectBroadcastChannel = null;
+    }
+  }
+
+  /** Subscribe to Broadcast events so teammates’ saves trigger a full graph reload. */
+  function subscribeProjectBroadcast(projectId) {
+    if (!remote || !sb || !projectId) return;
+    releaseProjectBroadcastChannel();
+    projectBroadcastChannel = sb
+      .channel('fairshare-project-' + projectId, {
+        config: { broadcast: { self: false } },
+      })
+      .on('broadcast', { event: 'graph_refresh' }, async () => {
+        await loadProjectGraph([projectId]);
+        if (typeof window.refreshFairshareProjectUI === 'function') {
+          window.refreshFairshareProjectUI(projectId);
+        }
+      })
+      .subscribe();
+  }
+
+  function subscribeTasksRealtime(projectId) {
+    if (!remote || !sb || !projectId) return;
+    releaseTasksChannel();
+    tasksChannel = sb
+      .channel('fs-tasks-' + projectId)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fs_tasks',
+          filter: 'project_id=eq.' + projectId,
+        },
+        async () => {
+          const { data, error } = await sb.from('fs_tasks').select('*').eq('project_id', projectId);
+          if (error) {
+            console.warn('[FSB] tasks realtime reload', error.message || error);
+            return;
+          }
+          mem['tasks_' + projectId] = (data || []).map(rowTask);
+          if (typeof window.refreshFairshareTasksUI === 'function') {
+            window.refreshFairshareTasksUI(projectId);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  function subscribeDocumentsRealtime(projectId) {
+    if (!remote || !sb || !projectId) return;
+    releaseDocsChannel();
+    docsChannel = sb
+      .channel('fs-docs-' + projectId)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fs_documents',
+          filter: 'project_id=eq.' + projectId,
+        },
+        async () => {
+          const { data, error } = await sb.from('fs_documents').select('*').eq('project_id', projectId);
+          if (error) {
+            console.warn('[FSB] documents realtime reload', error.message || error);
+            return;
+          }
+          mem['docs_' + projectId] = (data || []).map(rowDoc);
+          if (typeof window.refreshFairshareDocumentsUI === 'function') {
+            window.refreshFairshareDocumentsUI(projectId);
+          }
+        }
+      )
+      .subscribe();
+  }
+
   function subscribeActivities(projectId) {
     if (!remote || !sb || !projectId) return;
     releaseActivityChannel();
+
+    async function reloadActivitiesFromServer() {
+      const { data, error } = await sb.from('fs_activities').select('*').eq('project_id', projectId);
+      if (error) {
+        console.warn('[FSB] activities reload', error.message || error);
+        return;
+      }
+      const list = (data || [])
+        .map(rowAct)
+        .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      mem['activity_' + projectId] = list;
+      if (typeof window.refreshFairshareActivityUI === 'function') {
+        window.refreshFairshareActivityUI(projectId);
+      }
+    }
+
+    void reloadActivitiesFromServer();
+
     activityChannel = sb
       .channel('fs-activity-' + projectId)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'fs_activities',
           filter: 'project_id=eq.' + projectId,
         },
-        (payload) => {
-          const row = payload.new;
-          if (!row || row.project_id !== projectId) return;
-          const o = rowAct(row);
-          const key = 'activity_' + projectId;
-          const list = mem[key] || [];
-          if (list.some((x) => x.id === o.id)) return;
-          list.push(o);
-          mem[key] = list;
-          if (typeof window.refreshFairshareActivityUI === 'function') {
-            window.refreshFairshareActivityUI(projectId);
-          }
+        () => {
+          void reloadActivitiesFromServer();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          void reloadActivitiesFromServer();
+        }
+      });
   }
 
   function subscribeChat(projectId, channel) {
@@ -676,6 +936,13 @@
       sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_OUT') {
           releaseActivityChannel();
+          releaseTasksChannel();
+          releaseDocsChannel();
+          releaseProjectBroadcastChannel();
+          if (chatChannel && sb) {
+            sb.removeChannel(chatChannel);
+            chatChannel = null;
+          }
           stopNotificationsRealtime();
           viewerId = null;
           for (const k of Object.keys(mem)) delete mem[k];
@@ -798,24 +1065,7 @@
     },
 
     async resolveProjectMembers(members) {
-      if (!sb || !Array.isArray(members) || !members.length) return members || [];
-      const emails = [...new Set(members.map((m) => String(m.email || '').trim().toLowerCase()).filter(Boolean))];
-      if (!emails.length) return members;
-      const { data, error } = await sb.from('profiles').select('id,email,full_name,role').in('email', emails);
-      if (error) throw error;
-      const byEmail = new Map((data || []).map((p) => [String(p.email || '').trim().toLowerCase(), p]));
-      return members.map((m) => {
-        const hit = byEmail.get(String(m.email || '').trim().toLowerCase());
-        if (!hit) return m;
-        return {
-          ...m,
-          id: hit.id,
-          inviteUserId: hit.id,
-          name: hit.full_name || m.name,
-          email: hit.email || m.email,
-          role: hit.role || m.role,
-        };
-      });
+      return resolveProjectMembersCore(members);
     },
 
     async sendProjectInvites(project) {
@@ -959,7 +1209,36 @@
      * Used when opening a project from an invite if the list was stale.
      */
     async fetchProjectById(projectId) {
-      return loadProjectRowForSession(projectId);
+      const proj = await loadProjectRowForSession(projectId);
+      if (!proj || !remote || !sb) return proj;
+      const prof = mem['_prof_' + viewerId] || null;
+      const key = 'projects_' + viewerId;
+      const list = Array.isArray(mem[key]) ? [...mem[key]] : [];
+      const ix = list.findIndex((p) => p && p.id === proj.id);
+      if (ix < 0) return proj;
+      try {
+        list[ix] = { ...list[ix], members: await enrichProjectMembers(list[ix].members || [], prof) };
+        mem[key] = list;
+        return list[ix];
+      } catch (e) {
+        console.warn('[FSB] fetchProjectById enrich', e);
+        return proj;
+      }
+    },
+
+    /**
+     * Persist full membership for the signed-in user (members[].inviteUserId). Requires migration 008.
+     */
+    async joinProject(projectId) {
+      if (!remote || !sb || !viewerId) throw new Error('Sign in to join a project.');
+      const pid = String(projectId || '').trim();
+      if (!pid) throw new Error('Missing project id');
+      const { data, error } = await sb.rpc('fs_join_project', { p_project_id: pid });
+      if (error) throw error;
+      const r = data && typeof data === 'object' ? data : {};
+      if (r.ok === false) throw new Error(r.error || 'Could not join project');
+      await hydrateSession(viewerId);
+      return r;
     },
 
     /**
@@ -1044,6 +1323,9 @@
         if (typeof localStorage !== 'undefined') localStorage.removeItem(LOCAL_MODE_KEY);
       } catch (e) {}
       releaseActivityChannel();
+      releaseTasksChannel();
+      releaseDocsChannel();
+      releaseProjectBroadcastChannel();
       stopNotificationsRealtime();
       if (sb) await sb.auth.signOut();
       viewerId = null;
@@ -1075,8 +1357,32 @@
       subscribeActivities(projectId);
     },
 
+    startTasksRealtime(projectId) {
+      subscribeTasksRealtime(projectId);
+    },
+
+    startDocumentsRealtime(projectId) {
+      subscribeDocumentsRealtime(projectId);
+    },
+
+    startProjectBroadcast(projectId) {
+      subscribeProjectBroadcast(projectId);
+    },
+
+    stopProjectBroadcast() {
+      releaseProjectBroadcastChannel();
+    },
+
     stopActivitiesRealtime() {
       releaseActivityChannel();
+    },
+
+    stopTasksRealtime() {
+      releaseTasksChannel();
+    },
+
+    stopDocumentsRealtime() {
+      releaseDocsChannel();
     },
 
     stopChatRealtime() {

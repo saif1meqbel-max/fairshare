@@ -58,10 +58,7 @@
       localStorage.setItem(STORAGE_KEY, lang);
     } catch (e) {}
 
-    var navEl = document.getElementById('site-nav-links');
-    var navBtn = document.querySelector('.nav-toggle');
-    if (navEl) navEl.classList.remove('open');
-    if (navBtn) navBtn.setAttribute('aria-expanded', 'false');
+    /* Do not toggle .nav-links.open here: on small screens that hides the whole nav (display:none until .open). */
 
     window.__FAIRSHARE_SITE_LANG__ = lang;
     if (typeof window.updateRoiCalculator === 'function') window.updateRoiCalculator();

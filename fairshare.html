@@ -3891,9 +3891,66 @@ function loadProjects(){
   return projects;
 }
 
+/** Prefer account id for assignee when member has joined (stable across tabs). */
+function memberAssigneeValue(m){
+  if(!m)return'';
+  return String(m.inviteUserId||m.id||'');
+}
+
+function findMemberForTaskAssignee(proj,assignedTo){
+  if(!proj||!Array.isArray(proj.members))return null;
+  if(assignedTo==null||assignedTo==='')return null;
+  const a=String(assignedTo);
+  return proj.members.find(m=>{
+    if(!m)return false;
+    return String(m.id)===a||String(m.inviteUserId||'')===a;
+  })||null;
+}
+
+function taskAssignedToCurrentUser(t,proj,uid){
+  if(!t||!uid)return false;
+  if(String(t.assignedTo||'')===String(uid))return true;
+  const m=findMemberForTaskAssignee(proj,t.assignedTo);
+  if(!m)return false;
+  return String(m.inviteUserId||'')===String(uid)||String(m.id)===String(uid);
+}
+
+function memberMatchesAssignee(member,assigneeMember){
+  if(!member||!assigneeMember)return false;
+  const a=new Set([String(assigneeMember.id),String(assigneeMember.inviteUserId||'')].filter(Boolean));
+  return a.has(String(member.id))||a.has(String(member.inviteUserId||''));
+}
+
 function getInviteNotifications(){
   if(!currentUser)return[];
   return(STORE.get('notifs_'+currentUser.id)||[]).filter(n=>String(n.type||'').toLowerCase()==='project_invite');
+}
+
+/** True when this user is the lead or a full member (not email-only pending). */
+function userHasJoinedProject(proj){
+  if(!currentUser||!proj)return false;
+  const uid=currentUser.id;
+  if(proj.ownerId===uid)return true;
+  if(!Array.isArray(proj.members))return false;
+  const em=String(currentUser.email||'').trim().toLowerCase();
+  return proj.members.some(m=>{
+    if(!m)return false;
+    const mEm=String(m.email||'').trim().toLowerCase();
+    if(mEm&&mEm===em)return !!(m.inviteUserId===uid||m.id===uid);
+    return m.inviteUserId===uid||m.id===uid;
+  });
+}
+
+/** Invites where the user has not yet joined (or project not loaded yet). */
+function getPendingInviteNotifications(){
+  const all=getInviteNotifications().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  return all.filter(not=>{
+    const pid=notificationProjectId(not);
+    if(!pid)return true;
+    const p=loadProjects().find(x=>x.id===pid);
+    if(!p)return true;
+    return !userHasJoinedProject(p);
+  });
 }
 
 function notificationProjectId(not){
@@ -3908,7 +3965,7 @@ function renderProjectInvites(){
   const hint=document.getElementById('projects-invite-hint');
   const countEl=document.getElementById('invites-nav-count');
   if(!wrap||!list||!currentUser)return;
-  const invites=getInviteNotifications().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const invites=getPendingInviteNotifications();
   const n=invites.length;
 
   if(countEl){
@@ -3919,7 +3976,7 @@ function renderProjectInvites(){
   if(hint){
     if(n){
       hint.style.display='flex';
-      hint.innerHTML=`<span>You have <strong>${n}</strong> project invite${n===1?'':'s'}. Open the <strong>Invites</strong> tab to accept.</span>
+      hint.innerHTML=`<span>You have <strong>${n}</strong> project invite${n===1?'':'s'}. Use <strong>Join project</strong> on the Invites tab to become a member.</span>
         <button type="button" class="btn btn-primary btn-sm" onclick="showPage('invites',document.querySelector('[data-page=invites]'))">Open Invites</button>`;
     }else{
       hint.style.display='none';
@@ -3938,11 +3995,44 @@ function renderProjectInvites(){
   list.innerHTML=invites.map(not=>{
     const pid=notificationProjectId(not);
     const title=not.title||'Project invite';
-    return`<div class="invite-row">
-      <div class="invite-row-text"><strong>${esc(title)}</strong> · ${timeAgo(not.ts||Date.now())}</div>
-      <button type="button" class="btn btn-primary btn-sm" onclick='openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})'>Open project</button>
+    const proj=pid?loadProjects().find(x=>x.id===pid):null;
+    const joined=proj&&userHasJoinedProject(proj);
+    const primaryBtn=joined
+      ?`<button type="button" class="btn btn-primary btn-sm" onclick='openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})'>Open project</button>`
+      :`<button type="button" class="btn btn-primary btn-sm" onclick='joinProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(not.id)})'>Join project</button>`;
+    return`<div class="invite-row" style="align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="invite-row-text" style="flex:1;min-width:0"><strong>${esc(title)}</strong> · ${timeAgo(not.ts||Date.now())}</div>
+      <div style="display:flex;gap:8px;flex-shrink:0">${primaryBtn}</div>
     </div>`;
   }).join('');
+}
+
+async function joinProjectFromInvite(projectId, notifId){
+  const pid=String(projectId||'').trim();
+  if(!pid){toast('This invite is missing a project link. Ask the lead to send the invite again.','error');return}
+  if(!window.FSB||typeof window.FSB.joinProject!=='function'){
+    toast('Sign in with FairShare cloud to join a project.','error');
+    return;
+  }
+  try{
+    await window.FSB.joinProject(pid);
+  }catch(e){
+    console.warn('joinProject',e);
+    toast(e.message||'Could not join project. Confirm your account email matches the one the lead added.','error');
+    return;
+  }
+  if(notifId) markRead(notifId);
+  renderProjectList();
+  let p=loadProjects().find(x=>x.id===pid);
+  if(!p&&window.FSB&&typeof window.FSB.fetchProjectById==='function'){
+    try{p=await window.FSB.fetchProjectById(pid)}catch(e){console.warn('fetchProjectById',e)}
+  }
+  if(!p){
+    toast('You joined the project. Open it from Projects when it appears.','success');
+    return;
+  }
+  await openProject(pid,{silent:true});
+  toast(`You joined ${p.name||'the project'}.`,'success');
 }
 
 async function openProjectFromInvite(projectId, notifId){
@@ -3963,6 +4053,10 @@ async function openProjectFromInvite(projectId, notifId){
   if(!p){
     toast('Could not load this project. Confirm your account email matches the one the lead added, then refresh the page.','error');
     return
+  }
+  if(!userHasJoinedProject(p)){
+    toast('Use Join project on the Invites tab to become a member first.','error');
+    return;
   }
   await openProject(pid);
 }
@@ -4031,7 +4125,7 @@ function renderProjectList(){
   }).join('');
 }
 
-async function openProject(id){
+async function openProject(id, opts){
   let projects=loadProjects();
   let p=projects.find(p=>p.id===id);
   if(!p){toast('Project not found','error');return}
@@ -4041,7 +4135,7 @@ async function openProject(id){
   if(!p){toast('Project not found','error');return}
   currentProject=p;
   try{if(currentUser&&currentUser.id)STORE.set('current_project_'+currentUser.id,id)}catch(e){}
-  toast(`Opened: ${p.name}`,'success');
+  if(!opts||!opts.silent)toast(`Opened: ${p.name}`,'success');
 
   // Update UI hints
   document.getElementById('tasks-project-name').textContent=p.name;
@@ -4343,6 +4437,9 @@ async function deleteCurrentProject(){
     activityInterval=null;
     if(window.FSB&&typeof window.FSB.stopChatRealtime==='function')window.FSB.stopChatRealtime();
     if(window.FSB&&typeof window.FSB.stopActivitiesRealtime==='function')window.FSB.stopActivitiesRealtime();
+    if(window.FSB&&typeof window.FSB.stopTasksRealtime==='function')window.FSB.stopTasksRealtime();
+    if(window.FSB&&typeof window.FSB.stopDocumentsRealtime==='function')window.FSB.stopDocumentsRealtime();
+    if(window.FSB&&typeof window.FSB.stopProjectBroadcast==='function')window.FSB.stopProjectBroadcast();
   }catch(e){}
   currentProject=null;
   try{if(currentUser&&currentUser.id)STORE.del('current_project_'+currentUser.id)}catch(e){}
@@ -4455,7 +4552,7 @@ function computeScores(){
   const cfg=STORE.get('score_config')||SCORE_CONFIG;
 
   return currentProject.members.map(m=>{
-    const myTasks=tasks.filter(t=>t.assignedTo===m.id);
+    const myTasks=tasks.filter(t=>memberMatchesAssignee(m,findMemberForTaskAssignee(currentProject,t.assignedTo)));
     const taskCount=myTasks.filter(t=>t.status==='done').length;
     const task=taskCount*cfg.taskPts+myTasks.filter(t=>t.status==='in_progress').length*Math.floor(cfg.taskPts*0.3);
     const editActs=acts.filter(a=>a.userId===m.id&&a.type==='doc_edit');
@@ -4529,7 +4626,35 @@ function refreshActivityDisplays(){
 
 window.refreshFairshareActivityUI=function(projectId){
   if(!currentProject||currentProject.id!==projectId)return;
-  refreshActivityDisplays();
+  /* Full dashboard refresh so Live feed, contribution scores, and upcoming deadlines stay in sync for all members. */
+  renderDashboard();
+  const actPg=document.getElementById('page-activity');
+  if(actPg&&actPg.classList.contains('active'))renderActivityPage();
+};
+
+/** After remote graph reload (Broadcast or Realtime) — sync project pointer and all project-scoped UI. */
+window.refreshFairshareProjectUI=function(projectId){
+  if(!currentProject||currentProject.id!==projectId)return;
+  const list=loadProjects();
+  const p=list.find(x=>x.id===projectId);
+  if(p)currentProject=p;
+  renderDashboard();
+  renderTasks();
+  if(typeof renderDocList==='function')renderDocList();
+  if(typeof renderChatMessages==='function')renderChatMessages();
+  const reportPg=document.getElementById('page-report');
+  if(reportPg&&reportPg.classList.contains('active')&&typeof renderReport==='function')renderReport();
+};
+
+window.refreshFairshareTasksUI=function(projectId){
+  if(!currentProject||currentProject.id!==projectId)return;
+  renderTasks();
+  renderDashboard();
+};
+
+window.refreshFairshareDocumentsUI=function(projectId){
+  if(!currentProject||currentProject.id!==projectId)return;
+  if(typeof renderDocList==='function')renderDocList();
 };
 
 function startLiveActivity(){
@@ -4538,6 +4663,15 @@ function startLiveActivity(){
   renderLiveFeed();
   if(window.FSB&&typeof window.FSB.startActivitiesRealtime==='function'&&window.__FAIRSHARE_USE_REMOTE__&&currentProject){
     window.FSB.startActivitiesRealtime(currentProject.id);
+  }
+  if(window.FSB&&typeof window.FSB.startTasksRealtime==='function'&&window.__FAIRSHARE_USE_REMOTE__&&currentProject){
+    window.FSB.startTasksRealtime(currentProject.id);
+  }
+  if(window.FSB&&typeof window.FSB.startDocumentsRealtime==='function'&&window.__FAIRSHARE_USE_REMOTE__&&currentProject){
+    window.FSB.startDocumentsRealtime(currentProject.id);
+  }
+  if(window.FSB&&typeof window.FSB.startProjectBroadcast==='function'&&window.__FAIRSHARE_USE_REMOTE__&&currentProject){
+    window.FSB.startProjectBroadcast(currentProject.id);
   }
 }
 
@@ -4551,7 +4685,7 @@ function renderUpcoming(){
   document.getElementById('dash-upcoming').innerHTML=upcoming.length?upcoming.map(t=>{
     const dl=daysLeft(t.due);
     const color=dl<0?'var(--red)':dl===0?'var(--amber)':dl<=3?'var(--amber)':'var(--txt3)';
-    const assignee=currentProject.members.find(m=>m.id===t.assignedTo);
+    const assignee=findMemberForTaskAssignee(currentProject,t.assignedTo);
     return`<div class="task-row">
       <div class="priority-dot priority-${t.priority}"></div>
       <div class="task-name" style="flex:1">${esc(t.name)}</div>
@@ -4596,7 +4730,7 @@ function renderTasks(){
   const filter=document.getElementById('task-filter').value;
   let tasks=STORE.get('tasks_'+currentProject.id)||[];
 
-  if(filter==='mine')tasks=tasks.filter(t=>t.assignedTo===currentUser.id);
+  if(filter==='mine')tasks=tasks.filter(t=>taskAssignedToCurrentUser(t,currentProject,currentUser.id));
   else if(filter!=='all')tasks=tasks.filter(t=>t.status===filter);
 
   if(taskView==='kanban'){
@@ -4625,7 +4759,7 @@ function renderTasks(){
 }
 
 function taskCardHtml(t){
-  const assignee=currentProject.members.find(m=>m.id===t.assignedTo);
+  const assignee=findMemberForTaskAssignee(currentProject,t.assignedTo);
   const dl=t.due?daysLeft(t.due):null;
   const dueColor=dl!==null&&dl<0?'var(--red)':dl===0?'var(--amber)':'var(--txt3)';
   return`<div class="task-card" onclick="toggleTaskDone('${t.id}')">
@@ -4643,7 +4777,7 @@ function taskCardHtml(t){
 }
 
 function taskRowHtml(t){
-  const assignee=currentProject.members.find(m=>m.id===t.assignedTo);
+  const assignee=findMemberForTaskAssignee(currentProject,t.assignedTo);
   const dl=t.due?daysLeft(t.due):null;
   const dueColor=dl!==null&&dl<0?'var(--red)':dl===0?'var(--amber)':'var(--txt3)';
   return`<div class="task-row">
@@ -5795,7 +5929,7 @@ async function exportProjectXlsx(){
   const scores=computeScores();
   const taskRows=tasks.map(t=>({
     Task:t.name,Status:t.status,Priority:t.priority||'medium',
-    AssignedTo:(currentProject.members.find(m=>m.id===t.assignedTo)||{}).name||t.assignedTo||'',
+    AssignedTo:(findMemberForTaskAssignee(currentProject,t.assignedTo)||{}).name||t.assignedTo||'',
     Due:t.due||'',CompletedAt:t.completedAt?new Date(t.completedAt).toLocaleString():'',
   }));
   const scoreRows=scores.map((s,i)=>({
@@ -6196,15 +6330,27 @@ function renderNotifications(){
   const notifs=STORE.get('notifs_'+currentUser.id)||[];
   const typeIcons={task_complete:'✅',doc_edit:'✏️',comment:'💬',task_assign:'📋',project_invite:'📁',doc_shared:'📄',info:'ℹ️'};
   const typeBg={task_complete:'rgba(0,212,170,0.1)',doc_edit:'rgba(79,124,255,0.1)',comment:'rgba(255,179,71,0.1)',task_assign:'rgba(155,109,255,0.1)',project_invite:'rgba(0,212,170,0.12)',doc_shared:'rgba(79,124,255,0.12)',info:'rgba(255,255,255,0.05)'};
-  document.getElementById('notif-list').innerHTML=notifs.length?notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" onclick="markRead('${n.id}')">
+  document.getElementById('notif-list').innerHTML=notifs.length?notifs.map(n=>{
+    const pid=notificationProjectId(n);
+    const isProjInv=String(n.type||'').toLowerCase()==='project_invite'&&pid;
+    const proj=isProjInv?loadProjects().find(x=>x.id===pid):null;
+    const joined=proj&&userHasJoinedProject(proj);
+    let joinBtn='';
+    if(isProjInv&&!joined){
+      joinBtn=`<button type="button" class="btn btn-primary btn-sm" style="margin-left:auto;flex-shrink:0" onclick="event.stopPropagation();joinProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(n.id)})">Join project</button>`;
+    }else if(isProjInv&&joined){
+      joinBtn=`<button type="button" class="btn btn-outline btn-sm" style="margin-left:auto;flex-shrink:0" onclick="event.stopPropagation();openProjectFromInvite(${JSON.stringify(pid)},${JSON.stringify(n.id)})">Open</button>`;
+    }
+    return`<div class="notif-item ${n.read?'':'unread'}" onclick="markRead('${n.id}')" style="align-items:center">
       <div class="notif-icon" style="background:${typeBg[n.type]||typeBg.info}">${typeIcons[n.type]||'📌'}</div>
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="notif-title">${esc(n.title)}</div>
         <div class="notif-time">${timeAgo(n.ts)}</div>
       </div>
-      ${!n.read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--teal);margin-left:auto;flex-shrink:0"></div>':''}
-    </div>`).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">🔔</div><div class="empty-text">No notifications</div></div>`;
+      ${joinBtn}
+      ${!n.read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0"></div>':''}
+    </div>`;
+  }).join(''):`<div class="empty" style="padding:40px"><div class="empty-icon">🔔</div><div class="empty-text">No notifications</div></div>`;
   renderProjectInvites();
 }
 
@@ -6758,9 +6904,11 @@ function showPage(id,tabEl){
 
 function openModal(id){
   if(id==='modal-new-task'&&currentProject){
-    document.getElementById('nt-assign').innerHTML=currentProject.members.map(m=>
-      `<option value="${m.id}">${esc(m.name)}${m.id===currentUser.id?' (you)':''}</option>`
-    ).join('');
+    document.getElementById('nt-assign').innerHTML=currentProject.members.map(m=>{
+      const val=memberAssigneeValue(m);
+      const you=taskAssignedToCurrentUser({assignedTo:val},currentProject,currentUser.id)||m.id===currentUser.id||m.inviteUserId===currentUser.id;
+      return`<option value=${JSON.stringify(val)}>${esc(m.name)}${you?' (you)':''}</option>`;
+    }).join('');
   }
   if(id==='modal-new-project'){
     const ts=document.getElementById('np-template');
