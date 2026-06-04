@@ -2828,6 +2828,60 @@ function isValidEmailFormat(email){
   return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||'').trim());
 }
 
+function isFairshareDemoUser(user){
+  return!!(user&&String(user.email||'').toLowerCase()==='demo@fairshare.app');
+}
+/** Old builds used id "demo" and fixed project ids — everyone shared one localStorage pool. */
+function purgeLegacySharedDemoStores(){
+  const legacyPids=['proj_demo','proj_hrm3130'];
+  try{
+    STORE.del('projects_demo');
+    for(let pi=0;pi<legacyPids.length;pi++){
+      const pid=legacyPids[pi];
+      STORE.del('tasks_'+pid);
+      STORE.del('activity_'+pid);
+      STORE.del('docs_'+pid);
+      for(let ci=0;ci<chatChannels.length;ci++){
+        STORE.del('chat_'+pid+'_'+chatChannels[ci]);
+      }
+    }
+    STORE.del('notifs_demo');
+  }catch(e){}
+}
+function purgeDemoDataForUserId(uid){
+  if(!uid)return;
+  try{
+    const plist=STORE.get('projects_'+uid)||[];
+    for(let i=0;i<plist.length;i++){
+      const pid=plist[i]&&plist[i].id;
+      if(!pid)continue;
+      STORE.del('tasks_'+pid);
+      STORE.del('activity_'+pid);
+      STORE.del('docs_'+pid);
+      for(let ci=0;ci<chatChannels.length;ci++){
+        STORE.del('chat_'+pid+'_'+chatChannels[ci]);
+      }
+    }
+    STORE.del('projects_'+uid);
+    STORE.del('notifs_'+uid);
+  }catch(e){}
+}
+/** Migrate pre-isolation demo account to a per-browser-tab instance id. */
+function migrateLegacyDemoUserIfNeeded(user){
+  if(!isFairshareDemoUser(user)||user.id!=='demo')return user;
+  const sid='demo_'+genId('mig');
+  try{sessionStorage.setItem('fairshare_demo_uid',sid);}catch(e){}
+  purgeLegacySharedDemoStores();
+  let users=STORE.get('users')||[];
+  const ix=users.findIndex(u=>u.id==='demo'&&isFairshareDemoUser(u));
+  const migrated={...user,id:sid};
+  if(ix>=0)users[ix]=migrated;
+  else users.push(migrated);
+  STORE.set('users',users);
+  STORE.set('session',sid);
+  return migrated;
+}
+
 async function handleForgotPassword(){
   if(window.FSB&&typeof window.FSB.init==='function')await window.FSB.init();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
@@ -2886,11 +2940,14 @@ async function handleLogin(){
 function demoLogin(){
   if(window.FSB&&typeof window.FSB.useLocalDemo==='function')window.FSB.useLocalDemo();
   let users=STORE.get('users')||[];
-  let demo=users.find(u=>u.email==='demo@fairshare.app');
-  if(!demo){
-    demo={id:'demo',name:'Jamie Liu',email:'demo@fairshare.app',password:'demo',role:'student',created:Date.now()};
-    users.push(demo);STORE.set('users',users);
-  }
+  const prevDemo=users.filter(u=>isFairshareDemoUser(u));
+  for(let i=0;i<prevDemo.length;i++)purgeDemoDataForUserId(prevDemo[i].id);
+  users=users.filter(u=>!isFairshareDemoUser(u));
+  const demoSid='demo_'+genId('inst');
+  try{sessionStorage.setItem('fairshare_demo_uid',demoSid);}catch(e){}
+  const demo={id:demoSid,name:'Jamie Liu',email:'demo@fairshare.app',password:'demo',role:'student',created:Date.now()};
+  users.push(demo);
+  STORE.set('users',users);
   seedDemoData(demo);
   loginAs(demo);
 }
@@ -2948,12 +3005,14 @@ function loginAs(user){
     toast('Could not complete sign-in (missing user id). Try again or refresh.','error');
     return;
   }
+  if(isFairshareDemoUser(user))user=migrateLegacyDemoUserIfNeeded(user);
   currentUser=user;
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
   document.getElementById('app').classList.add('visible');
 
-  if(user.id==='demo'&&user.email==='demo@fairshare.app'){
+  if(isFairshareDemoUser(user)){
+    try{sessionStorage.setItem('fairshare_demo_uid',user.id);}catch(e){}
     try{seedDemoData(user)}catch(e){}
   }
 
@@ -3038,6 +3097,9 @@ function confirmSignOut(){
 }
 
 async function handleLogout(){
+  if(currentUser&&isFairshareDemoUser(currentUser)){
+    try{sessionStorage.removeItem('fairshare_demo_uid');}catch(e){}
+  }
   if(window.FSB&&window.FSB.hasCloud)await window.FSB.signOut();
   else STORE.del('session');
   currentUser=null;currentProject=null;
@@ -3054,42 +3116,43 @@ async function handleLogout(){
    DEMO DATA SEEDING
 ══════════════════════════════════════════════ */
 function seedDemoData(owner){
-  const pid='proj_demo';
+  const me=owner.id;
+  const pid='proj_demo_'+me;
   const members=[
-    {id:'demo',name:'Jamie Liu',email:'demo@fairshare.app'},
+    {id:me,name:'Jamie Liu',email:'demo@fairshare.app'},
     {id:'m2',name:'Maya Rodriguez',email:'maya@uni.edu'},
     {id:'m3',name:'Alex Singh',email:'alex@uni.edu'},
     {id:'m4',name:'Taylor Kim',email:'taylor@uni.edu'},
   ];
-  const proj={id:pid,name:'CS470 Research Paper',desc:'An empirical study on distributed systems performance and scalability patterns.',deadline:'2026-12-15',instructor:'Prof. Sarah Chen',ownerId:'demo',members,created:Date.now()-86400000*10,status:'active'};
-  let projects=STORE.get('projects_demo')||[];
-  if(!projects.find(p=>p.id===pid)){projects.push(proj);STORE.set('projects_demo',projects)}
+  const proj={id:pid,name:'CS470 Research Paper',desc:'An empirical study on distributed systems performance and scalability patterns.',deadline:'2026-12-15',instructor:'Prof. Sarah Chen',ownerId:me,members,created:Date.now()-86400000*10,status:'active'};
+  let projects=STORE.get('projects_'+me)||[];
+  if(!projects.find(p=>p.id===pid)){projects.push(proj);STORE.set('projects_'+me,projects)}
 
   if(!(STORE.get('tasks_'+pid)||[]).length){
     STORE.set('tasks_'+pid,[
-      {id:'t1',projectId:pid,name:'Literature review outline',assignedTo:'demo',priority:'high',due:'2026-12-05',status:'done',created:Date.now()-86400000*8,completedAt:Date.now()-86400000*7},
+      {id:'t1',projectId:pid,name:'Literature review outline',assignedTo:me,priority:'high',due:'2026-12-05',status:'done',created:Date.now()-86400000*8,completedAt:Date.now()-86400000*7},
       {id:'t2',projectId:pid,name:'Research question definition',assignedTo:'m2',priority:'high',due:'2026-12-05',status:'done',created:Date.now()-86400000*8,completedAt:Date.now()-86400000*6},
       {id:'t3',projectId:pid,name:'Data collection methodology',assignedTo:'m2',priority:'medium',due:'2026-12-07',status:'done',created:Date.now()-86400000*7,completedAt:Date.now()-86400000*5},
       {id:'t4',projectId:pid,name:'Statistical analysis write-up',assignedTo:'m3',priority:'medium',due:'2026-12-10',status:'in_progress',created:Date.now()-86400000*5},
-      {id:'t5',projectId:pid,name:'Discussion section draft',assignedTo:'demo',priority:'medium',due:'2026-12-11',status:'in_progress',created:Date.now()-86400000*4},
+      {id:'t5',projectId:pid,name:'Discussion section draft',assignedTo:me,priority:'medium',due:'2026-12-11',status:'in_progress',created:Date.now()-86400000*4},
       {id:'t6',projectId:pid,name:'Bibliography & citations',assignedTo:'m2',priority:'low',due:'2026-12-12',status:'in_progress',created:Date.now()-86400000*3},
       {id:'t7',projectId:pid,name:'Final proofread & formatting',assignedTo:'m4',priority:'high',due:'2026-12-14',status:'todo',created:Date.now()-86400000*2},
-      {id:'t8',projectId:pid,name:'Abstract writing',assignedTo:'demo',priority:'medium',due:'2026-12-13',status:'todo',created:Date.now()-86400000*1},
+      {id:'t8',projectId:pid,name:'Abstract writing',assignedTo:me,priority:'medium',due:'2026-12-13',status:'todo',created:Date.now()-86400000*1},
     ]);
   }
 
   if(!(STORE.get('activity_'+pid)||[]).length){
     STORE.set('activity_'+pid,[
-      {id:'a1',projectId:pid,userId:'demo',userName:'Jamie Liu',type:'task_complete',text:'completed task: Literature review outline',ts:Date.now()-86400000*7},
+      {id:'a1',projectId:pid,userId:me,userName:'Jamie Liu',type:'task_complete',text:'completed task: Literature review outline',ts:Date.now()-86400000*7},
       {id:'a2',projectId:pid,userId:'m2',userName:'Maya Rodriguez',type:'task_complete',text:'completed task: Research question definition',ts:Date.now()-86400000*6},
       {id:'a3',projectId:pid,userId:'m2',userName:'Maya Rodriguez',type:'task_complete',text:'completed task: Data collection methodology',ts:Date.now()-86400000*5},
       {id:'a4',projectId:pid,userId:'m3',userName:'Alex Singh',type:'doc_edit',text:'edited Introduction — 340 words added',ts:Date.now()-86400000*4},
-      {id:'a5',projectId:pid,userId:'demo',userName:'Jamie Liu',type:'comment',text:'commented on Methodology section',ts:Date.now()-86400000*3},
+      {id:'a5',projectId:pid,userId:me,userName:'Jamie Liu',type:'comment',text:'commented on Methodology section',ts:Date.now()-86400000*3},
       {id:'a6',projectId:pid,userId:'m4',userName:'Taylor Kim',type:'view',text:'viewed the project dashboard',ts:Date.now()-86400000*2},
       {id:'a7',projectId:pid,userId:'m3',userName:'Alex Singh',type:'doc_edit',text:'uploaded Literature Review draft',ts:Date.now()-3600000*3},
-      {id:'a8',projectId:pid,userId:'demo',userName:'Jamie Liu',type:'doc_edit',text:'edited Discussion — 210 words added',ts:Date.now()-3600000*2},
+      {id:'a8',projectId:pid,userId:me,userName:'Jamie Liu',type:'doc_edit',text:'edited Discussion — 210 words added',ts:Date.now()-3600000*2},
       {id:'a9',projectId:pid,userId:'m2',userName:'Maya Rodriguez',type:'comment',text:'commented: "Should we include error bars in Fig. 3?"',ts:Date.now()-3600000},
-      {id:'a10',projectId:pid,userId:'demo',userName:'Jamie Liu',type:'doc_edit',text:'edited Introduction — 3 paragraphs revised',ts:Date.now()-60000*5},
+      {id:'a10',projectId:pid,userId:me,userName:'Jamie Liu',type:'doc_edit',text:'edited Introduction — 3 paragraphs revised',ts:Date.now()-60000*5},
     ]);
   }
 
@@ -3097,7 +3160,8 @@ function seedDemoData(owner){
   const did='doc_demo1';
   if(!(STORE.get('docs_'+pid)||[]).length){
     const content=`<h1>CS470 Research Paper</h1><h2>Abstract</h2><p>This paper investigates performance characteristics of distributed systems under various load conditions. We present empirical data collected from a cluster of 24 nodes over a 30-day period, demonstrating significant throughput improvements when using adaptive load balancing strategies.</p><h2>1. Introduction</h2><p>Distributed systems have become the backbone of modern computing infrastructure. As organizations scale their services, understanding the performance trade-offs becomes increasingly critical. This study aims to provide quantitative analysis of key performance metrics including latency, throughput, and fault tolerance across different architectural configurations.</p><p>Our primary contributions are: (1) a comprehensive benchmarking framework for distributed systems, (2) empirical evidence supporting adaptive load balancing over static approaches, and (3) recommendations for system architects based on our findings.</p><h2>2. Methodology</h2><p>We conducted experiments on a dedicated cluster using industry-standard benchmarking tools. Each experiment was run a minimum of five times to ensure statistical significance. Our measurement framework tracked CPU utilization, memory consumption, network I/O, and request latency at millisecond granularity.</p>`;
-    STORE.set('docs_'+pid,[{id:did,projectId:pid,kind:'document',title:'CS470 Research Paper Draft',content,created:Date.now()-86400000*8,lastEditedBy:'demo',lastEditedAt:Date.now()-3600000*2,wordCounts:{demo:280,m3:340,m2:120,m4:40}}]);
+    const wcPaper={m3:340,m2:120,m4:40};wcPaper[me]=280;
+    STORE.set('docs_'+pid,[{id:did,projectId:pid,kind:'document',title:'CS470 Research Paper Draft',content,created:Date.now()-86400000*8,lastEditedBy:me,lastEditedAt:Date.now()-3600000*2,wordCounts:wcPaper}]);
   }
 
   // Seed chat
@@ -3106,19 +3170,19 @@ function seedDemoData(owner){
       const demoMsgs=ch==='general'?[
         {id:genId('msg'),userId:'m2',userName:'Maya Rodriguez',text:'Hey team! Just finished the data collection methodology section 🎉',ts:Date.now()-86400000*2},
         {id:genId('msg'),userId:'m3',userName:'Alex Singh',text:'Nice work Maya! I started on the statistical analysis. Should have a draft by tomorrow.',ts:Date.now()-86400000*2+3600000},
-        {id:genId('msg'),userId:'demo',userName:'Jamie Liu',text:'Great progress everyone. Let\'s sync Friday to review what we have.',ts:Date.now()-86400000},
+        {id:genId('msg'),userId:me,userName:'Jamie Liu',text:'Great progress everyone. Let\'s sync Friday to review what we have.',ts:Date.now()-86400000},
         {id:genId('msg'),userId:'m4',userName:'Taylor Kim',text:'Works for me. 3pm?',ts:Date.now()-86400000+1800000},
-        {id:genId('msg'),userId:'demo',userName:'Jamie Liu',text:'3pm works! I\'ll send the Zoom link.',ts:Date.now()-3600000*4},
+        {id:genId('msg'),userId:me,userName:'Jamie Liu',text:'3pm works! I\'ll send the Zoom link.',ts:Date.now()-3600000*4},
       ]:[];
       STORE.set('chat_'+pid+'_'+ch,demoMsgs);
     }
   });
 
   /* HRM3130 — includes Feyza Cim; open this project’s doc to try live AI writing estimate */
-  const pidHrm='proj_hrm3130';
-  projects=STORE.get('projects_demo')||[];
+  const pidHrm='proj_hrm3130_'+me;
+  projects=STORE.get('projects_'+me)||[];
   const hrmMembers=[
-    {id:'demo',name:'Jamie Liu',email:'demo@fairshare.app'},
+    {id:me,name:'Jamie Liu',email:'demo@fairshare.app'},
     {id:'feyzacim',name:'Feyza Cim',email:'feyzacim@uni.edu'},
     {id:'m2',name:'Maya Rodriguez',email:'maya@uni.edu'},
   ];
@@ -3128,14 +3192,14 @@ function seedDemoData(owner){
     desc:'University course project (remote-friendly). Individual reflection + group coordination.',
     deadline:'2026-11-22',
     instructor:'Dr. Rivera',
-    ownerId:'demo',
+    ownerId:me,
     members:hrmMembers,
     created:Date.now()-86400000*6,
     status:'active',
   };
   if(!projects.find(p=>p.id===pidHrm)){
     projects.push(projHrm);
-    STORE.set('projects_demo',projects);
+    STORE.set('projects_'+me,projects);
   }
   const hrmDocId='doc_hrm3130_main';
   if(!(STORE.get('docs_'+pidHrm)||[]).length){
@@ -3148,6 +3212,7 @@ function seedDemoData(owner){
       '<p>The textbook’s section on psychological safety helped me frame why we explicitly asked for “clarifying questions only” in the first five minutes. It reduced defensive reactions compared to our first rehearsal. I also applied the idea of goal-setting theory: we made the objective of the role-play measurable (“resolve without HR escalation”) so feedback was less subjective.</p>'+
       '<h2>3. Personal takeaway</h2>'+
       '<p>I am learning that remote facilitation is less about perfect tools and more about explicit norms. I still want to improve how I summarize decisions at the end of meetings so nobody leaves unsure of the next step.</p>';
+    const wcHrm={feyzacim:420};wcHrm[me]=40;
     STORE.set('docs_'+pidHrm,[
       {
         id:hrmDocId,
@@ -3158,7 +3223,7 @@ function seedDemoData(owner){
         created:Date.now()-86400000*2,
         lastEditedBy:'feyzacim',
         lastEditedAt:Date.now()-3600000*5,
-        wordCounts:{feyzacim:420,demo:40},
+        wordCounts:wcHrm,
       },
     ]);
   }

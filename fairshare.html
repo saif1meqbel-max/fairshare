@@ -2320,8 +2320,8 @@ textarea{resize:vertical;min-height:72px}
         </div>
         <div style="display:flex;gap:10px">
           <button class="btn btn-outline btn-sm" onclick="renderSmartSummary(true)">✨ Smart summary</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportReport()">⬇ Export PDF</button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-export-report')">📊 Full Report</button>
+          <button class="btn btn-ghost btn-sm" onclick="openExportModal('save')">⬇ Export PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="openExportModal('full')">📊 Full Report</button>
         </div>
       </div>
 
@@ -2995,14 +2995,25 @@ textarea{resize:vertical;min-height:72px}
 </div>
 
 <div class="modal-overlay" id="modal-export-report" onclick="overlayClose(event,this)">
-  <div class="modal modal-sm">
-    <div class="modal-title">📊 Full Report</div>
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title" id="export-modal-title">📊 Full Report</div>
     <button class="modal-close" onclick="closeModal('modal-export-report')">✕</button>
-    <p style="font-size:13px;color:var(--txt2);margin-bottom:20px">Print or save a PDF of the current analytics view for your records or instructor.</p>
-    <div class="form-actions" style="margin-top:0">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-export-report')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="exportReport();closeModal('modal-export-report')">Print / Save PDF</button>
+    <p id="export-modal-desc" style="font-size:13px;color:var(--txt2);margin-bottom:20px"></p>
+    <!-- Inline mini-preview -->
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;background:#fff">
+      <div style="background:#f7f8fc;padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+        <div style="width:10px;height:10px;border-radius:50%;background:#ff5c7a;opacity:.7"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#ffb347;opacity:.7"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#00d4aa;opacity:.7"></div>
+        <span style="font-size:10px;color:var(--txt3);margin-left:4px;font-family:monospace">FairShare Report — <span id="export-preview-name">Project</span></span>
+      </div>
+      <div style="padding:14px 16px;background:#fff" id="export-preview-content">
+        <div style="display:flex;gap:8px;margin-bottom:10px" id="export-preview-stats"></div>
+        <div style="height:1px;background:#f0f0f0;margin-bottom:10px"></div>
+        <div id="export-preview-members" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
     </div>
+    <div id="export-modal-actions" class="form-actions" style="margin-top:0"></div>
   </div>
 </div>
 
@@ -3561,15 +3572,24 @@ async function handleLogin(){
 }
 
 function demoLogin(){
-  if(window.FSB&&typeof window.FSB.useLocalDemo==='function')window.FSB.useLocalDemo();
+  /* Write demo data DIRECTLY to localStorage with the fs4_ prefix before touching FSB or STORE.
+     This is the only guaranteed-safe path because FSB._runInit may still be settling async state. */
+  const P='fs4_';
+  function lsSet(k,v){try{localStorage.setItem(P+k,JSON.stringify(v))}catch(e){}}
+  const demo={id:'demo',name:'Jamie Liu',email:'demo@fairshare.app',password:'demo',role:'student',created:Date.now()-86400000*30};
+  const existing=[];try{const r=JSON.parse(localStorage.getItem(P+'users')||'[]');if(Array.isArray(r))existing.push(...r.filter(u=>u&&u.id!=='demo'))}catch(e){}
+  lsSet('users',[...existing,demo]);
+  lsSet('session','demo');
+  /* Tell FSB to use local/demo mode so future STORE calls hit localStorage */
+  try{if(window.FSB&&window.FSB.useLocalDemo)window.FSB.useLocalDemo()}catch(e){}
+  /* Ensure STORE itself is the localStorage adapter right now */
+  window.STORE={
+    get(k){try{return JSON.parse(localStorage.getItem(P+k)||'null')}catch{return null}},
+    set(k,v){try{localStorage.setItem(P+k,JSON.stringify(v))}catch(e){}},
+    del(k){try{localStorage.removeItem(P+k)}catch(e){}},
+  };
   setAuthStatus('Loading demo workspace…','loading');
-  let users=STORE.get('users')||[];
-  let demo=users.find(u=>u.email==='demo@fairshare.app');
-  if(!demo){
-    demo={id:'demo',name:'Jamie Liu',email:'demo@fairshare.app',password:'demo',role:'student',created:Date.now()};
-    users.push(demo);STORE.set('users',users);
-  }
-  seedDemoData(demo);
+  seedDemoData(demo,true);
   loginAs(demo);
 }
 
@@ -3645,7 +3665,7 @@ function loginAs(user){
   document.getElementById('app').classList.add('visible');
 
   if(user.id==='demo'&&user.email==='demo@fairshare.app'){
-    try{seedDemoData(user)}catch(e){}
+    try{seedDemoData(user,true)}catch(e){console.warn('seedDemoData',e)}
   }
 
   // Set avatar/name in nav
@@ -3759,7 +3779,8 @@ async function handleLogout(){
 /* ══════════════════════════════════════════════
    DEMO DATA SEEDING
 ══════════════════════════════════════════════ */
-function seedDemoData(owner){
+function seedDemoData(owner, force){
+  /* force=true: always re-write all data (used when demo is blank/corrupt) */
   const pid='proj_demo';
   const members=[
     {id:'demo',name:'Jamie Liu',email:'demo@fairshare.app'},
@@ -3769,9 +3790,13 @@ function seedDemoData(owner){
   ];
   const proj={id:pid,name:'CS470 Research Paper',desc:'An empirical study on distributed systems performance and scalability patterns.',deadline:'2026-12-15',instructor:'Prof. Sarah Chen',ownerId:'demo',members,created:Date.now()-86400000*10,status:'active'};
   let projects=STORE.get('projects_demo')||[];
-  if(!projects.find(p=>p.id===pid)){projects.push(proj);STORE.set('projects_demo',projects)}
+  if(force||!projects.find(p=>p.id===pid)){
+    projects=projects.filter(p=>p.id!==pid);
+    projects.unshift(proj);
+    STORE.set('projects_demo',projects);
+  }
 
-  if(!(STORE.get('tasks_'+pid)||[]).length){
+  if(force||(!(STORE.get('tasks_'+pid)||[]).length)){
     STORE.set('tasks_'+pid,[
       {id:'t1',projectId:pid,name:'Literature review outline',assignedTo:'demo',priority:'high',due:'2026-12-05',status:'done',created:Date.now()-86400000*8,completedAt:Date.now()-86400000*7},
       {id:'t2',projectId:pid,name:'Research question definition',assignedTo:'m2',priority:'high',due:'2026-12-05',status:'done',created:Date.now()-86400000*8,completedAt:Date.now()-86400000*6},
@@ -3784,7 +3809,7 @@ function seedDemoData(owner){
     ]);
   }
 
-  if(!(STORE.get('activity_'+pid)||[]).length){
+  if(force||(!(STORE.get('activity_'+pid)||[]).length)){
     STORE.set('activity_'+pid,[
       {id:'a1',projectId:pid,userId:'demo',userName:'Jamie Liu',type:'task_complete',text:'completed task: Literature review outline',ts:Date.now()-86400000*7},
       {id:'a2',projectId:pid,userId:'m2',userName:'Maya Rodriguez',type:'task_complete',text:'completed task: Research question definition',ts:Date.now()-86400000*6},
@@ -3801,7 +3826,7 @@ function seedDemoData(owner){
 
   // Seed demo document
   const did='doc_demo1';
-  if(!(STORE.get('docs_'+pid)||[]).length){
+  if(force||(!(STORE.get('docs_'+pid)||[]).length)){
     const content=`<h1>CS470 Research Paper</h1><h2>Abstract</h2><p>This paper investigates performance characteristics of distributed systems under various load conditions. We present empirical data collected from a cluster of 24 nodes over a 30-day period, demonstrating significant throughput improvements when using adaptive load balancing strategies.</p><h2>1. Introduction</h2><p>Distributed systems have become the backbone of modern computing infrastructure. As organizations scale their services, understanding the performance trade-offs becomes increasingly critical. This study aims to provide quantitative analysis of key performance metrics including latency, throughput, and fault tolerance across different architectural configurations.</p><p>Our primary contributions are: (1) a comprehensive benchmarking framework for distributed systems, (2) empirical evidence supporting adaptive load balancing over static approaches, and (3) recommendations for system architects based on our findings.</p><h2>2. Methodology</h2><p>We conducted experiments on a dedicated cluster using industry-standard benchmarking tools. Each experiment was run a minimum of five times to ensure statistical significance. Our measurement framework tracked CPU utilization, memory consumption, network I/O, and request latency at millisecond granularity.</p>`;
     STORE.set('docs_'+pid,[{id:did,projectId:pid,kind:'document',title:'CS470 Research Paper Draft',content,created:Date.now()-86400000*8,lastEditedBy:'demo',lastEditedAt:Date.now()-3600000*2,wordCounts:{demo:280,m3:340,m2:120,m4:40}}]);
   }
@@ -4067,11 +4092,15 @@ function renderProjectList(){
   const container=document.getElementById('project-grid');
   if(!container)return;
   if(!projects.length){
+    const isDemo=currentUser&&currentUser.id==='demo';
     container.innerHTML=`<div class="empty" style="grid-column:1/-1">
       <div class="empty-icon">📂</div>
       <div class="empty-text">No projects yet</div>
-      <div class="empty-sub">Create your first group project to get started</div>
-      <button class="btn btn-primary" style="width:auto;margin-top:16px" onclick="openModal('modal-new-project')">+ Create Project</button>
+      <div class="empty-sub">${isDemo?'Demo data missing — click the button below to restore it.':'Create your first group project to get started'}</div>
+      ${isDemo
+        ?`<button class="btn btn-primary" style="width:auto;margin-top:16px" onclick="seedDemoData(currentUser,true);renderProjectList();toast('Demo projects restored','success')">↺ Restore Demo Projects</button>`
+        :`<button class="btn btn-primary" style="width:auto;margin-top:16px" onclick="openModal('modal-new-project')">+ Create Project</button>`
+      }
     </div>`;
     return;
   }
@@ -6589,10 +6618,343 @@ function getBadges(){
   return badges;
 }
 
-function exportReport(){
+function _reportEsc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+
+function buildReportHTML(mode){
+  /* mode: 'save' = open in new tab (no auto-print), 'print' = open + trigger print dialog */
+  if(!currentProject)return null;
+  const p=currentProject;
+  const scores=computeScores();
+  const tasks=STORE.get('tasks_'+p.id)||[];
+  const acts=STORE.get('activity_'+p.id)||[];
+  const docs=STORE.get('docs_'+p.id)||[];
+  const doneCount=tasks.filter(t=>t.status==='done').length;
+  const pcts=scores.map(s=>s.pct);
+  const mean=pcts.reduce((a,b)=>a+b,0)/(pcts.length||1);
+  const variance=pcts.reduce((a,b)=>a+(b-mean)**2,0)/(pcts.length||1);
+  const fairness=Math.max(0,Math.min(1,1-Math.sqrt(variance)/100)).toFixed(2);
+  const withDue=tasks.filter(t=>t.due);
+  const onTimeTasks=withDue.filter(t=>t.status==='done'&&t.completedAt&&new Date(t.completedAt)<=new Date(t.due+'T23:59:59')).length;
+  const lateTasks=withDue.filter(t=>t.status==='done'&&t.completedAt&&new Date(t.completedAt)>new Date(t.due+'T23:59:59')).length;
+  const overdueTasks=withDue.filter(t=>t.status!=='done'&&daysLeft(t.due)<0).length;
+  const expected=100/(p.members.length||1);
+  const HEX=['#00d4aa','#4f7cff','#9b6dff','#ffb347','#ff5c7a','#ff6b9d'];
+  const col=i=>HEX[i%HEX.length];
+  const ini=n=>(n||'?').split(' ').map(x=>x[0]||'').join('').toUpperCase().slice(0,2);
+  const e=_reportEsc;
+  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const autoPrint=mode==='print';
+
+  /* ── Member score cards (page 1) ── */
+  const memberCards=scores.map((s,i)=>`
+    <div class="member-card">
+      <div class="av" style="background:${col(i)};width:44px;height:44px;font-size:15px">${ini(s.member.name)}</div>
+      <div class="member-info">
+        <div class="member-name">${e(s.member.name)}</div>
+        <div class="member-sub">Rank #${i+1} · ${s.taskCount} tasks · ${s.editCount} edits · ${s.wcPoints} writing pts</div>
+        <div class="bar-outer"><div class="bar-inner" style="width:${s.pct}%;background:${col(i)}"></div></div>
+      </div>
+      <div class="member-pct" style="color:${col(i)}">${s.pct}%</div>
+    </div>`).join('');
+
+  /* ── Score breakdown table (page 2) ── */
+  const memberRows=scores.map((s,i)=>`
+    <tr>
+      <td><span class="av-sm" style="background:${col(i)}">${ini(s.member.name)}</span>${e(s.member.name)}</td>
+      <td class="num" style="color:${col(i)};font-weight:800">${s.pct}%</td>
+      <td class="num">${s.taskCount} / ${s.assignedCount}</td>
+      <td class="num">${s.editCount}</td>
+      <td class="num">${s.wcPoints}</td>
+      <td class="num">${s.onTime}</td>
+      <td class="num">${s.total}</td>
+    </tr>`).join('');
+
+  /* ── Flags ── */
+  const flags=[];
+  scores.forEach(s=>{
+    if(s.pct<expected*0.5)flags.push({c:'#ff5c7a',t:'Low contribution — '+s.member.name,m:`${s.pct}% (expected ~${Math.round(expected)}%). ${s.taskCount} tasks done.`});
+    if(s.taskCount===0)flags.push({c:'#ffb347',t:'No tasks done — '+s.member.name,m:'Zero tasks completed. Follow-up needed.'});
+  });
+  const od=tasks.filter(t=>t.status!=='done'&&t.due&&daysLeft(t.due)<0);
+  if(od.length)flags.push({c:'#ffb347',t:`${od.length} overdue task${od.length>1?'s':''}`,m:od.map(t=>t.name).join(', ')});
+  if(scores.length&&scores[0].pct>=25)flags.push({c:'#00d4aa',t:'Top contributor — '+scores[0].member.name,m:`Leading with ${scores[0].pct}% across ${scores[0].taskCount} tasks.`});
+
+  /* ── Tasks (page 3) ── */
+  const statusOrder=['done','in_progress','todo'];
+  const statusLabel={done:'Completed','in_progress':'In Progress',todo:'To Do'};
+  const statusDot={done:'#00d4aa','in_progress':'#4f7cff',todo:'#aaa'};
+  const taskRows=statusOrder.flatMap(st=>{
+    const ts=tasks.filter(t=>t.status===st);
+    if(!ts.length)return[];
+    return[`<tr class="group-row"><td colspan="4"><span class="status-dot" style="background:${statusDot[st]}"></span>${statusLabel[st]} (${ts.length})</td></tr>`,
+      ...ts.map(t=>{
+        const mem=p.members.find(m=>m.id===t.assignedTo||m.inviteUserId===t.assignedTo);
+        const pr=t.priority==='high'?'#ff5c7a':t.priority==='medium'?'#ffb347':'#aaa';
+        return`<tr><td style="padding-left:20px">${e(t.name)}</td><td>${mem?e(mem.name):''}</td><td>${t.due?new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</td><td><span style="color:${pr};font-size:11px;font-weight:600;text-transform:capitalize">${t.priority||''}</span></td></tr>`;
+      })];
+  }).join('');
+
+  /* ── Activity feed (last 20) ── */
+  const recentActs=[...acts].sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,20);
+  const actRows=recentActs.map(a=>`<tr>
+    <td>${e(a.userName||'')}</td>
+    <td>${e((a.text||a.type||'').slice(0,80))}</td>
+    <td style="color:#aaa;white-space:nowrap">${a.ts?new Date(a.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</td>
+  </tr>`).join('');
+
+  return`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>FairShare Report — ${e(p.name)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;font-size:13px;color:#111827;background:#fff}
+.page{padding:48px 56px;max-width:860px;margin:0 auto}
+@media screen{.page{border-bottom:1px solid #e5e7eb;padding-bottom:64px}}
+@media print{
+  .no-print{display:none!important}
+  .page{padding:0;border:none;page-break-after:always;max-width:100%}
+  .page:last-child{page-break-after:avoid}
+  @page{margin:20mm 18mm;size:A4}
+}
+/* ── Header ── */
+.report-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:36px;padding-bottom:20px;border-bottom:2px solid #00d4aa}
+.header-left{}
+.brand{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00d4aa;margin-bottom:6px}
+.proj-title{font-size:24px;font-weight:800;letter-spacing:-0.6px;line-height:1.1;color:#111}
+.proj-meta{font-size:12px;color:#6b7280;margin-top:5px}
+.header-right{text-align:right;font-size:11px;color:#9ca3af;line-height:1.6}
+/* ── Hero stats ── */
+.hero-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:40px}
+.stat-box{background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px;padding:16px 10px;text-align:center}
+.stat-val{font-size:22px;font-weight:800;letter-spacing:-0.8px;line-height:1}
+.stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-top:5px}
+/* ── Section ── */
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #f3f4f6}
+/* ── Member cards ── */
+.member-cards{display:flex;flex-direction:column;gap:14px;margin-bottom:32px}
+.member-card{display:flex;align-items:center;gap:16px;padding:14px 16px;border:1px solid #f3f4f6;border-radius:10px}
+.av{border-radius:50%;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.member-info{flex:1;min-width:0}
+.member-name{font-size:14px;font-weight:600;color:#111;margin-bottom:2px}
+.member-sub{font-size:11px;color:#9ca3af;margin-bottom:8px}
+.bar-outer{height:7px;background:#f3f4f6;border-radius:4px;overflow:hidden}
+.bar-inner{height:100%;border-radius:4px}
+.member-pct{font-size:26px;font-weight:800;letter-spacing:-1px;flex-shrink:0;width:64px;text-align:right}
+/* ── Table ── */
+table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:32px}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;padding:0 6px 8px;border-bottom:1px solid #e5e7eb;font-weight:600}
+th:first-child{padding-left:0}th:last-child{padding-right:0}
+td{padding:10px 6px;border-bottom:1px solid #f9fafb;vertical-align:middle;color:#374151}
+td:first-child{padding-left:0}td:last-child{padding-right:0}
+tr:last-child td{border-bottom:none}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.av-sm{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:8px;font-weight:700;margin-right:7px;vertical-align:middle}
+.group-row td{padding:14px 0 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#6b7280;border-bottom:none}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+/* ── Flags ── */
+.flags{display:flex;flex-direction:column;gap:8px;margin-bottom:32px}
+.flag-item{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:8px;border:1px solid #f3f4f6;background:#fafafa}
+.flag-dot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0}
+.flag-t{font-weight:700;font-size:12px;color:#111;margin-bottom:2px}
+.flag-m{font-size:11px;color:#6b7280}
+/* ── Deadline grid ── */
+.dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px}
+.dl-box{border:1px solid #f3f4f6;border-radius:8px;padding:14px;text-align:center}
+.dl-val{font-size:28px;font-weight:800;letter-spacing:-1px}
+.dl-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-top:4px}
+/* ── Footer ── */
+.report-footer{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:12px;border-top:1px solid #f3f4f6;font-size:10px;color:#d1d5db}
+/* ── Toolbar ── */
+.toolbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 56px;display:flex;align-items:center;justify-content:space-between}
+.tb-title{font-size:13px;font-weight:600;color:#111}
+.tb-meta{font-size:11px;color:#9ca3af}
+.tb-btns{display:flex;gap:8px}
+.tb-btn{padding:7px 16px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
+.tb-btn-save{background:#111;color:#fff}
+.tb-btn-print{background:#00d4aa;color:#fff}
+.tb-btn:hover{opacity:.88}
+</style>
+${autoPrint?'':''}
+</head><body>
+
+${autoPrint?'':`<div class="toolbar no-print">
+  <div><div class="tb-title">📊 ${e(p.name)} — FairShare Report</div><div class="tb-meta">${e(p.instructor||'Team project')} · ${p.members.length} members · ${now}</div></div>
+  <div class="tb-btns">
+    <button class="tb-btn tb-btn-print" onclick="window.print()">🖨 Print</button>
+    <button class="tb-btn tb-btn-save" onclick="window.print()">⬇ Save as PDF</button>
+  </div>
+</div>`}
+
+<!-- ═══════════════════════ PAGE 1 — Overview & Contributions ═══════════════════════ -->
+<div class="page">
+  <div class="report-header">
+    <div class="header-left">
+      <div class="brand">FairShare Analytics Report</div>
+      <div class="proj-title">${e(p.name)}</div>
+      <div class="proj-meta">${e(p.instructor||'Team project')} · ${p.members.length} member${p.members.length!==1?'s':''} · ${tasks.length} tasks${p.deadline?` · Due ${new Date(p.deadline+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`:''}  </div>
+    </div>
+    <div class="header-right">
+      <div style="font-size:18px;font-weight:800;color:#00d4aa">${fairness}</div>
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af">Fairness Index</div>
+      <div style="margin-top:8px">${now}</div>
+    </div>
+  </div>
+
+  <div class="hero-grid">
+    <div class="stat-box"><div class="stat-val" style="color:#4f7cff">${doneCount}<span style="font-size:14px;font-weight:400;color:#9ca3af">/${tasks.length}</span></div><div class="stat-lbl">Tasks Done</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:#9b6dff">${acts.length}</div><div class="stat-lbl">Activity Events</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:#ffb347">${docs.length}</div><div class="stat-lbl">Documents</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:#ff5c7a">${overdueTasks}</div><div class="stat-lbl">Overdue</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:#00d4aa">${onTimeTasks}</div><div class="stat-lbl">On Time</div></div>
+  </div>
+
+  <div class="section-title">Contribution Scores</div>
+  <div class="member-cards">${memberCards}</div>
+
+  <div class="report-footer">
+    <span>FairShare — Contribution Analytics</span>
+    <span>Page 1 of 3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGE 2 — Breakdown, Flags & Deadlines ═══════════════════════ -->
+<div class="page">
+  <div class="report-header">
+    <div class="header-left">
+      <div class="brand">FairShare Analytics Report</div>
+      <div class="proj-title">${e(p.name)}</div>
+    </div>
+    <div class="header-right" style="font-size:11px;color:#9ca3af">Score Detail &amp; Alerts</div>
+  </div>
+
+  <div class="section-title">Detailed Score Breakdown</div>
+  <table>
+    <thead><tr>
+      <th>Member</th><th class="num">Share</th><th class="num">Done/Total</th>
+      <th class="num">Edits</th><th class="num">Writing</th><th class="num">On Time</th><th class="num">Total Pts</th>
+    </tr></thead>
+    <tbody>${memberRows}</tbody>
+  </table>
+
+  ${flags.length?`<div class="section-title">Flags &amp; Alerts</div>
+  <div class="flags">${flags.map(f=>`
+    <div class="flag-item">
+      <div class="flag-dot" style="background:${f.c}"></div>
+      <div><div class="flag-t">${e(f.t)}</div><div class="flag-m">${e(f.m)}</div></div>
+    </div>`).join('')}
+  </div>`:''}
+
+  <div class="section-title">Deadline Summary</div>
+  <div class="dl-grid">
+    <div class="dl-box"><div class="dl-val" style="color:#00d4aa">${onTimeTasks}</div><div class="dl-lbl">On Time</div></div>
+    <div class="dl-box"><div class="dl-val" style="color:#ffb347">${lateTasks}</div><div class="dl-lbl">Submitted Late</div></div>
+    <div class="dl-box"><div class="dl-val" style="color:#ff5c7a">${overdueTasks}</div><div class="dl-lbl">Currently Overdue</div></div>
+  </div>
+
+  <div class="report-footer">
+    <span>FairShare — Contribution Analytics</span>
+    <span>Page 2 of 3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGE 3 — Tasks & Activity ═══════════════════════ -->
+<div class="page">
+  <div class="report-header">
+    <div class="header-left">
+      <div class="brand">FairShare Analytics Report</div>
+      <div class="proj-title">${e(p.name)}</div>
+    </div>
+    <div class="header-right" style="font-size:11px;color:#9ca3af">Tasks &amp; Activity</div>
+  </div>
+
+  ${tasks.length?`<div class="section-title">All Tasks (${tasks.length})</div>
+  <table>
+    <thead><tr><th>Task</th><th>Assigned To</th><th>Due Date</th><th>Priority</th></tr></thead>
+    <tbody>${taskRows}</tbody>
+  </table>`:''}
+
+  ${recentActs.length?`<div class="section-title">Recent Activity (last 20 events)</div>
+  <table>
+    <thead><tr><th>Member</th><th>Activity</th><th class="num">When</th></tr></thead>
+    <tbody>${actRows}</tbody>
+  </table>`:''}
+
+  <div class="report-footer">
+    <span>FairShare — Contribution Analytics</span>
+    <span>Page 3 of 3</span>
+  </div>
+</div>
+
+${autoPrint?'<script>window.addEventListener("load",function(){setTimeout(function(){window.print()},350)})<\/script>':''}
+</body></html>`;
+}
+
+function openExportModal(trigger){
   if(!currentProject){toast('Open a project first','error');return}
-  window.print();
-  toast('Opening print dialog…');
+  const p=currentProject;
+  const scores=computeScores();
+  const tasks=STORE.get('tasks_'+p.id)||[];
+  const HEX=['#00d4aa','#4f7cff','#9b6dff','#ffb347','#ff5c7a','#ff6b9d'];
+  const col=i=>HEX[i%HEX.length];
+  const ini=n=>(n||'?').split(' ').map(x=>x[0]||'').join('').toUpperCase().slice(0,2);
+  const doneCount=tasks.filter(t=>t.status==='done').length;
+  const pcts=scores.map(s=>s.pct);
+  const mean=pcts.reduce((a,b)=>a+b,0)/(pcts.length||1);
+  const variance=pcts.reduce((a,b)=>a+(b-mean)**2,0)/(pcts.length||1);
+  const fairness=Math.max(0,Math.min(1,1-Math.sqrt(variance)/100)).toFixed(2);
+
+  /* Mini preview */
+  const nameEl=document.getElementById('export-preview-name');
+  const statsEl=document.getElementById('export-preview-stats');
+  const membersEl=document.getElementById('export-preview-members');
+  if(nameEl)nameEl.textContent=p.name;
+  if(statsEl)statsEl.innerHTML=[
+    {v:fairness,l:'Fairness',c:'#00d4aa'},
+    {v:doneCount+'/'+tasks.length,l:'Done',c:'#4f7cff'},
+    {v:p.members.length,l:'Members',c:'#9b6dff'},
+  ].map(s=>`<div style="flex:1;background:#f9fafb;border-radius:6px;padding:8px 6px;text-align:center"><div style="font-size:16px;font-weight:800;color:${s.c}">${s.v}</div><div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${s.l}</div></div>`).join('');
+  if(membersEl)membersEl.innerHTML=scores.slice(0,4).map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:20px;height:20px;border-radius:50%;background:${col(i)};color:#fff;font-size:7px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ini(s.member.name)}</div>
+      <div style="flex:1;height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:${s.pct}%;background:${col(i)};border-radius:3px"></div></div>
+      <div style="font-size:11px;font-weight:700;color:${col(i)};width:32px;text-align:right">${s.pct}%</div>
+    </div>`).join('');
+
+  /* Modal text & actions */
+  const titleEl=document.getElementById('export-modal-title');
+  const descEl=document.getElementById('export-modal-desc');
+  const actionsEl=document.getElementById('export-modal-actions');
+  if(trigger==='save'){
+    if(titleEl)titleEl.textContent='⬇ Export PDF';
+    if(descEl)descEl.textContent='Opens your full report in a new tab. In the print dialog, change the destination to "Save as PDF" to download it to your files.';
+    if(actionsEl)actionsEl.innerHTML=`
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-export-report')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="exportReport('save');closeModal('modal-export-report')">⬇ Open & Save as PDF</button>`;
+  }else{
+    if(titleEl)titleEl.textContent='📊 Full Report';
+    if(descEl)descEl.textContent='View and export a clean 3-page report with contribution scores, breakdown, flags, tasks, and activity.';
+    if(actionsEl)actionsEl.innerHTML=`
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-export-report')">Cancel</button>
+      <button class="btn btn-outline btn-sm" onclick="exportReport('save');closeModal('modal-export-report')">⬇ Save to Files</button>
+      <button class="btn btn-primary btn-sm" onclick="exportReport('print');closeModal('modal-export-report')">🖨 Print</button>`;
+  }
+  openModal('modal-export-report');
+}
+
+function exportReport(mode){
+  if(!currentProject){toast('Open a project first','error');return}
+  const html=buildReportHTML(mode||'save');
+  if(!html)return;
+  const win=window.open('','_blank','width=960,height=780');
+  if(!win){toast('Pop-up blocked — please allow pop-ups for this page, then try again','error');return}
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  if(mode==='print'){
+    /* auto-print is handled by the inline script in the HTML */
+    toast('Opening print dialog — choose "Save as PDF" to download');
+  }else{
+    toast('Report opened — use Print → Save as PDF to download');
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -6864,6 +7226,168 @@ async function runPlagiarismCheck(){
   }
 }
 
+function schoolMaterialKey(pid){return 'school_materials_'+pid}
+function schoolTaskKey(pid){return 'school_revision_tasks_'+pid}
+function getSchoolMaterials(pid){return STORE.get(schoolMaterialKey(pid))||[]}
+function getSchoolTasks(pid){return STORE.get(schoolTaskKey(pid))||[]}
+function setSchoolMaterials(pid,rows){STORE.set(schoolMaterialKey(pid),rows)}
+function setSchoolTasks(pid,rows){STORE.set(schoolTaskKey(pid),rows)}
+
+function addSchoolMaterial(){
+  if(!isSchoolMode()){toast('School Hub is available in FairShare for Schools mode.','error');return}
+  if(!currentProject){toast('Select a class workspace first.','error');return}
+  if(!canManageSchoolContent()){toast('Only teachers can add revision materials.','error');return}
+  const title=(document.getElementById('school-material-title').value||'').trim();
+  if(!title){toast('Add a material title first.','error');return}
+  const type=document.getElementById('school-material-type').value||'note';
+  const link=(document.getElementById('school-material-link').value||'').trim();
+  const summary=(document.getElementById('school-material-summary').value||'').trim();
+  const rows=getSchoolMaterials(currentProject.id);
+  rows.unshift({id:genId('mat'),title,type,link,summary,createdAt:Date.now(),createdBy:currentUser.id,createdByName:currentUser.name});
+  setSchoolMaterials(currentProject.id,rows);
+  document.getElementById('school-material-title').value='';
+  document.getElementById('school-material-link').value='';
+  document.getElementById('school-material-summary').value='';
+  logActivity({type:'doc_edit',text:`added revision material: ${title}`});
+  renderSchoolCenter();
+  toast('Revision material added','success');
+}
+
+function addSchoolTask(){
+  if(!isSchoolMode()){toast('School Hub is available in FairShare for Schools mode.','error');return}
+  if(!currentProject){toast('Select a class workspace first.','error');return}
+  if(!canManageSchoolContent()){toast('Only teachers can assign revision tasks.','error');return}
+  const title=(document.getElementById('school-task-title').value||'').trim();
+  if(!title){toast('Add a task title first.','error');return}
+  const due=document.getElementById('school-task-due').value||'';
+  const notes=(document.getElementById('school-task-notes').value||'').trim();
+  const rows=getSchoolTasks(currentProject.id);
+  rows.unshift({id:genId('srt'),title,due,notes,createdAt:Date.now(),createdBy:currentUser.id,createdByName:currentUser.name,completedBy:[]});
+  setSchoolTasks(currentProject.id,rows);
+  document.getElementById('school-task-title').value='';
+  document.getElementById('school-task-due').value='';
+  document.getElementById('school-task-notes').value='';
+  logActivity({type:'task_assign',text:`assigned revision task: ${title}`});
+  renderSchoolCenter();
+  toast('Revision task assigned','success');
+}
+
+function toggleSchoolTaskDone(taskId){
+  if(!isSchoolMode()||!currentProject||!currentUser)return;
+  const rows=getSchoolTasks(currentProject.id);
+  const i=rows.findIndex(t=>t.id===taskId);
+  if(i<0)return;
+  const done=new Set(rows[i].completedBy||[]);
+  if(done.has(currentUser.id))done.delete(currentUser.id);else done.add(currentUser.id);
+  rows[i]={...rows[i],completedBy:[...done]};
+  setSchoolTasks(currentProject.id,rows);
+  renderSchoolCenter();
+}
+
+function renderSchoolCenter(){
+  const wrap=document.getElementById('school-wrap');
+  const empty=document.getElementById('school-empty');
+  const matList=document.getElementById('school-material-list');
+  const taskList=document.getElementById('school-task-list');
+  const teacherMaterial=document.getElementById('school-teacher-material-form');
+  const teacherTask=document.getElementById('school-teacher-task-form');
+  const teacherControls=document.getElementById('school-teacher-controls');
+  if(!wrap||!empty||!matList||!taskList)return;
+  if(!currentProject){
+    wrap.style.display='none';
+    empty.style.display='block';
+    return;
+  }
+  wrap.style.display='grid';
+  empty.style.display='none';
+  const isTeacher=canManageSchoolContent();
+  if(teacherControls)teacherControls.style.display=isTeacher?'flex':'none';
+  if(teacherMaterial)teacherMaterial.style.display=isTeacher?'':'none';
+  if(teacherTask)teacherTask.style.display=isTeacher?'':'none';
+  const mats=getSchoolMaterials(currentProject.id);
+  if(!mats.length){
+    matList.innerHTML='<div class="empty"><div class="empty-text">No revision materials yet</div><div class="empty-sub">'+(isTeacher?'Use the form above to publish the first one.':'Your teacher will post materials here.')+'</div></div>';
+  }else{
+    matList.innerHTML=mats.map(m=>{
+      const safeLink=m.link?('<a href="'+esc(m.link)+'" target="_blank" rel="noopener">Open material</a>'):'';
+      return '<div class="school-item"><h4>'+esc(m.title)+'</h4><p>'+esc(m.summary||'No extra notes provided.')+'</p><div class="school-meta"><span>'+esc(m.type)+'</span><span>Added '+timeAgo(m.createdAt||Date.now())+'</span><span>By '+esc(m.createdByName||'Teacher')+'</span></div>'+(safeLink?'<div class="school-meta">'+safeLink+'</div>':'')+'</div>';
+    }).join('');
+  }
+  const tasks=getSchoolTasks(currentProject.id);
+  if(!tasks.length){
+    taskList.innerHTML='<div class="empty"><div class="empty-text">No revision tasks yet</div><div class="empty-sub">'+(isTeacher?'Use the form above to assign one.':'Tasks from your teacher will appear here.')+'</div></div>';
+  }else{
+    taskList.innerHTML=tasks.map(t=>{
+      const done=(t.completedBy||[]).includes(currentUser.id);
+      return '<div class="school-item"><h4>'+esc(t.title)+'</h4><p>'+esc(t.notes||'No extra instructions.')+'</p><div class="school-meta"><span>Due '+(t.due?esc(formatDateFull(t.due)):'Any time')+'</span><span>'+((t.completedBy||[]).length)+' completed</span><span>By '+esc(t.createdByName||'Teacher')+'</span></div><div style="margin-top:8px"><button type="button" class="btn btn-sm '+(done?'btn-ghost':'btn-primary')+'" style="width:auto" onclick="toggleSchoolTaskDone('+JSON.stringify(t.id)+')">'+(done?'Mark as not done':'Mark as done')+'</button></div></div>';
+    }).join('');
+  }
+}
+
+function computeScoresForProject(proj){
+  if(!proj||!Array.isArray(proj.members))return[];
+  const tasks=STORE.get('tasks_'+proj.id)||[];
+  const acts=STORE.get('activity_'+proj.id)||[];
+  const docs=STORE.get('docs_'+proj.id)||[];
+  const cfg=STORE.get('score_config')||SCORE_CONFIG;
+  return proj.members.map(m=>{
+    const myTasks=tasks.filter(t=>memberMatchesAssignee(m,findMemberForTaskAssignee(proj,t.assignedTo)));
+    const taskCount=myTasks.filter(t=>t.status==='done').length;
+    const task=taskCount*cfg.taskPts+myTasks.filter(t=>t.status==='in_progress').length*Math.floor(cfg.taskPts*0.3);
+    const editActs=acts.filter(a=>a.userId===m.id&&a.type==='doc_edit');
+    const edit=editActs.length*cfg.editPts;
+    const comment=acts.filter(a=>a.userId===m.id&&a.type==='comment').length*cfg.commentPts;
+    const other=acts.filter(a=>a.userId===m.id&&!['doc_edit','comment','task_complete'].includes(a.type)).length;
+    let wcPoints=0;
+    docs.forEach(d=>{const wc=(d.wordCounts||{})[m.id]||0;wcPoints+=Math.round(wc/50)*cfg.wordPts});
+    const total=task+edit+comment+other+wcPoints;
+    const assigned=myTasks.length||0;
+    const donePct=assigned?Math.round(taskCount/assigned*100):0;
+    return{member:m,total,taskCount,assigned,donePct,pct:0};
+  }).sort((a,b)=>b.total-a.total).map((s,_,arr)=>{
+    const grand=arr.reduce((acc,row)=>acc+row.total,0)||1;
+    return{...s,pct:Math.round(s.total/grand*100)};
+  });
+}
+
+function renderSchoolTeacherAnalytics(){
+  const wrap=document.getElementById('school-teacher-analytics-wrap');
+  if(!wrap)return;
+  const projects=loadProjects();
+  if(!projects.length){
+    wrap.innerHTML='<div class="empty"><div class="empty-text">No projects available</div><div class="empty-sub">Open or create a school project first.</div></div>';
+    return;
+  }
+  wrap.innerHTML=projects.map(p=>{
+    const scores=computeScoresForProject(p);
+    const rows=scores.map(s=>`
+      <tr>
+        <td><strong>${esc(s.member.name)}</strong></td>
+        <td>${s.pct}%</td>
+        <td>${s.taskCount}/${s.assigned||0}</td>
+        <td>${s.donePct}%</td>
+      </tr>
+    `).join('')||'<tr><td colspan="4" style="color:var(--txt3)">No activity yet</td></tr>';
+    return `<div class="school-analytics-proj">
+      <h4>${esc(p.name)}</h4>
+      <div class="school-analytics-sub">Contribution score and task completion sample view</div>
+      <table class="data-table">
+        <thead><tr><th>Student</th><th>Contribution</th><th>Tasks done</th><th>Done %</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+function openSchoolTeacherAnalytics(){
+  if(!isSchoolMode()||!isTeacherRole()){
+    toast('Teacher analytics is available for school-mode teachers only.','error');
+    return;
+  }
+  renderSchoolTeacherAnalytics();
+  openModal('modal-school-teacher-analytics');
+}
+
 /* ══════════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════════ */
@@ -6898,6 +7422,7 @@ function showPage(id,tabEl){
     chat:renderChatChannels,
     notifications:renderNotifications,
     admin:()=>renderAdminOverview(),
+    school:renderSchoolCenter,
   };
   if(renders[id])renders[id]();
 }
@@ -6995,6 +7520,13 @@ document.addEventListener('keydown',function(e){
         if(user){
           if(window.FSB&&window.FSB.hasCloud&&typeof window.FSB.useLocalDemo==='function')
             window.FSB.useLocalDemo();
+          /* Guarantee STORE is the localStorage adapter before loginAs reads projects */
+          const _P='fs4_';
+          window.STORE={
+            get(k){try{return JSON.parse(localStorage.getItem(_P+k)||'null')}catch{return null}},
+            set(k,v){try{localStorage.setItem(_P+k,JSON.stringify(v))}catch(e){}},
+            del(k){try{localStorage.removeItem(_P+k)}catch(e){}},
+          };
           loginAs(user);
           return;
         }

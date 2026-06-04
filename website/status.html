@@ -38,7 +38,12 @@
 
       <div class="prose" style="padding-top:0;">
         <h2>What we monitor</h2>
-        <p>Replace this list with your real checks: application host, Node API <code style="font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:6px;">/api/health</code>, database availability, authentication provider, and third-party services (email, AI, video) if you expose them to users.</p>
+        <p>FairShare monitors application host, Node API <code style="font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:6px;">/api/health</code>, database availability, authentication provider, and third-party services (email, AI, video).</p>
+        <ul>
+          <li>AI suite endpoints (ideas 1-15) and policy guardrails endpoint availability.</li>
+          <li>Realtime sync flows for tasks, documents, activities, and project broadcasts.</li>
+          <li>Core collaboration services required for teaching workflows.</li>
+        </ul>
 
         <h2>Incidents</h2>
         <p>When you move to production, post incident summaries here or link to an external status provider (e.g. status page vendor). Until then, this page is a template.</p>
@@ -64,5 +69,6 @@
       document.getElementById('y').textContent=String(new Date().getFullYear());
     })();
   </script>
+  <script src="../js/fs-support-chatbot.js" defer data-fs-chat-context="marketing"></script>
 </body>
 </html>

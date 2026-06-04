@@ -43,10 +43,10 @@
       <p>Document where your production database and application run (e.g. region of your Supabase project or cloud host). If personal data moves between the UK, EU, or other countries, describe the transfer mechanism (e.g. Standard Contractual Clauses, UK Addendum, adequacy decisions) in your DPA and privacy policy.</p>
 
       <h2>Subprocessors</h2>
-      <p>Maintain a current list of vendors that process personal data on your behalf (hosting, database, authentication, email, analytics, AI if applicable). Link to their trust pages and notify customers of material changes per your DPA.</p>
+      <p>FairShare uses subprocessors for hosting, database/auth, email, and optional AI features. When AI is enabled by institutional policy, prompts are minimized, redaction is applied where feasible, and outputs are advisory evidence for educators.</p>
       <ul>
-        <li><strong>Example:</strong> Database &amp; auth — document provider and region.</li>
-        <li><strong>Example:</strong> AI features — if student text is sent to an external model, disclose purpose, retention, and opt-in/institutional policy.</li>
+        <li><strong>Core stack:</strong> database/auth provider region, hosting provider, transactional email provider.</li>
+        <li><strong>Optional AI stack:</strong> external model provider for configured features with policy-scoped access controls.</li>
       </ul>
 
       <h2>Security measures</h2>
@@ -85,5 +85,6 @@
   <script>
     (function(){var APP=window.FAIRSHARE_APP_URL||'/fairshare.html';document.querySelectorAll('[data-app-link]').forEach(function(a){a.setAttribute('href',APP);});document.getElementById('y').textContent=String(new Date().getFullYear());})();
   </script>
+  <script src="../js/fs-support-chatbot.js" defer data-fs-chat-context="marketing"></script>
 </body>
 </html>

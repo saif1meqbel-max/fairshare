@@ -131,6 +131,10 @@
     const b = r.body || {};
     return { ...b, id: r.id, projectId: r.project_id, channel: r.channel };
   }
+  function rowAiArtifact(r) {
+    const b = parseJsonBody(r.body);
+    return { ...b, id: r.id, projectId: r.project_id, feature: r.feature || b.feature || null };
+  }
   function parseJsonBody(b) {
     if (b == null) return {};
     if (typeof b === 'string') {
@@ -170,16 +174,18 @@
 
   async function loadProjectGraph(pids) {
     if (!pids.length) return;
-    const [tasks, docs, acts, chats] = await Promise.all([
+    const [tasks, docs, acts, chats, aiArtifacts] = await Promise.all([
       sb.from('fs_tasks').select('*').in('project_id', pids),
       sb.from('fs_documents').select('*').in('project_id', pids),
       sb.from('fs_activities').select('*').in('project_id', pids),
       sb.from('fs_chat_messages').select('*').in('project_id', pids),
+      sb.from('fs_ai_artifacts').select('*').in('project_id', pids),
     ]);
     if (tasks.error) console.warn('[FSB] fs_tasks load', tasks.error.message || tasks.error);
     if (docs.error) console.warn('[FSB] fs_documents load', docs.error.message || docs.error);
     if (acts.error) console.warn('[FSB] fs_activities load', acts.error.message || acts.error);
     if (chats.error) console.warn('[FSB] fs_chat_messages load', chats.error.message || chats.error);
+    if (aiArtifacts.error) console.warn('[FSB] fs_ai_artifacts load', aiArtifacts.error.message || aiArtifacts.error);
     for (const pid of pids) {
       mem['tasks_' + pid] = (tasks.data || []).filter((r) => r.project_id === pid).map(rowTask);
       mem['docs_' + pid] = (docs.data || []).filter((r) => r.project_id === pid).map(rowDoc);
@@ -187,6 +193,8 @@
         .filter((r) => r.project_id === pid)
         .map(rowAct)
         .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const aiRow = (aiArtifacts.data || []).find((r) => r.project_id === pid && (r.feature || '') === 'bundle');
+      mem['ai_artifacts_' + pid] = aiRow ? rowAiArtifact(aiRow).bundle || null : null;
     }
     for (const pid of pids) {
       const msgs = (chats.data || []).filter((r) => r.project_id === pid);
@@ -643,6 +651,18 @@
             }))
           );
         }
+      } else if (k.startsWith('ai_artifacts_')) {
+        const pid = k.slice('ai_artifacts_'.length);
+        const bundle = mem[k];
+        if (!bundle || typeof bundle !== 'object') continue;
+        await sb.from('fs_ai_artifacts').delete().eq('project_id', pid).eq('feature', 'bundle');
+        await sb.from('fs_ai_artifacts').insert({
+          id: `aibundle_${pid}`,
+          project_id: pid,
+          feature: 'bundle',
+          body: { bundle, ts: Date.now() },
+        });
+        broadcastPids.add(pid);
       } else if (k === 'score_config') {
         const sc = mem[k];
         if (!sc) continue;

@@ -49,6 +49,14 @@
       a.setAttribute('href', 'mailto:admin@fairsharework.space?subject=' + encodeURIComponent(subj));
     });
 
+    var appUrl =
+      typeof window.FAIRSHARE_APP_URL === 'string' && window.FAIRSHARE_APP_URL.trim()
+        ? String(window.FAIRSHARE_APP_URL).replace(/\/$/, '')
+        : '/fairshare.html';
+    document.querySelectorAll('a[data-app-link]').forEach(function (a) {
+      a.setAttribute('href', appUrl);
+    });
+
     var fc = document.getElementById('footer-copy');
     if (fc && d.footer_copy) {
       fc.textContent = d.footer_copy.replace(/\{\{year\}\}/g, String(new Date().getFullYear()));

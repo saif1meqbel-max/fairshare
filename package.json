@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server/index.mjs",
     "dev": "node --watch server/index.mjs",
-    "sync": "echo 'sync script disabled — copy fairshare.html to index.html and use git yourself if needed.' && exit 0"
+    "sync": "echo 'sync script disabled — copy fairshare.html to index.html and use git yourself if needed.' && exit 0",
+    "test:ai": "node tests/ai-foundation.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
