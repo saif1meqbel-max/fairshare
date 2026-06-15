@@ -5940,11 +5940,12 @@ function refreshActivityDisplays(){
 
 window.refreshFairshareActivityUI=function(projectId){
   if(!currentProject||currentProject.id!==projectId)return;
-  /* Full dashboard refresh so Live feed, contribution scores, and upcoming deadlines stay in sync for all members. */
   renderDashboard();
   if(typeof window.scheduleAIContributionRefresh==='function')window.scheduleAIContributionRefresh();
   const actPg=document.getElementById('page-activity');
   if(actPg&&actPg.classList.contains('active'))renderActivityPage();
+  const reportPg=document.getElementById('page-report');
+  if(reportPg&&reportPg.classList.contains('active')&&typeof renderReport==='function')renderReport();
 };
 
 /** After remote graph reload (Broadcast or Realtime) — sync project pointer and all project-scoped UI. */
@@ -5972,11 +5973,39 @@ window.refreshFairshareTasksUI=function(projectId){
   renderTasks();
   renderDashboard();
   if(typeof window.scheduleAIContributionRefresh==='function')window.scheduleAIContributionRefresh();
+  const reportPg=document.getElementById('page-report');
+  if(reportPg&&reportPg.classList.contains('active')&&typeof renderReport==='function')renderReport();
 };
 
 window.refreshFairshareDocumentsUI=function(projectId){
   if(!currentProject||currentProject.id!==projectId)return;
+  // Refresh doc list (sidebar)
   if(typeof renderDocList==='function')renderDocList();
+  // Refresh dashboard so doc count stat stays accurate
+  const dash=document.getElementById('page-dashboard');
+  if(dash&&dash.classList.contains('active')&&typeof renderDashboard==='function')renderDashboard();
+  // If the open document was updated by a teammate, reload it (viewer gets fresh content)
+  if(currentDocId){
+    const docs=STORE.get('docs_'+currentProject.id)||[];
+    const updatedDoc=docs.find(d=>d.id===currentDocId);
+    if(updatedDoc){
+      const editor=document.getElementById('doc-editor');
+      const titleEl=document.getElementById('doc-title-input');
+      // Only auto-update if the user is not actively typing (avoid clobbering their work)
+      if(editor&&document.activeElement!==editor){
+        const kind=docKindOf(updatedDoc);
+        if(kind==='document'){
+          editor.innerHTML=updatedDoc.content||'';
+        }
+        if(titleEl&&document.activeElement!==titleEl)titleEl.value=updatedDoc.title||'';
+        // Show a subtle toast so they know a teammate made a change
+        toast('Document updated by a teammate','info');
+      }
+    }
+  }
+  // Refresh analytics page if open
+  const reportPg=document.getElementById('page-report');
+  if(reportPg&&reportPg.classList.contains('active')&&typeof renderReport==='function')renderReport();
 };
 
 function startLiveActivity(){

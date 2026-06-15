@@ -502,14 +502,8 @@
     }
     notifChannel = sb
       .channel('fs-notifs-' + userId)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'fs_notifications',
-          filter: 'user_id=eq.' + userId,
-        },
+      // New notification arrives
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'fs_notifications', filter: 'user_id=eq.' + userId },
         (payload) => {
           const row = payload.new;
           if (!row) return;
@@ -521,7 +515,24 @@
           if (list.length > 50) list.length = 50;
           mem[key] = list;
           refreshNotifBadgeFromMem();
-          // Also refresh notifications panel if it is open
+          if (typeof window.renderNotifications === 'function') window.renderNotifications();
+          if (typeof window.renderProjectInvites === 'function') window.renderProjectInvites();
+        }
+      )
+      // Notification marked read on another device — sync read state
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fs_notifications', filter: 'user_id=eq.' + userId },
+        (payload) => {
+          const row = payload.new;
+          if (!row) return;
+          const key = 'notifs_' + userId;
+          const list = mem[key] || [];
+          const idx = list.findIndex((x) => x.id === row.id);
+          if (idx >= 0) {
+            const b = typeof row.body === 'string' ? JSON.parse(row.body) : (row.body || {});
+            list[idx] = { ...list[idx], read: b.read ?? row.read ?? list[idx].read };
+            mem[key] = list;
+          }
+          refreshNotifBadgeFromMem();
           if (typeof window.renderNotifications === 'function') window.renderNotifications();
         }
       )
@@ -803,6 +814,32 @@
       mem[key] = list;
       bakWrite(key, list);
     } catch (e) { console.warn('[FSB] reloadProjectRow', e); }
+  }
+
+  /** Subscribe to fs_projects postgres_changes so project row updates (member list, name, deadline)
+   *  are immediately picked up without relying solely on the Broadcast channel. */
+  let projectsRealtimeChannel = null;
+  function subscribeProjectsRealtime(projectId) {
+    if (!remote || !sb || !projectId) return;
+    if (projectsRealtimeChannel) { sb.removeChannel(projectsRealtimeChannel); projectsRealtimeChannel = null; }
+    projectsRealtimeChannel = sb
+      .channel('fs-projects-row-' + projectId)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fs_projects', filter: 'id=eq.' + projectId },
+        async () => {
+          await reloadProjectRow(projectId);
+          if (typeof window.refreshFairshareProjectUI === 'function') window.refreshFairshareProjectUI(projectId);
+        }
+      )
+      .subscribe((status) => {
+        if (typeof window.updateRTStatus === 'function') window.updateRTStatus('project-row-' + projectId, status);
+      });
+  }
+  function releaseProjectsRealtimeChannel(projectId) {
+    if (projectsRealtimeChannel) {
+      sb.removeChannel(projectsRealtimeChannel);
+      projectsRealtimeChannel = null;
+    }
+    if (typeof window.clearRTChannel === 'function') window.clearRTChannel('project-row-' + projectId);
   }
 
   /** Subscribe to Broadcast events so teammates' saves trigger a full graph reload. */
@@ -1626,10 +1663,12 @@
 
     startProjectBroadcast(projectId) {
       subscribeProjectBroadcast(projectId);
+      subscribeProjectsRealtime(projectId);
     },
 
-    stopProjectBroadcast() {
-      releaseProjectBroadcastChannel();
+    stopProjectBroadcast(projectId) {
+      releaseProjectBroadcastChannel(projectId);
+      releaseProjectsRealtimeChannel(projectId);
     },
 
     stopActivitiesRealtime() {
