@@ -1445,6 +1445,36 @@
       for (const mk of Object.keys(mem)) {
         if (mk.startsWith('chat_' + pid + '_')) delete mem[mk];
       }
+
+      // Scrub the localStorage durability backup so the deleted project
+      // does not get restored by bakMerge() on the next page refresh.
+      try {
+        // Remove from projects backup list
+        const bakKey = BAK_PREFIX + key;
+        const rawBak = localStorage.getItem(bakKey);
+        if (rawBak) {
+          const filtered = JSON.parse(rawBak).filter((x) => x.id !== pid);
+          localStorage.setItem(bakKey, JSON.stringify(filtered));
+        }
+        // Remove from member_pids index
+        const pidsKey = BAK_PREFIX + 'member_pids_' + viewerId;
+        const rawPids = localStorage.getItem(pidsKey);
+        if (rawPids) {
+          const filtered = JSON.parse(rawPids).filter((id) => id !== pid);
+          localStorage.setItem(pidsKey, JSON.stringify(filtered));
+        }
+        // Remove any fs4_ keys scoped to this project (tasks, docs, activity, chat)
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const lk = localStorage.key(i);
+          if (lk && (lk === PREFIX + 'tasks_' + pid ||
+                     lk === PREFIX + 'docs_' + pid ||
+                     lk === PREFIX + 'activity_' + pid ||
+                     lk.startsWith(PREFIX + 'chat_' + pid + '_'))) {
+            localStorage.removeItem(lk);
+          }
+        }
+      } catch (e) {}
+
       releaseActivityChannel();
       if (chatChannel && sb) {
         sb.removeChannel(chatChannel);
