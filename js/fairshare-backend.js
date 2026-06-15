@@ -836,6 +836,33 @@
           window.onMemberRemovedFromProject(projectId, removedId);
         }
       })
+      .on('broadcast', { event: 'project_deleted' }, (msg) => {
+        const deletedPid = msg?.payload?.projectId || projectId;
+        // Scrub the deleted project from every member's local state
+        if (viewerId) {
+          const key = 'projects_' + viewerId;
+          if (mem[key]) mem[key] = mem[key].filter((x) => x.id !== deletedPid);
+          delete mem['tasks_'    + deletedPid];
+          delete mem['docs_'     + deletedPid];
+          delete mem['activity_' + deletedPid];
+          for (const mk of Object.keys(mem)) {
+            if (mk.startsWith('chat_' + deletedPid + '_')) delete mem[mk];
+          }
+          // Scrub localStorage backup too so it doesn't restore on refresh
+          try {
+            const bakKey  = BAK_PREFIX + key;
+            const rawBak  = localStorage.getItem(bakKey);
+            if (rawBak) localStorage.setItem(bakKey, JSON.stringify(JSON.parse(rawBak).filter(x => x.id !== deletedPid)));
+            const pidsKey = BAK_PREFIX + 'member_pids_' + viewerId;
+            const rawPids = localStorage.getItem(pidsKey);
+            if (rawPids) localStorage.setItem(pidsKey, JSON.stringify(JSON.parse(rawPids).filter(id => id !== deletedPid)));
+          } catch (e) {}
+        }
+        // Tell the UI to kick the member back to the projects list
+        if (typeof window.onProjectDeleted === 'function') {
+          window.onProjectDeleted(deletedPid);
+        }
+      })
       .on('broadcast', { event: 'graph_refresh' }, async () => {
         // Also reload project row on a generic graph_refresh so member changes propagate
         await reloadProjectRow(projectId);
@@ -1441,6 +1468,23 @@
         return { ok: false, error: 'Only the project lead can delete this project' };
       }
       if (remote && window.__FAIRSHARE_USE_REMOTE__) {
+        // Broadcast project_deleted BEFORE the DB delete so the channel still exists.
+        // All members receive this and immediately clear the project from their state.
+        try {
+          const ch = sb.channel('fairshare-project-' + pid, { config: { broadcast: { self: false } } });
+          await new Promise((resolve) => {
+            const t = setTimeout(resolve, 3000);
+            ch.subscribe((status) => {
+              if (status === 'SUBSCRIBED') {
+                clearTimeout(t);
+                ch.send({ type: 'broadcast', event: 'project_deleted', payload: { projectId: pid } })
+                  .then(resolve).catch(resolve);
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { clearTimeout(t); resolve(); }
+            });
+          });
+          sb.removeChannel(ch);
+        } catch (e) { console.warn('[FSB] project_deleted broadcast', e); }
+
         const { error } = await sb.from('fs_projects').delete().eq('id', pid);
         if (error) {
           console.warn('[FSB] deleteProject', error);

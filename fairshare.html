@@ -5367,6 +5367,33 @@ async function removeProjectMember(memberIndex){
   renderProjectList();
 }
 
+/** Called when the project lead deletes a project — fires for all members in real time. */
+window.onProjectDeleted=function(projectId){
+  if(!currentUser)return;
+  // Scrub from in-memory store and localStorage
+  const remaining=(STORE.get('projects_'+currentUser.id)||[]).filter(pp=>pp.id!==projectId);
+  STORE.set('projects_'+currentUser.id,remaining);
+  try{
+    const bak=localStorage.getItem('fs4_bak_projects_'+currentUser.id);
+    if(bak)localStorage.setItem('fs4_bak_projects_'+currentUser.id,JSON.stringify(JSON.parse(bak).filter(pp=>pp.id!==projectId)));
+  }catch(e){}
+  try{
+    const pids=localStorage.getItem('fs4_bak_member_pids_'+currentUser.id);
+    if(pids)localStorage.setItem('fs4_bak_member_pids_'+currentUser.id,JSON.stringify(JSON.parse(pids).filter(id=>id!==projectId)));
+  }catch(e){}
+  if(currentProject&&currentProject.id===projectId){
+    currentProject=null;
+    if(typeof window.clearRTStatus==='function')window.clearRTStatus();
+    if(typeof window.stopAIContributionInterval==='function')window.stopAIContributionInterval();
+    showPage('page-projects');
+    renderProjectList();
+    toast('This project was deleted by the project lead.','info');
+  } else {
+    // Project was in list but not open — just refresh the list silently
+    renderProjectList();
+  }
+};
+
 /** Called by the realtime subscription when the current user has been removed from a project. */
 window.onMemberRemovedFromProject=function(projectId,removedUserId){
   if(!currentUser)return;
