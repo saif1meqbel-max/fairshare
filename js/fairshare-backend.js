@@ -814,12 +814,21 @@
         config: { broadcast: { self: false } },
       })
       .on('broadcast', { event: 'member_joined' }, async (msg) => {
-        // Reload project row first so members[] reflects the new joiner
+        // Wait 800ms before reloading — the broadcast can arrive faster than Supabase
+        // replicates the DB write, so an immediate reload may still return stale data.
+        await new Promise(r => setTimeout(r, 800));
         await reloadProjectRow(projectId);
         await loadProjectGraph([projectId]);
         if (typeof window.refreshFairshareProjectUI === 'function') {
           window.refreshFairshareProjectUI(projectId, msg?.payload);
         }
+        // Second reload after 3s to catch any further replication lag
+        setTimeout(async () => {
+          await reloadProjectRow(projectId);
+          if (typeof window.refreshFairshareProjectUI === 'function') {
+            window.refreshFairshareProjectUI(projectId, null);
+          }
+        }, 3000);
       })
       .on('broadcast', { event: 'member_removed' }, (msg) => {
         const removedId = msg?.payload?.removedUserId;
