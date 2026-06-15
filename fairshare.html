@@ -639,6 +639,161 @@ html[data-theme="light"] .nav-search:focus{
   font-size:13px;color:var(--txt2);
 }
 .projects-invite-hint strong{color:var(--txt)}
+/* ── Invite modal (Google-Docs style) ── */
+.atm-people-box{
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;
+  min-height:44px;padding:8px 10px;
+  background:var(--surface2);
+  border:1.5px solid var(--border2);border-radius:var(--r2);
+  cursor:text;transition:border-color .15s;
+}
+.atm-people-box:focus-within{border-color:var(--accent)}
+.atm-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px 3px 10px;
+  background:var(--surface3);border:1px solid var(--border2);
+  border-radius:100px;font-size:12.5px;color:var(--txt);
+  white-space:nowrap;line-height:1.5;
+}
+.atm-chip-remove{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:50%;
+  background:transparent;border:none;
+  font-size:12px;color:var(--txt3);cursor:pointer;
+  padding:0;line-height:1;transition:background .12s,color .12s;
+  flex-shrink:0;
+}
+.atm-chip-remove:hover{background:var(--danger-muted);color:var(--danger)}
+.atm-people-input{
+  flex:1;min-width:140px;border:none;background:transparent;
+  font-size:13.5px;color:var(--txt);outline:none;padding:2px 0;
+  font-family:var(--font-base);
+}
+.atm-people-input::placeholder{color:var(--txt3)}
+.atm-suggestions{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:1200;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r2);box-shadow:0 8px 28px var(--shadow);
+  overflow:hidden;display:none;
+}
+.atm-suggestions.open{display:block}
+.atm-sug-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;cursor:pointer;font-size:13px;
+  border-bottom:1px solid var(--border);transition:background .12s;
+}
+.atm-sug-item:last-child{border-bottom:none}
+.atm-sug-item:hover,.atm-sug-item.focused{background:var(--surface3)}
+.atm-sug-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.atm-sug-info{min-width:0}
+.atm-sug-name{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.atm-sug-email{font-size:11.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.atm-section-label{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--txt3);margin:0 0 6px;
+}
+.atm-message-box{
+  width:100%;min-height:80px;resize:vertical;
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:10px 12px;
+  font-size:13.5px;color:var(--txt);font-family:var(--font-base);
+  outline:none;transition:border-color .15s;line-height:1.5;
+}
+.atm-message-box:focus{border-color:var(--accent)}
+.atm-message-box::placeholder{color:var(--txt3)}
+.atm-access-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-top:1px solid var(--border);
+}
+.atm-lock-icon{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--surface3);display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.atm-access-info{flex:1;min-width:0}
+.atm-access-title{font-size:13px;font-weight:600;color:var(--txt)}
+.atm-access-sub{font-size:12px;color:var(--txt2)}
+
+/* ── New-Project chip input (npc-) ── */
+.npc-row{display:flex;align-items:flex-start;gap:8px}
+.npc-box-wrap{flex:1;min-width:0;position:relative}
+.npc-box{
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:5px;
+  min-height:44px;padding:7px 10px;
+  background:var(--surface2);
+  border:1.5px solid var(--border2);border-radius:var(--r2);
+  cursor:text;transition:border-color .15s;
+}
+.npc-box:focus-within{border-color:var(--accent)}
+.npc-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px 3px 6px;
+  background:rgba(79,110,247,0.15);
+  border:1px solid rgba(79,110,247,0.35);
+  border-radius:100px;font-size:.8rem;color:var(--txt);
+  white-space:nowrap;line-height:1.5;
+}
+.npc-chip-avatar{
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#4F6EF7,#7C3AED);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:#fff;
+}
+.npc-chip-name{max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.npc-chip-x{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:14px;height:14px;border-radius:50%;
+  background:transparent;border:none;font-size:11px;
+  color:rgba(79,110,247,0.7);cursor:pointer;padding:0;
+  transition:background .12s,color .12s;flex-shrink:0;
+}
+.npc-chip-x:hover{background:rgba(79,110,247,0.25);color:var(--txt)}
+.npc-input{
+  flex:1;min-width:110px;border:none;background:transparent;
+  font-size:13.5px;color:var(--txt);outline:none;padding:2px 0;
+  font-family:var(--font-base);
+}
+.npc-input::placeholder{color:var(--txt3)}
+.npc-dropdown{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:1200;
+  background:var(--bg-3,var(--surface2));
+  border:1px solid var(--bdr-2,var(--border2));
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+  overflow:hidden;display:none;
+}
+.npc-dropdown.open{display:block}
+.npc-drop-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;cursor:pointer;font-size:13px;
+  border-bottom:1px solid var(--border);transition:background .12s;
+}
+.npc-drop-item:last-child{border-bottom:none}
+.npc-drop-item:hover,.npc-drop-item.focused{background:var(--bg-4,var(--surface3))}
+.npc-drop-avatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#4F6EF7,#7C3AED);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.npc-drop-info{min-width:0}
+.npc-drop-name{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.npc-drop-email{font-size:11.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.npc-role-sel{
+  flex-shrink:0;width:auto;min-width:90px;
+  padding:0 10px;height:44px;
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:var(--r2);font-size:13px;color:var(--txt);
+  font-family:var(--font-base);cursor:pointer;outline:none;
+  transition:border-color .15s;
+}
+.npc-role-sel:focus{border-color:var(--accent)}
+
 .team-member-row{
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   padding:10px 0;border-bottom:1px solid var(--border);
@@ -1588,7 +1743,28 @@ textarea{resize:vertical;min-height:72px}
   justify-content:space-between;flex-shrink:0;
   background:var(--surface);
 }
-.chat-header-name{font-family:var(--font-display);font-size:15px;font-weight:700}
+.chat-header-name{font-family:var(--font-display);font-size:15px;font-weight:700;display:flex;align-items:center;gap:7px}
+/* Real-time connection status dot */
+.chat-rt-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+  background:var(--txt3);
+  transition:background .4s;
+}
+.chat-rt-dot.connected{background:var(--teal);box-shadow:0 0 0 2px rgba(0,212,170,.18)}
+.chat-rt-dot.disconnected{background:#f87171}
+/* Global real-time health dot in nav bar */
+#rt-health-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:var(--txt3);transition:background .4s,box-shadow .4s;
+  cursor:default;
+}
+#rt-health-dot.rt-ok{background:#34d399;box-shadow:0 0 0 2px rgba(52,211,153,.2)}
+#rt-health-dot.rt-warn{background:#fbbf24;box-shadow:0 0 0 2px rgba(251,191,36,.2)}
+#rt-health-dot.rt-err{background:#f87171;box-shadow:0 0 0 2px rgba(248,113,113,.2)}
+#rt-health-dot.rt-offline{background:var(--txt3)}
+/* Pending (optimistic) message — slightly muted until confirmed */
+.chat-msg-pending .chat-bubble{opacity:.65}
+.chat-msg-pending .chat-msg-meta::after{content:' · sending…';color:var(--txt3)}
 .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:4px}
 .chat-msg{
   display:flex;gap:10px;padding:6px 0;
@@ -1825,6 +2001,263 @@ textarea{resize:vertical;min-height:72px}
 .mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
 .truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+/* ── AI Score Rings ──────────────────────────────────────────────────────────*/
+.score-ring-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.score-ring{position:relative;width:64px;height:64px;flex-shrink:0}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring-track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:5}
+.score-ring-fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .7s ease,stroke .4s ease}
+.score-ring-label{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;line-height:1;
+}
+.score-ring-sub{font-size:9px;color:var(--txt3);margin-top:1px}
+.score-green .score-ring-fill{stroke:#34d399}
+.score-green .score-ring-label{color:#34d399}
+.score-amber .score-ring-fill{stroke:#fbbf24}
+.score-amber .score-ring-label{color:#fbbf24}
+.score-red   .score-ring-fill{stroke:#f87171}
+.score-red   .score-ring-label{color:#f87171}
+.score-none  .score-ring-fill{stroke:rgba(255,255,255,.2)}
+.score-none  .score-ring-label{color:var(--txt3)}
+
+/* ── Anomaly badges ──────────────────────────────────────────────────────────*/
+.anomaly-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:700;border-radius:20px;padding:1px 6px;
+  margin-left:5px;vertical-align:middle;
+}
+.anomaly-info    {background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.25)}
+.anomaly-warning {background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.25)}
+.anomaly-critical{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.25)}
+.anomaly-dot     {width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* ── AI Dashboard top row (analytics page) ───────────────────────────────────*/
+#ai-dash-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;
+}
+@media(max-width:700px){#ai-dash-row{grid-template-columns:1fr}}
+.ai-dash-card{
+  background:rgba(99,102,241,.06);
+  border:1px solid rgba(99,102,241,.18);border-radius:14px;padding:16px 18px;
+  position:relative;overflow:hidden;
+}
+.ai-dash-card::before{
+  content:'';position:absolute;top:-30px;right:-20px;
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(99,102,241,.15),transparent 70%);
+  pointer-events:none;
+}
+.ai-dash-card-label{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.ai-dash-card-value{font-size:28px;font-weight:800;line-height:1;font-family:var(--font-display)}
+.ai-dash-card-detail{font-size:12px;color:var(--txt2);margin-top:5px;line-height:1.4}
+.ai-dash-risk-low   {color:#34d399}
+.ai-dash-risk-medium{color:#fbbf24}
+.ai-dash-risk-high  {color:#f87171}
+.ai-dash-risk-none  {color:var(--txt3)}
+.ai-updating{
+  display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--txt3);
+}
+.ai-updating-dot{
+  width:6px;height:6px;border-radius:50%;background:rgba(99,102,241,.7);
+  animation:aiPulse 1.2s ease-in-out infinite;
+}
+@keyframes aiPulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+/* ── Export AI Report modal ──────────────────────────────────────────────────*/
+#modal-ai-report .modal-body{max-height:65vh;overflow-y:auto}
+.ai-report-md{
+  font-size:13px;line-height:1.7;color:var(--txt2);
+  white-space:pre-wrap;word-break:break-word;
+}
+.ai-report-md h1{font-size:18px;font-weight:800;color:var(--txt);margin:0 0 8px}
+.ai-report-md h2{font-size:15px;font-weight:700;color:var(--txt);margin:18px 0 6px}
+.ai-report-md h3{font-size:13px;font-weight:700;color:var(--txt2);margin:12px 0 4px}
+.ai-report-md strong{color:var(--txt);font-weight:700}
+.ai-report-md ul,.ai-report-md ol{margin:4px 0 4px 18px}
+.ai-report-md li{margin-bottom:2px}
+
+/* ── AI Contribution Assessment ─────────────────────────────────────────────*/
+.ai-contrib-header{
+  display:flex;align-items:center;gap:7px;margin-bottom:10px;
+  font-size:12px;color:var(--txt3);
+}
+.ai-contrib-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.12));
+  border:1px solid rgba(99,102,241,.25);border-radius:20px;
+  padding:2px 8px;font-size:11px;font-weight:600;color:#a5b4fc;
+}
+.ai-contrib-badge::before{content:'✦';font-size:9px}
+.ai-team-insight{
+  font-size:12.5px;color:var(--txt2);line-height:1.5;
+  padding:8px 10px;background:rgba(99,102,241,.07);
+  border-left:2px solid rgba(99,102,241,.4);border-radius:0 6px 6px 0;
+  margin-bottom:10px;
+}
+.ai-alert{
+  font-size:12px;color:#fbbf24;
+  padding:6px 10px;background:rgba(251,191,36,.08);
+  border-left:2px solid rgba(251,191,36,.4);border-radius:0 6px 6px 0;
+  margin-bottom:8px;
+}
+.ai-member-insight{
+  font-size:11.5px;color:var(--txt3);margin-top:2px;font-style:italic;
+}
+.ai-flag-high{color:#34d399}
+.ai-flag-medium{color:#60a5fa}
+.ai-flag-low{color:#f87171}
+.ai-refresh-btn{
+  font-size:11px;color:var(--txt3);background:none;border:none;cursor:pointer;padding:0;
+  margin-left:auto;text-decoration:underline;text-underline-offset:2px;
+}
+.ai-refresh-btn:hover{color:var(--txt2)}
+.ai-contrib-ts{font-size:10.5px;color:var(--txt3);opacity:.7}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FairShare AI Manager — floating chat widget
+   All class names prefixed with .fsai- to avoid conflicts
+   ══════════════════════════════════════════════════════════════════════════════ */
+#fsai-btn{
+  position:fixed;bottom:24px;right:24px;z-index:9998;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--ac,#6366f1) 0%,#8b5cf6 100%);
+  box-shadow:0 4px 20px rgba(99,102,241,.45);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;
+}
+#fsai-btn:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(99,102,241,.6)}
+#fsai-btn svg{width:24px;height:24px;fill:#fff;pointer-events:none}
+#fsai-btn .fsai-badge{
+  position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;
+  background:#f59e0b;border:2px solid var(--bg-base,#0d1117);
+  display:none;
+}
+#fsai-btn.fsai-unread .fsai-badge{display:block}
+
+#fsai-panel{
+  position:fixed;bottom:88px;right:24px;z-index:9999;
+  width:380px;max-width:calc(100vw - 32px);
+  height:560px;max-height:calc(100vh - 120px);
+  background:var(--bg-1,#161b22);border:1px solid var(--bdr-1,rgba(255,255,255,.08));
+  border-radius:16px;box-shadow:0 16px 56px rgba(0,0,0,.6);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform-origin:bottom right;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .18s;
+  transform:scale(.85);opacity:0;pointer-events:none;
+}
+#fsai-panel.fsai-open{transform:scale(1);opacity:1;pointer-events:auto}
+
+.fsai-head{
+  display:flex;align-items:center;gap:10px;padding:14px 16px;
+  background:linear-gradient(135deg,rgba(99,102,241,.15) 0%,rgba(139,92,246,.1) 100%);
+  border-bottom:1px solid var(--bdr-1,rgba(255,255,255,.08));flex-shrink:0;
+}
+.fsai-head-icon{width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--ac,#6366f1),#8b5cf6);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fsai-head-icon svg{width:18px;height:18px;fill:#fff}
+.fsai-head-info{flex:1;min-width:0}
+.fsai-head-title{font-size:14px;font-weight:700;color:var(--txt1,#f0f6fc)}
+.fsai-head-sub{font-size:11px;color:var(--txt3,#8b949e);margin-top:1px}
+.fsai-head-close{
+  width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;
+  background:transparent;color:var(--txt3,#8b949e);font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;
+}
+.fsai-head-close:hover{background:var(--bdr-1,rgba(255,255,255,.08));color:var(--txt1,#f0f6fc)}
+
+.fsai-messages{
+  flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;
+  scroll-behavior:smooth;
+}
+.fsai-messages::-webkit-scrollbar{width:4px}
+.fsai-messages::-webkit-scrollbar-thumb{background:var(--bdr-2,rgba(255,255,255,.12));border-radius:2px}
+
+.fsai-msg{display:flex;gap:8px;align-items:flex-start;animation:fsai-in .18s ease}
+@keyframes fsai-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fsai-msg.fsai-user{flex-direction:row-reverse}
+.fsai-avatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+}
+.fsai-msg.fsai-ai .fsai-avatar{background:linear-gradient(135deg,var(--ac,#6366f1),#8b5cf6);color:#fff}
+.fsai-msg.fsai-user .fsai-avatar{background:var(--bg-3,#21262d);color:var(--txt2,#c9d1d9)}
+.fsai-bubble{
+  max-width:82%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.55;
+  color:var(--txt1,#f0f6fc);word-break:break-word;
+}
+.fsai-msg.fsai-ai  .fsai-bubble{background:var(--bg-2,#21262d);border-radius:4px 12px 12px 12px}
+.fsai-msg.fsai-user .fsai-bubble{background:var(--ac,#6366f1);color:#fff;border-radius:12px 12px 4px 12px}
+.fsai-bubble p{margin:0 0 6px}.fsai-bubble p:last-child{margin:0}
+.fsai-bubble ul,.fsai-bubble ol{margin:4px 0 4px 18px;padding:0}
+.fsai-bubble li{margin-bottom:3px}
+.fsai-bubble strong{font-weight:700}
+.fsai-bubble code{
+  background:rgba(0,0,0,.3);border-radius:3px;
+  padding:1px 5px;font-family:monospace;font-size:12px;
+}
+
+.fsai-tool-indicator{
+  display:flex;align-items:center;gap:7px;font-size:12px;
+  color:var(--ac,#6366f1);padding:4px 0;opacity:.85;
+}
+.fsai-tool-indicator::before{
+  content:'';width:7px;height:7px;border-radius:50%;
+  background:var(--ac,#6366f1);animation:fsai-pulse 1s infinite;
+}
+@keyframes fsai-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.fsai-typing{display:flex;align-items:center;gap:8px;padding:4px 0}
+.fsai-dot{width:6px;height:6px;border-radius:50%;background:var(--txt3,#8b949e);animation:fsai-bounce .9s infinite}
+.fsai-dot:nth-child(2){animation-delay:.15s}
+.fsai-dot:nth-child(3){animation-delay:.3s}
+@keyframes fsai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+.fsai-foot{
+  padding:12px;border-top:1px solid var(--bdr-1,rgba(255,255,255,.08));flex-shrink:0;
+  display:flex;flex-direction:column;gap:8px;
+}
+.fsai-suggestions{display:flex;flex-wrap:wrap;gap:6px}
+.fsai-sug{
+  font-size:11.5px;padding:5px 10px;border-radius:20px;border:1px solid var(--bdr-2,rgba(255,255,255,.12));
+  background:transparent;color:var(--txt2,#c9d1d9);cursor:pointer;transition:background .15s,border-color .15s;
+}
+.fsai-sug:hover{background:var(--bdr-1,rgba(255,255,255,.06));border-color:var(--ac,#6366f1);color:var(--txt1,#f0f6fc)}
+.fsai-input-row{display:flex;gap:8px;align-items:flex-end}
+.fsai-input{
+  flex:1;background:var(--bg-2,#21262d);border:1px solid var(--bdr-2,rgba(255,255,255,.12));
+  border-radius:10px;padding:9px 12px;font-size:13.5px;
+  color:var(--txt1,#f0f6fc);outline:none;resize:none;max-height:100px;
+  font-family:inherit;transition:border-color .15s;line-height:1.45;
+}
+.fsai-input::placeholder{color:var(--txt3,#8b949e)}
+.fsai-input:focus{border-color:var(--ac,#6366f1)}
+.fsai-send{
+  width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;flex-shrink:0;
+  background:var(--ac,#6366f1);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,transform .1s;
+}
+.fsai-send:hover:not(:disabled){background:#4f46e5;transform:scale(1.05)}
+.fsai-send:disabled{opacity:.4;cursor:default}
+.fsai-send svg{width:16px;height:16px;fill:#fff}
+
+.fsai-clear{
+  font-size:11px;color:var(--txt3,#8b949e);background:none;border:none;cursor:pointer;
+  text-align:right;padding:0;align-self:flex-end;
+}
+.fsai-clear:hover{color:var(--txt2,#c9d1d9)}
+
+@media(max-width:440px){
+  #fsai-panel{width:calc(100vw - 16px);right:8px;bottom:80px}
+  #fsai-btn{bottom:16px;right:16px}
+}
 </style>
 <script>
 (function(){
@@ -2037,6 +2470,7 @@ textarea{resize:vertical;min-height:72px}
     </div>
 
     <div class="nav-right">
+      <span id="rt-health-dot" class="rt-offline" title="Real-time: not connected" aria-label="Real-time connection status" aria-live="polite"></span>
       <button type="button" class="nav-icon-btn" title="Theme" aria-label="Change theme" onclick="openThemeModal()">🎨</button>
       <button type="button" class="nav-text-btn" title="Help and keyboard shortcuts" onclick="openModal('modal-help')">Help</button>
       <button class="nav-icon-btn notif-dot" title="Notifications" aria-label="Notifications" onclick="showPage('notifications',null);document.querySelector('[data-page=notifications]')?.classList.add('active')" id="notif-btn">🔔</button>
@@ -2274,7 +2708,10 @@ textarea{resize:vertical;min-height:72px}
         <div class="chat-main">
           <div class="chat-header">
             <div>
-              <div class="chat-header-name" id="chat-channel-name"># general</div>
+              <div class="chat-header-name" id="chat-channel-name">
+                <span id="chat-rt-dot" class="chat-rt-dot" title="Realtime status"></span>
+                # general
+              </div>
               <div style="font-size:11px;color:var(--txt3)" id="chat-members-online">Select a project to start chatting</div>
             </div>
             <div style="display:flex;gap:8px">
@@ -2318,10 +2755,33 @@ textarea{resize:vertical;min-height:72px}
           <div class="page-title" id="report-title">Analytics</div>
           <div class="page-sub" id="report-sub">Contribution insights and fairness analysis</div>
         </div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span id="ai-updating-indicator" class="ai-updating" style="display:none">
+            <span class="ai-updating-dot"></span>AI Updating…
+          </span>
           <button class="btn btn-outline btn-sm" onclick="renderSmartSummary(true)">✨ Smart summary</button>
           <button class="btn btn-ghost btn-sm" onclick="openExportModal('save')">⬇ Export PDF</button>
           <button class="btn btn-primary btn-sm" onclick="openExportModal('full')">📊 Full Report</button>
+          <button class="btn btn-outline btn-sm" id="ai-report-btn" style="display:none" onclick="generateAIReport()">🤖 AI Report</button>
+        </div>
+      </div>
+
+      <!-- AI Dashboard top row -->
+      <div id="ai-dash-row" style="display:none">
+        <div class="ai-dash-card">
+          <div class="ai-dash-card-label">Deadline Forecast</div>
+          <div class="ai-dash-card-value ai-dash-risk-none" id="ai-forecast-risk">—</div>
+          <div class="ai-dash-card-detail" id="ai-forecast-detail">Run prediction to see timeline</div>
+        </div>
+        <div class="ai-dash-card">
+          <div class="ai-dash-card-label">Team Health Score</div>
+          <div class="ai-dash-card-value" id="ai-health-score" style="color:var(--teal)">—</div>
+          <div class="ai-dash-card-detail" id="ai-health-detail">AI-weighted average across all members</div>
+        </div>
+        <div class="ai-dash-card">
+          <div class="ai-dash-card-label">Active Anomalies</div>
+          <div class="ai-dash-card-value" id="ai-anomaly-count" style="color:var(--txt2)">—</div>
+          <div class="ai-dash-card-detail" id="ai-anomaly-detail">Flagged contribution patterns</div>
         </div>
       </div>
 
@@ -2824,15 +3284,36 @@ textarea{resize:vertical;min-height:72px}
     <div class="form-row"><label>Description</label><textarea id="np-desc" placeholder="What is this project about?"></textarea></div>
     <div class="form-row"><label>Deadline</label><input type="date" id="np-deadline"></div>
     <div class="form-row"><label>Instructor / Supervisor (optional)</label><input type="text" id="np-instructor" placeholder="Prof. Sarah Chen"></div>
+    <!-- Team member chip input -->
     <div class="form-row">
-      <label>Add team members (one per line: Name, email)</label>
-      <textarea id="np-members" placeholder="Maya Rodriguez, maya@uni.edu&#10;Alex Singh, alex@uni.edu" style="min-height:90px"></textarea>
-      <div class="help-text">You are automatically added as project lead.</div>
+      <label>Add team members</label>
+      <div class="npc-row">
+        <div class="npc-box-wrap">
+          <div class="npc-box" id="npc-box" onclick="document.getElementById('npc-input').focus()">
+            <input
+              type="text"
+              id="npc-input"
+              class="npc-input"
+              placeholder="Search by name or email…"
+              autocomplete="off"
+              oninput="npcOnInput(this)"
+              onkeydown="npcOnKey(event)"
+              onblur="npcOnBlur()"
+            >
+          </div>
+          <div class="npc-dropdown" id="npc-dropdown"></div>
+        </div>
+        <select id="npc-role" class="npc-role-sel" title="Role for all added members">
+          <option value="member">Member</option>
+          <option value="lead">Lead</option>
+        </select>
+      </div>
+      <div class="help-text">Press Enter or , to add. You are automatically added as project lead.</div>
     </div>
+    <!-- Invite message -->
     <div class="form-row">
-      <label>Optional — extra emails only (one per line)</label>
-      <textarea id="np-invite-emails" placeholder="Optional: emails not already listed above…" style="min-height:72px"></textarea>
-      <div class="help-text">Everyone you list under team members gets an in-app invite if they already have an account. When your host has email configured (Resend), invite emails are sent to all teammate addresses (including this box). Duplicates are skipped.</div>
+      <label>Message <span style="font-weight:400;color:var(--txt3)">(optional)</span></label>
+      <textarea id="np-invite-message" placeholder="Add a note to your invitation…" style="min-height:64px"></textarea>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-project')">Cancel</button>
@@ -2841,17 +3322,53 @@ textarea{resize:vertical;min-height:72px}
   </div>
 </div>
 
-<!-- Add team member (after project exists) -->
+<!-- Add team member (Google Docs-style share dialog) -->
 <div class="modal-overlay" id="modal-add-team-member" onclick="overlayClose(event,this)">
   <div class="modal">
-    <div class="modal-title">➕ Add team member</div>
-    <button class="modal-close" onclick="closeModal('modal-add-team-member')">✕</button>
-    <p style="font-size:13px;color:var(--txt2);margin:0 0 14px;line-height:1.45">Add someone to <strong id="atm-project-label">this project</strong>. If they already have a FairShare account on that email, they’ll get an in-app invite after you save.</p>
-    <div class="form-row"><label>Name</label><input type="text" id="atm-name" placeholder="e.g. Maya Rodriguez" autocomplete="name"></div>
-    <div class="form-row"><label>Email</label><input type="email" id="atm-email" placeholder="maya@school.edu" autocomplete="email"></div>
-    <div class="form-actions">
+    <div class="modal-title" style="font-size:16px">Share &#8220;<span id="atm-project-label">Project</span>&#8221;</div>
+    <button class="modal-close" onclick="closeModal('modal-add-team-member')">&#x2715;</button>
+
+    <!-- Chip-based people input -->
+    <div class="form-row" style="margin-bottom:4px">
+      <div class="atm-section-label">Add people</div>
+      <div style="position:relative">
+        <div class="atm-people-box" id="atm-people-box" onclick="document.getElementById('atm-people-input').focus()">
+          <input
+            type="text"
+            id="atm-people-input"
+            class="atm-people-input"
+            placeholder="Search by name or email&#8230;"
+            autocomplete="off"
+            oninput="atmOnInput(this)"
+            onkeydown="atmOnKey(event)"
+            onblur="atmOnBlur()"
+          >
+        </div>
+        <div class="atm-suggestions" id="atm-suggestions"></div>
+      </div>
+      <div id="atm-input-hint" style="font-size:11.5px;color:var(--txt3);margin-top:5px;display:none">
+        Press <kbd style="background:var(--surface3);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10.5px">Enter</kbd> or <kbd style="background:var(--surface3);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10.5px">,</kbd> to add
+      </div>
+    </div>
+
+    <!-- Message -->
+    <div class="form-row">
+      <div class="atm-section-label">Message <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <textarea id="atm-message" class="atm-message-box" placeholder="Add a note to your invite&#8230;"></textarea>
+    </div>
+
+    <!-- Restricted access indicator -->
+    <div class="atm-access-row">
+      <div class="atm-lock-icon">&#x1F512;</div>
+      <div class="atm-access-info">
+        <div class="atm-access-title">Restricted</div>
+        <div class="atm-access-sub">Only people you add can open this project</div>
+      </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:14px">
       <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-team-member')">Cancel</button>
-      <button type="button" class="btn btn-primary btn-sm" onclick="submitAddTeamMember()">Add to project</button>
+      <button type="button" class="btn btn-primary btn-sm" id="atm-send-btn" onclick="submitAddTeamMember()" disabled>Send invite</button>
     </div>
   </div>
 </div>
@@ -2889,6 +3406,24 @@ textarea{resize:vertical;min-height:72px}
     <div class="form-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-task')">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="createTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Contribution Report Modal -->
+<div class="modal-overlay" id="modal-ai-report" onclick="overlayClose(event,this)">
+  <div class="modal" style="max-width:680px;width:95%">
+    <div class="modal-title">🤖 AI Contribution Report</div>
+    <button type="button" class="modal-close" onclick="closeModal('modal-ai-report')">✕</button>
+    <div class="modal-body">
+      <div id="ai-report-content" style="color:var(--txt3);font-size:13px;text-align:center;padding:40px 0">
+        Generating report… this may take 20–30 seconds.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-ai-report')">Close</button>
+      <button class="btn btn-outline btn-sm" id="ai-report-copy-btn" style="display:none" onclick="copyAIReport()">Copy Markdown</button>
+      <button class="btn btn-primary btn-sm" id="ai-report-pdf-btn" style="display:none" onclick="printAIReport()">Print / Save PDF</button>
     </div>
   </div>
 </div>
@@ -3663,6 +4198,7 @@ function loginAs(user){
   STORE.set('session',user.id);
   document.getElementById('auth-screen').classList.remove('visible');
   document.getElementById('app').classList.add('visible');
+  const _fsaiBtn=document.getElementById('fsai-btn');if(_fsaiBtn)_fsaiBtn.style.display='flex';
 
   if(user.id==='demo'&&user.email==='demo@fairshare.app'){
     try{seedDemoData(user,true)}catch(e){console.warn('seedDemoData',e)}
@@ -3770,8 +4306,12 @@ async function handleLogout(){
   if(window.FSB&&typeof window.FSB.stopChatRealtime==='function')window.FSB.stopChatRealtime();
   if(window.FSB&&typeof window.FSB.stopActivitiesRealtime==='function')window.FSB.stopActivitiesRealtime();
   if(window.FSB&&typeof window.FSB.stopNotificationsRealtime==='function')window.FSB.stopNotificationsRealtime();
+  if(typeof window.clearRTStatus==='function')window.clearRTStatus();
+  if(typeof window.stopAIContributionInterval==='function')window.stopAIContributionInterval();
   document.getElementById('app').classList.remove('visible');
   document.getElementById('auth-screen').classList.add('visible');
+  const _fsaiBtnOut=document.getElementById('fsai-btn');if(_fsaiBtnOut)_fsaiBtnOut.style.display='none';
+  const _fsaiPanelOut=document.getElementById('fsai-panel');if(_fsaiPanelOut)_fsaiPanelOut.classList.remove('fsai-open');
   clearAuthStatus();
   showLogin();
 }
@@ -3912,8 +4452,27 @@ const PROJECT_BG_COLORS=[
 
 function loadProjects(){
   if(!currentUser)return[];
-  const projects=STORE.get('projects_'+currentUser.id)||[];
+  let projects=STORE.get('projects_'+currentUser.id)||[];
+  // If the in-memory cloud store has nothing yet (hydrating or Supabase unreachable),
+  // fall back to the localStorage durability mirror.
+  if(!projects.length){
+    try{
+      const bak=localStorage.getItem('fs4_bak_projects_'+currentUser.id);
+      if(bak){const p=JSON.parse(bak);if(Array.isArray(p)&&p.length)projects=p;}
+    }catch(e){}
+  }
   return projects;
+}
+
+/** Called when a member successfully opens a shared project — tracks it for future recovery. */
+function trackMemberProject(projectId){
+  if(!currentUser||!projectId)return;
+  try{
+    const k='fs4_bak_member_pids_'+currentUser.id;
+    const set=new Set(JSON.parse(localStorage.getItem(k)||'[]'));
+    set.add(projectId);
+    localStorage.setItem(k,JSON.stringify([...set]));
+  }catch(e){}
 }
 
 /** Prefer account id for assignee when member has joined (stable across tabs). */
@@ -4164,6 +4723,8 @@ async function openProject(id, opts){
   if(!p){toast('Project not found','error');return}
   currentProject=p;
   try{if(currentUser&&currentUser.id)STORE.set('current_project_'+currentUser.id,id)}catch(e){}
+  // Track this project in the member index so it survives refresh even if Supabase RLS misses it
+  if(p.ownerId!==currentUser.id) trackMemberProject(id);
   if(!opts||!opts.silent)toast(`Opened: ${p.name}`,'success');
 
   // Update UI hints
@@ -4175,6 +4736,8 @@ async function openProject(id, opts){
   startLiveActivity();
   renderChatChannels();
   if(window.FSB&&window.FSB.enabled)window.FSB.startChatRealtime(id,currentChatChannel);
+  // Start AI contribution tracking for this project
+  if(typeof window.startAIContributionInterval==='function')window.startAIContributionInterval(id);
   const landing=(currentUser&&currentUser.role==='instructor')?'report':'dashboard';
   showPage(landing,document.querySelector('[data-page='+landing+']'));
 }
@@ -4224,43 +4787,182 @@ async function sendProjectInviteEmails(project,emails){
   return data;
 }
 
+/* ── New-Project Chip (npc) state ── */
+let _npcChips   = []; // [{email, name, registered}]
+let _npcSearchT = null; // debounce timer
+
+function npcUpdateBox(){
+  const box = document.getElementById('npc-box');
+  const inp = document.getElementById('npc-input');
+  if(!box||!inp) return;
+  Array.from(box.querySelectorAll('.npc-chip')).forEach(c=>c.remove());
+  _npcChips.forEach((p,i)=>{
+    const chip = document.createElement('span');
+    chip.className = 'npc-chip';
+    const init = (p.name||p.email).charAt(0).toUpperCase();
+    chip.innerHTML = `<span class="npc-chip-avatar">${init}</span><span class="npc-chip-name">${p.name||p.email}</span><button class="npc-chip-x" title="Remove" onclick="npcRemove(${i})" type="button">&#x2715;</button>`;
+    box.insertBefore(chip, inp);
+  });
+}
+
+function npcRemove(i){
+  _npcChips.splice(i,1);
+  npcUpdateBox();
+}
+
+function npcAddPerson(email, name, registered){
+  const em = email.trim().toLowerCase();
+  if(!em||!isValidEmailFormat(em)) return false;
+  const ownerLc = String((currentUser&&currentUser.email)||'').trim().toLowerCase();
+  if(em===ownerLc){ toast('You are automatically the project lead.','error'); return false; }
+  if(_npcChips.some(c=>c.email===em)){ return false; }
+  _npcChips.push({email:em, name:name||em.split('@')[0], registered:!!registered});
+  return true;
+}
+
+async function npcSearchProfiles(query){
+  if(!query||query.length<2) return [];
+  // Use Supabase client if available
+  if(window.FSB&&window.FSB.client&&window.FSB.hasCloud&&!window.FSB.localDemo){
+    try{
+      const q = '%'+query+'%';
+      const {data} = await window.FSB.client
+        .from('profiles')
+        .select('id,email,full_name')
+        .or(`email.ilike.${q},full_name.ilike.${q}`)
+        .limit(6);
+      return (data||[]).map(r=>({
+        email: String(r.email||'').toLowerCase(),
+        name:  r.full_name||r.email||'',
+        registered: true
+      }));
+    }catch(e){ console.warn('npcSearch',e); }
+  }
+  return [];
+}
+
+function npcHideDrop(){
+  const d=document.getElementById('npc-dropdown');
+  if(d){d.classList.remove('open');d.innerHTML='';}
+}
+
+function npcShowDrop(results, query){
+  const d=document.getElementById('npc-dropdown');
+  if(!d) return;
+  if(!results.length){npcHideDrop();return;}
+  const seen=new Set(_npcChips.map(c=>c.email));
+  const ownerLc=String((currentUser&&currentUser.email)||'').toLowerCase();
+  const filtered=results.filter(r=>r.email!==ownerLc&&!seen.has(r.email));
+  if(!filtered.length){npcHideDrop();return;}
+  d.innerHTML=filtered.map(r=>{
+    const init=(r.name||r.email).charAt(0).toUpperCase();
+    const eName=r.name.replace(/'/g,"\\'");
+    const eEmail=r.email.replace(/'/g,"\\'");
+    return `<div class="npc-drop-item" onmousedown="event.preventDefault();npcPick('${eEmail}','${eName}',true)">
+      <div class="npc-drop-avatar">${init}</div>
+      <div class="npc-drop-info">
+        <div class="npc-drop-name">${r.name}</div>
+        <div class="npc-drop-email">${r.email}</div>
+      </div>
+    </div>`;
+  }).join('');
+  d.classList.add('open');
+}
+
+function npcPick(email, name, registered){
+  if(npcAddPerson(email, name, registered)){
+    const inp=document.getElementById('npc-input');
+    if(inp)inp.value='';
+    npcUpdateBox();
+  }
+  npcHideDrop();
+}
+
+function npcOnInput(inp){
+  const val=inp.value.trim();
+  clearTimeout(_npcSearchT);
+  if(!val){npcHideDrop();return;}
+  _npcSearchT=setTimeout(async()=>{
+    const results=await npcSearchProfiles(val);
+    npcShowDrop(results, val);
+  },300);
+}
+
+function npcOnKey(e){
+  const inp=e.target;
+  const val=inp.value;
+  if(e.key==='Enter'||e.key===','||e.key===';'){
+    e.preventDefault();
+    const v=val.replace(/,/g,'').trim();
+    if(v&&isValidEmailFormat(v)){
+      if(npcAddPerson(v,v.split('@')[0],false)){inp.value='';npcUpdateBox();}
+    }else if(v){
+      toast('Enter a valid email address.','error');
+    }
+    npcHideDrop();
+  } else if(e.key==='Backspace'&&!val&&_npcChips.length){
+    _npcChips.pop();npcUpdateBox();
+  }
+}
+
+function npcOnBlur(){
+  const inp=document.getElementById('npc-input');
+  if(inp){
+    const v=inp.value.replace(/,/g,'').trim();
+    if(v&&isValidEmailFormat(v)){
+      if(npcAddPerson(v,v.split('@')[0],false)){inp.value='';npcUpdateBox();}
+    }
+  }
+  setTimeout(npcHideDrop,150);
+}
+
+function npcReset(){
+  _npcChips=[];
+  npcUpdateBox();
+  const inp=document.getElementById('npc-input');
+  if(inp)inp.value='';
+  const msg=document.getElementById('np-invite-message');
+  if(msg)msg.value='';
+  const role=document.getElementById('npc-role');
+  if(role)role.value='member';
+  npcHideDrop();
+}
+
 async function createProject(){
   const name=document.getElementById('np-name').value.trim();
   const desc=document.getElementById('np-desc').value.trim();
   const deadline=document.getElementById('np-deadline').value;
   const instructor=document.getElementById('np-instructor').value.trim();
-  const membersRaw=document.getElementById('np-members').value.trim();
-  const inviteEmails=parseInviteEmails((document.getElementById('np-invite-emails')||{}).value||'');
   const templateKey=(document.getElementById('np-template')||{}).value||'blank';
-  if(!name){toast('Please enter a project name','error');return}
-  const members=[{id:currentUser.id,name:currentUser.name,email:String(currentUser.email||'').trim().toLowerCase()}];
-  if(membersRaw){
-    membersRaw.split('\n').forEach(line=>{
-      const parts=line.split(',');
-      const em=String(parts[1]||'').trim().toLowerCase();
-      if(parts[0].trim())members.push({id:genId('m'),name:parts[0].trim(),email:em});
-    });
+
+  // Commit anything still typed in the field
+  const npcInp=document.getElementById('npc-input');
+  if(npcInp&&npcInp.value.trim()){
+    const v=npcInp.value.replace(/,/g,'').trim();
+    if(v&&isValidEmailFormat(v)){npcAddPerson(v,v.split('@')[0],false);npcInp.value='';}
   }
+
+  if(!name){toast('Please enter a project name','error');return}
+
+  // Build member list from chips
+  const members=[{id:currentUser.id,name:currentUser.name,email:String(currentUser.email||'').trim().toLowerCase()}];
+  _npcChips.forEach(chip=>{
+    members.push({id:genId('m'),name:chip.name,email:chip.email});
+  });
+
   let resolvedMembers=members;
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.resolveProjectMembers==='function'){
     try{
-      resolvedMembers=await window.FSB.resolveProjectMembers([
-        ...members,
-        ...inviteEmails.map(email=>({id:genId('m'),name:email.split('@')[0],email}))
-      ]);
-    }catch(e){
-      console.warn('resolveProjectMembers',e);
-    }
+      resolvedMembers=await window.FSB.resolveProjectMembers(members);
+    }catch(e){ console.warn('resolveProjectMembers',e); }
   }
   const byEmail=new Map();
   resolvedMembers.forEach(m=>{
     const email=String(m.email||'').trim().toLowerCase();
     if(email&&!byEmail.has(email))byEmail.set(email,{...m,email});
   });
-  const finalMembers=[...byEmail.values()].map(m=>({
-    ...m,
-    email:m.email?String(m.email).trim().toLowerCase():m.email
-  }));
+  const finalMembers=[...byEmail.values()].map(m=>({...m,email:String(m.email).trim().toLowerCase()}));
+
   const proj={
     id:genId('proj'),
     name,desc,deadline,instructor,
@@ -4274,16 +4976,16 @@ async function createProject(){
   projects.unshift(proj);
   STORE.set('projects_'+currentUser.id,projects);
   applyProjectTemplateTasks(proj.id,templateKey,{deadline,ownerId:currentUser.id});
+
   let inviteToastShown=false;
   const ownerEmailLc=String(currentUser.email||'').trim().toLowerCase();
-  const allEmailRecipients=[...new Set([
-    ...inviteEmails,
-    ...finalMembers.map(m=>String(m.email||'').trim().toLowerCase()).filter(e=>e&&e!==ownerEmailLc)
-  ])];
+  const allEmailRecipients=[...new Set(
+    finalMembers.map(m=>String(m.email||'').trim().toLowerCase()).filter(e=>e&&e!==ownerEmailLc)
+  )];
+
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
     try{
       if(typeof window.FSB.persistNow==='function')await window.FSB.persistNow();
-      /* In-app invites: DB trigger on fs_projects inserts fs_notifications for registered member emails (apply migration 003). */
       if(allEmailRecipients.length){
         const emailResult=await sendProjectInviteEmails(proj,allEmailRecipients);
         if(emailResult.sent>0){
@@ -4302,9 +5004,11 @@ async function createProject(){
   closeModal('modal-new-project');
   renderProjectList();
   if(!inviteToastShown)toast('Project created with your workspace ready.','success','Project created');
-  ['np-name','np-desc','np-deadline','np-instructor','np-members','np-invite-emails'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  // Reset modal fields
+  ['np-name','np-desc','np-deadline','np-instructor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  npcReset();
   const ts=document.getElementById('np-template');
-  if(ts){ts.value='blank';applyNpTemplateHint()}
+  if(ts){ts.value='blank';applyNpTemplateHint();}
 }
 
 /* ══════════════════════════════════════════════
@@ -4353,49 +5057,175 @@ function renderTeamSection(){
   el.innerHTML=addBtn+rows;
 }
 
+/* ── ATM chip state ── */
+let _atmChips = []; // [{email, name}]
+
+function atmUpdateSendBtn(){
+  const btn = document.getElementById('atm-send-btn');
+  if(btn) btn.disabled = _atmChips.length === 0;
+}
+
+function atmRenderChips(){
+  const box = document.getElementById('atm-people-box');
+  const inp = document.getElementById('atm-people-input');
+  if(!box||!inp) return;
+  // Remove old chips (keep the input)
+  Array.from(box.querySelectorAll('.atm-chip')).forEach(c=>c.remove());
+  _atmChips.forEach((person,i)=>{
+    const chip = document.createElement('span');
+    chip.className = 'atm-chip';
+    chip.innerHTML = `${person.name||person.email}<button class="atm-chip-remove" title="Remove" onclick="atmRemoveChip(${i})">&#x2715;</button>`;
+    box.insertBefore(chip, inp);
+  });
+  atmUpdateSendBtn();
+}
+
+function atmRemoveChip(idx){
+  _atmChips.splice(idx,1);
+  atmRenderChips();
+}
+
+function atmAddEmail(raw){
+  const email = raw.trim().toLowerCase();
+  if(!email) return false;
+  if(!isValidEmailFormat(email)){ toast('Enter a valid email address.','error'); return false; }
+  const ownerLc = String((currentUser&&currentUser.email)||'').trim().toLowerCase();
+  if(email===ownerLc){ toast('You are already the project lead.','error'); return false; }
+  if(_atmChips.some(c=>c.email===email)){ toast('Already added.','error'); return false; }
+  // Check existing project members
+  const existing = (currentProject&&currentProject.members)||[];
+  if(existing.some(m=>String(m.email||'').trim().toLowerCase()===email)){
+    toast('That person is already on this project.','error'); return false;
+  }
+  const name = email.split('@')[0];
+  _atmChips.push({email, name});
+  return true;
+}
+
+function atmOnKey(e){
+  const inp = e.target;
+  const val = inp.value;
+  const hint = document.getElementById('atm-input-hint');
+  if(e.key==='Enter'||e.key===','||e.key===';'||e.key===' '){
+    e.preventDefault();
+    const v = val.replace(/,/g,'').trim();
+    if(v){
+      if(atmAddEmail(v)){ inp.value=''; atmRenderChips(); atmHideSuggestions(); }
+    }
+  } else if(e.key==='Backspace'&&!val&&_atmChips.length){
+    _atmChips.pop(); atmRenderChips();
+  }
+  if(hint) hint.style.display = val.length>0 ? '' : 'none';
+}
+
+function atmOnInput(inp){
+  const val = inp.value.trim();
+  const hint = document.getElementById('atm-input-hint');
+  if(hint) hint.style.display = val.length>0 ? '' : 'none';
+  // Build suggestions from current project members (known emails)
+  if(val.length<1){ atmHideSuggestions(); return; }
+  const existing = (currentProject&&currentProject.members)||[];
+  const alreadyChipped = new Set(_atmChips.map(c=>c.email));
+  const ownerLc = String((currentUser&&currentUser.email)||'').toLowerCase();
+  const matches = existing.filter(m=>{
+    const em = String(m.email||'').toLowerCase();
+    const nm = String(m.name||'').toLowerCase();
+    return em!==ownerLc && !alreadyChipped.has(em) &&
+           (em.includes(val.toLowerCase())||nm.includes(val.toLowerCase()));
+  });
+  if(matches.length===0){ atmHideSuggestions(); return; }
+  const sug = document.getElementById('atm-suggestions');
+  if(!sug) return;
+  sug.innerHTML = matches.slice(0,6).map(m=>{
+    const em = String(m.email||'').toLowerCase();
+    const nm = String(m.name||em.split('@')[0]);
+    const init = nm.charAt(0).toUpperCase();
+    return `<div class="atm-sug-item" onmousedown="event.preventDefault();atmPickSuggestion('${em}','${nm.replace(/'/g,"\\'")}')">
+      <div class="atm-sug-avatar">${init}</div>
+      <div class="atm-sug-info">
+        <div class="atm-sug-name">${nm}</div>
+        <div class="atm-sug-email">${em}</div>
+      </div>
+    </div>`;
+  }).join('');
+  sug.classList.add('open');
+}
+
+function atmPickSuggestion(email, name){
+  if(atmAddEmail(email)){
+    const inp = document.getElementById('atm-people-input');
+    if(inp) inp.value='';
+    atmRenderChips();
+  }
+  atmHideSuggestions();
+}
+
+function atmHideSuggestions(){
+  const sug = document.getElementById('atm-suggestions');
+  if(sug){ sug.classList.remove('open'); sug.innerHTML=''; }
+}
+
+function atmOnBlur(){
+  // Commit anything valid left in the field
+  const inp = document.getElementById('atm-people-input');
+  if(!inp) return;
+  const v = inp.value.replace(/,/g,'').trim();
+  if(v && isValidEmailFormat(v)){
+    if(atmAddEmail(v)){ inp.value=''; atmRenderChips(); }
+  }
+  setTimeout(atmHideSuggestions, 150);
+}
+
 function openAddTeamMemberModal(){
   if(!currentProject||!isProjectLead(currentProject)){toast('Only the project lead can add members.','error');return}
   const lab=document.getElementById('atm-project-label');
   if(lab)lab.textContent=currentProject.name||'this project';
-  const n=document.getElementById('atm-name');
-  const e=document.getElementById('atm-email');
-  if(n)n.value='';
-  if(e)e.value='';
+  // Reset chip state
+  _atmChips=[];
+  atmRenderChips();
+  const inp=document.getElementById('atm-people-input');
+  if(inp)inp.value='';
+  const msg=document.getElementById('atm-message');
+  if(msg)msg.value='';
+  const hint=document.getElementById('atm-input-hint');
+  if(hint)hint.style.display='none';
+  atmHideSuggestions();
   openModal('modal-add-team-member');
-  setTimeout(()=>{(e||n)&&((e||n).focus())},100);
+  setTimeout(()=>{const i=document.getElementById('atm-people-input');if(i)i.focus()},120);
 }
 
 async function submitAddTeamMember(){
   if(!currentProject||!currentUser)return;
   if(!isProjectLead(currentProject)){toast('Only the project lead can add members.','error');return}
-  const name=String((document.getElementById('atm-name')||{}).value||'').trim();
-  const email=String((document.getElementById('atm-email')||{}).value||'').trim().toLowerCase();
-  if(!email){toast('Enter an email address.','error');return}
-  if(!isValidEmailFormat(email)){toast('Enter a valid email address.','error');return}
-  const ownerLc=String(currentUser.email||'').trim().toLowerCase();
-  if(email===ownerLc){toast('You’re already the project lead.','error');return}
+  // Commit anything still typed in the field
+  const inp=document.getElementById('atm-people-input');
+  if(inp&&inp.value.trim()){
+    const v=inp.value.replace(/,/g,'').trim();
+    if(v&&isValidEmailFormat(v)){atmAddEmail(v);inp.value='';}
+  }
+  if(!_atmChips.length){toast('Add at least one email address.','error');return}
   const projects=loadProjects();
   const ix=projects.findIndex(x=>x.id===currentProject.id);
   if(ix<0){toast('Project not found.','error');return}
-  const existing=projects[ix].members||[];
-  if(existing.some(m=>String(m.email||'').trim().toLowerCase()===email)){
-    toast('That email is already on this project.','error');
+  let nextMembers=[...(projects[ix].members||[])];
+  const addedEmails=[];
+  for(const person of _atmChips){
+    const {email,name}=person;
+    if(nextMembers.some(m=>String(m.email||'').trim().toLowerCase()===email)) continue;
+    nextMembers.push({id:genId('m'),name:name||email.split('@')[0],email});
+    addedEmails.push(email);
+  }
+  if(!addedEmails.length){
+    toast('Those people are already on the project.','error');
+    closeModal('modal-add-team-member');
     return;
   }
-  const displayName=name||email.split('@')[0];
-  let nextMembers=[...existing,{id:genId('m'),name:displayName,email}];
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.resolveProjectMembers==='function'){
-    try{
-      nextMembers=await window.FSB.resolveProjectMembers(nextMembers);
-    }catch(err){
-      console.warn('resolveProjectMembers',err);
-    }
+    try{ nextMembers=await window.FSB.resolveProjectMembers(nextMembers); }
+    catch(err){ console.warn('resolveProjectMembers',err); }
   }
   const byEmail=new Map();
-  nextMembers.forEach(m=>{
-    const em=String(m.email||'').trim().toLowerCase();
-    if(em&&!byEmail.has(em))byEmail.set(em,m);
-  });
+  nextMembers.forEach(m=>{const em=String(m.email||'').trim().toLowerCase();if(em&&!byEmail.has(em))byEmail.set(em,m);});
   const merged=[...byEmail.values()];
   const updated={...projects[ix],members:merged};
   projects[ix]=updated;
@@ -4413,16 +5243,17 @@ async function submitAddTeamMember(){
   closeModal('modal-add-team-member');
   if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo){
     try{
-      const emailResult=await sendProjectInviteEmails(currentProject,[email]);
-      if(emailResult.sent>0)toast(`Member added. Invite email sent to ${email}.`,'success');
-      else if(emailResult.skipped)toast(emailResult.message||'Member added. Teammates with accounts also get an in-app invite.','success');
-      else toast('Member added to this project.','success');
+      const emailResult=await sendProjectInviteEmails(currentProject,addedEmails);
+      const n=addedEmails.length;
+      if(emailResult.sent>0)toast(`${n} member${n>1?'s':''} added. Invite email${n>1?'s':''} sent.`,'success');
+      else toast(`${n} member${n>1?'s':''} added to this project.`,'success');
     }catch(err){
       console.warn('sendProjectInviteEmails',err);
-      toast('Member saved. Invite email failed — they may still get an in-app notification.','success');
+      toast('Members saved. Invite emails failed — they may still get in-app notifications.','success');
     }
   }else{
-    toast('Member added to this project.','success');
+    const n=addedEmails.length;
+    toast(`${n} member${n>1?'s':''} added to this project.`,'success');
   }
   const ch=document.getElementById('chat-members-online');
   if(ch)ch.textContent=`${currentProject.members.length} members in this project`;
@@ -4469,6 +5300,8 @@ async function deleteCurrentProject(){
     if(window.FSB&&typeof window.FSB.stopTasksRealtime==='function')window.FSB.stopTasksRealtime();
     if(window.FSB&&typeof window.FSB.stopDocumentsRealtime==='function')window.FSB.stopDocumentsRealtime();
     if(window.FSB&&typeof window.FSB.stopProjectBroadcast==='function')window.FSB.stopProjectBroadcast();
+    if(typeof window.clearRTStatus==='function')window.clearRTStatus();
+    if(typeof window.stopAIContributionInterval==='function')window.stopAIContributionInterval();
   }catch(e){}
   currentProject=null;
   try{if(currentUser&&currentUser.id)STORE.del('current_project_'+currentUser.id)}catch(e){}
@@ -4489,9 +5322,11 @@ async function removeProjectMember(memberIndex){
   if(p.ownerId!==currentUser.id){toast('Only the project lead can remove people.','error');return}
   const m=p.members[memberIndex];
   if(!m)return;
-  if(m.id===p.ownerId){toast('You can’t remove the project lead.','error');return}
+  if(m.id===p.ownerId){toast('You cannot remove the project lead.','error');return}
   const nm=String(m.name||m.email||'this person').trim();
-  if(!confirm(`Remove ${nm} from this project? They will lose access after syncing.`))return;
+  if(!confirm(`Remove ${nm} from this project? They will lose access immediately.`))return;
+  // Capture the removed member's Supabase user ID before mutating the array
+  const removedUserId=m.inviteUserId||m.id||null;
   const projects=loadProjects();
   const ix=projects.findIndex(x=>x.id===p.id);
   if(ix<0)return;
@@ -4499,15 +5334,64 @@ async function removeProjectMember(memberIndex){
   projects[ix]=next;
   STORE.set('projects_'+currentUser.id,projects);
   currentProject=next;
+  // Broadcast removal BEFORE persisting so the removed member is still subscribed to the channel
+  if(removedUserId&&window.FSB&&window.FSB.client&&!window.FSB.localDemo){
+    try{
+      const bch=window.FSB.client.channel('fairshare-project-'+p.id,{config:{broadcast:{self:false}}});
+      await new Promise(resolve=>{
+        const t=setTimeout(resolve,4000);
+        bch.subscribe(status=>{
+          if(status==='SUBSCRIBED'){
+            clearTimeout(t);
+            bch.send({type:'broadcast',event:'member_removed',payload:{projectId:p.id,removedUserId}})
+              .then(resolve).catch(resolve);
+          }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){clearTimeout(t);resolve();}
+        });
+      });
+      window.FSB.client.removeChannel(bch);
+    }catch(e){console.warn('member_removed broadcast',e);}
+  }
   try{
     if(window.FSB&&window.FSB.hasCloud&&!window.FSB.localDemo&&typeof window.FSB.persistNow==='function')await window.FSB.persistNow();
   }catch(e){console.warn(e)}
-  toast('Member removed','success');
-  const ch=document.getElementById('chat-members-online');
-  if(ch)ch.textContent=`${currentProject.members.length} members in this project`;
+  toast(`${nm} has been removed from the project.`,'success');
+  const chatOnline=document.getElementById('chat-members-online');
+  if(chatOnline)chatOnline.textContent=`${currentProject.members.length} members in this project`;
   renderDashboard();
   renderProjectList();
 }
+
+/** Called by the realtime subscription when the current user has been removed from a project. */
+window.onMemberRemovedFromProject=function(projectId,removedUserId){
+  if(!currentUser)return;
+  if(removedUserId&&removedUserId!==currentUser.id)return;
+  // Scrub the project from local state + localStorage mirror
+  const remaining=(STORE.get('projects_'+currentUser.id)||[]).filter(pp=>pp.id!==projectId);
+  STORE.set('projects_'+currentUser.id,remaining);
+  try{
+    const bak=localStorage.getItem('fs4_bak_projects_'+currentUser.id);
+    if(bak){
+      const filtered=JSON.parse(bak).filter(pp=>pp.id!==projectId);
+      localStorage.setItem('fs4_bak_projects_'+currentUser.id,JSON.stringify(filtered));
+    }
+  }catch(e){}
+  try{
+    const pids=localStorage.getItem('fs4_bak_member_pids_'+currentUser.id);
+    if(pids){
+      const filtered=JSON.parse(pids).filter(id=>id!==projectId);
+      localStorage.setItem('fs4_bak_member_pids_'+currentUser.id,JSON.stringify(filtered));
+    }
+  }catch(e){}
+  if(currentProject&&currentProject.id===projectId){
+    currentProject=null;
+    showPage('page-projects');
+    renderProjectList();
+    toast('You have been removed from this project by the lead.','error');
+  }else{
+    renderProjectList();
+  }
+};
+
 
 function renderDashboard(){
   if(!currentProject){
@@ -4571,6 +5455,162 @@ function renderDashboard(){
 }
 
 /* ══════════════════════════════════════════════
+   AI CONTRIBUTION ASSESSMENT ENGINE
+   Fetches AI-generated insights per member from /api/ai/assess.
+   Results are cached in localStorage for 5 minutes per project.
+══════════════════════════════════════════════ */
+(function(){
+  const TTL    = 5 * 60 * 1000; // 5 minutes
+  const PFX    = 'fsai_';
+  let _debounce= null;
+  let _interval= null;
+  let _lastPid = null;
+  let _inflight= false;
+
+  function cacheRead(pid, key){
+    try{
+      const raw=localStorage.getItem(`${PFX}${key}_${pid}`);
+      if(!raw)return null;
+      const {ts,data}=JSON.parse(raw);
+      if(Date.now()-ts>TTL)return null;
+      return data;
+    }catch{return null;}
+  }
+  function cacheWrite(pid,key,data){
+    try{localStorage.setItem(`${PFX}${key}_${pid}`,JSON.stringify({ts:Date.now(),data}));}catch{}
+  }
+  function cacheClear(pid){
+    ['assess','score','predict','anomalies'].forEach(k=>{
+      try{localStorage.removeItem(`${PFX}${k}_${pid}`);}catch{}
+    });
+  }
+
+  async function getToken(){
+    try{
+      if(window.FSB?.client){
+        const {data:{session}}=await window.FSB.client.auth.getSession();
+        return session?.access_token||'';
+      }
+    }catch{}
+    return '';
+  }
+
+  async function aiPost(endpoint,pid,token){
+    const base=(window.__FAIRSHARE__?.apiBase||'').replace(/\/$/,'');
+    const res=await fetch(`${base}${endpoint}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({projectId:pid}),
+    });
+    if(!res.ok)return null;
+    const j=await res.json();
+    return j.ok!==false?j:null;
+  }
+
+  function setUpdating(on){
+    const el=document.getElementById('ai-updating-indicator');
+    if(el)el.style.display=on?'inline-flex':'none';
+  }
+
+  async function runRefresh(pid){
+    if(_inflight)return;
+    _inflight=true;
+    const token=await getToken();
+    if(!token){_inflight=false;return;}
+    setUpdating(true);
+    try{
+      // Score + assess run every refresh; predict + anomalies run on open or explicit refresh
+      const [assessRes, scoreRes, anomaliesRes] = await Promise.all([
+        aiPost('/api/ai/assess',    pid, token),
+        aiPost('/api/ai/score',     pid, token),
+        aiPost('/api/ai/anomalies', pid, token),
+      ]);
+
+      if(assessRes?.assessment){
+        cacheWrite(pid,'assess',assessRes.assessment);
+        window._aiAssessmentCache=assessRes.assessment;
+      }
+      if(scoreRes?.members){
+        cacheWrite(pid,'score',scoreRes.members);
+        window._aiScoreCache=scoreRes.members;
+      }
+      if(anomaliesRes?.anomalies){
+        cacheWrite(pid,'anomalies',anomaliesRes.anomalies);
+        window._aiAnomaliesCache=anomaliesRes.anomalies;
+      }
+
+      if(typeof renderContributions==='function')renderContributions();
+      if(typeof renderAIDashboard==='function')renderAIDashboard();
+    }catch(e){console.warn('[AI refresh]',e);}
+    finally{setUpdating(false);_inflight=false;}
+  }
+
+  async function runPredict(pid){
+    const token=await getToken();
+    if(!token)return;
+    try{
+      const r=await aiPost('/api/ai/predict',pid,token);
+      if(r?.prediction){
+        cacheWrite(pid,'predict',r.prediction);
+        window._aiPredictCache=r.prediction;
+        if(typeof renderAIDashboard==='function')renderAIDashboard();
+      }
+    }catch(e){console.warn('[AI predict]',e);}
+  }
+
+  window.scheduleAIContributionRefresh=function(force){
+    const pid=(typeof currentProject!=='undefined'&&currentProject?.id)||null;
+    if(!pid||window.FSB?.localDemo||!window.__FAIRSHARE_USE_REMOTE__)return;
+    // Restore caches to memory immediately
+    window._aiAssessmentCache=cacheRead(pid,'assess');
+    window._aiScoreCache     =cacheRead(pid,'score');
+    window._aiAnomaliesCache =cacheRead(pid,'anomalies')||[];
+    window._aiPredictCache   =cacheRead(pid,'predict');
+    if(typeof renderContributions==='function')renderContributions();
+    if(typeof renderAIDashboard==='function')renderAIDashboard();
+    if(force)cacheClear(pid);
+    clearTimeout(_debounce);
+    _debounce=setTimeout(()=>runRefresh(pid),force?0:2000);
+  };
+
+  window.startAIContributionInterval=function(pid){
+    clearInterval(_interval);
+    _lastPid=pid;
+    // Restore from cache
+    window._aiAssessmentCache=cacheRead(pid,'assess');
+    window._aiScoreCache     =cacheRead(pid,'score');
+    window._aiAnomaliesCache =cacheRead(pid,'anomalies')||[];
+    window._aiPredictCache   =cacheRead(pid,'predict');
+    if(typeof renderContributions==='function')renderContributions();
+    if(typeof renderAIDashboard==='function')renderAIDashboard();
+    // Immediate full refresh on project open
+    runRefresh(pid);
+    runPredict(pid);
+    _interval=setInterval(()=>{
+      if((typeof currentProject!=='undefined')&&currentProject?.id===_lastPid){
+        runRefresh(_lastPid);
+      }
+    },TTL);
+  };
+
+  window.stopAIContributionInterval=function(){
+    clearInterval(_interval);_interval=null;
+    _lastPid=null;_inflight=false;
+    window._aiAssessmentCache=null;
+    window._aiScoreCache=null;
+    window._aiAnomaliesCache=[];
+    window._aiPredictCache=null;
+    setUpdating(false);
+  };
+
+  // Allow predict to be triggered externally (e.g. user clicks Deadline Forecast)
+  window.triggerAIPredict=function(){
+    const pid=(typeof currentProject!=='undefined'&&currentProject?.id)||null;
+    if(pid&&!window.FSB?.localDemo&&window.__FAIRSHARE_USE_REMOTE__)runPredict(pid);
+  };
+})();
+
+/* ══════════════════════════════════════════════
    SCORING ENGINE
 ══════════════════════════════════════════════ */
 function computeScores(){
@@ -4600,24 +5640,236 @@ function computeScores(){
   });
 }
 
+/* Build a score ring SVG. radius=28, circumference≈175.9 */
+function _scoreRing(score, cls){
+  const R=28, C=Math.round(2*Math.PI*R*10)/10;
+  const fill=score!=null?Math.round(C*(1-score/100)):C;
+  return `<div class="score-ring ${cls}">
+    <svg width="64" height="64" viewBox="0 0 64 64">
+      <circle class="score-ring-track" cx="32" cy="32" r="${R}"/>
+      <circle class="score-ring-fill"  cx="32" cy="32" r="${R}"
+        stroke-dasharray="${C}" stroke-dashoffset="${fill}"/>
+    </svg>
+    <div class="score-ring-label">${score!=null?score:'—'}<div class="score-ring-sub">/ 100</div></div>
+  </div>`;
+}
+
+function _scoreRingCls(score){
+  if(score==null)return'score-none';
+  if(score>=75)return'score-green';
+  if(score>=50)return'score-amber';
+  return'score-red';
+}
+
 function renderContributions(){
   if(!currentProject)return;
-  const scores=computeScores();
-  document.getElementById('contribution-list').innerHTML=scores.length?scores.map((s,i)=>`
-    <div class="contrib-row">
-      <div class="contrib-member">
-        <div class="avatar ${getAvatarClass(s.member.name)}" style="width:32px;height:32px;font-size:12px">${getInitials(s.member.name)}</div>
-        <div>
-          <div class="contrib-name">${esc(s.member.name)}</div>
+  const scores   = computeScores();
+  const assess   = window._aiAssessmentCache   || null;
+  const scored   = window._aiScoreCache        || null;
+  const anomalies= window._aiAnomaliesCache    || [];
+  const isCloud  = window.__FAIRSHARE_USE_REMOTE__ && !window.FSB?.localDemo;
+
+  // Build per-name lookup maps
+  const assessByName = Object.create(null);
+  if(assess?.members) assess.members.forEach(m=>{ assessByName[m.name?.toLowerCase()]=m; });
+  const scoreByName  = Object.create(null);
+  if(scored)         scored.forEach(m=>{ scoreByName[m.name?.toLowerCase()]=m; });
+  const anomalyByName= Object.create(null);
+  anomalies.forEach(a=>{
+    const k=a.memberName?.toLowerCase();
+    if(!anomalyByName[k])anomalyByName[k]=[];
+    anomalyByName[k].push(a);
+  });
+
+  // AI header
+  let aiHeader='';
+  if(isCloud){
+    const ts=assess?.generatedAt?` · ${timeAgo(assess.generatedAt)}`:'';
+    aiHeader=`<div class="ai-contrib-header">
+      <span class="ai-contrib-badge">AI Insights</span>
+      <span class="ai-contrib-ts">${assess?ts:'Analysing…'}</span>
+      ${assess?`<button class="ai-refresh-btn" onclick="scheduleAIContributionRefresh(true)">↻ Refresh</button>`:''}
+    </div>`;
+    if(assess?.alert)      aiHeader+=`<div class="ai-alert">⚠ ${esc(assess.alert)}</div>`;
+    if(assess?.teamInsight)aiHeader+=`<div class="ai-team-insight">${esc(assess.teamInsight)}</div>`;
+  }
+
+  if(!scores.length){
+    document.getElementById('contribution-list').innerHTML=aiHeader+
+      `<div style="color:var(--txt3);font-size:13px;padding:20px 0;text-align:center">No contribution data yet</div>`;
+    return;
+  }
+
+  const rows=scores.map((s,i)=>{
+    const key      = s.member.name?.toLowerCase();
+    const aim      = assessByName[key]||null;
+    const sim      = scoreByName[key] ||null;
+    const memberAnoms=(anomalyByName[key]||[]);
+    const aiScore  = sim?.contributionScore??null;
+    const ringCls  = _scoreRingCls(aiScore);
+    const ring     = isCloud&&scored?_scoreRing(aiScore,ringCls):'';
+    const reason   = sim?.scoringReason||aim?.insight||null;
+    const anomBadges=memberAnoms.map(a=>`<span class="anomaly-badge anomaly-${a.severity}" title="${esc(a.description||'')}">
+      <span class="anomaly-dot"></span>${a.type==='sudden_drop'?'↓ Drop':a.type==='last_minute_spike'?'⚡ Spike':'⚠ Siphon'}
+    </span>`).join('');
+
+    return `<div class="contrib-row">
+      <div class="contrib-member" style="gap:10px">
+        ${ring?`<div class="score-ring-wrap">${ring}</div>`:''}
+        <div class="avatar ${getAvatarClass(s.member.name)}" style="width:32px;height:32px;font-size:12px;${ring?'display:none':''}">${getInitials(s.member.name)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="contrib-name">${esc(s.member.name)}${anomBadges}</div>
           <div class="contrib-sub">${s.taskCount} tasks · ${s.editCount} edits</div>
+          ${reason?`<div class="ai-member-insight">✦ ${esc(reason)}</div>`:''}
         </div>
       </div>
+      ${!isCloud||!scored?`
       <div class="contrib-bar-wrap">
         <div class="progress-track"><div class="progress-fill ${PCT_COLORS[i%PCT_COLORS.length]}" style="width:${s.pct}%"></div></div>
       </div>
       <div class="contrib-pct" style="color:${getPctColor(i)}">${s.pct}%</div>
-    </div>`).join('')
-    :`<div style="color:var(--txt3);font-size:13px;padding:20px 0;text-align:center">No contribution data yet</div>`;
+      `:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('contribution-list').innerHTML=aiHeader+rows;
+}
+
+/* ══════════════════════════════════════════════
+   AI DASHBOARD (analytics page top row)
+══════════════════════════════════════════════ */
+function renderAIDashboard(){
+  if(!currentProject)return;
+  const isCloud=window.__FAIRSHARE_USE_REMOTE__&&!window.FSB?.localDemo;
+  const row=document.getElementById('ai-dash-row');
+  if(!row)return;
+
+  row.style.display=isCloud?'grid':'none';
+
+  // Show AI Report button for leads/instructors
+  const reportBtn=document.getElementById('ai-report-btn');
+  if(reportBtn)reportBtn.style.display=isCloud&&isProjectLead(currentProject)?'inline-flex':'none';
+
+  // ── Deadline Forecast ──
+  const pred=window._aiPredictCache||null;
+  const riskEl=document.getElementById('ai-forecast-risk');
+  const detailEl=document.getElementById('ai-forecast-detail');
+  if(riskEl&&detailEl){
+    if(pred){
+      const risk=pred.deadlineRisk||'none';
+      const clsMap={low:'ai-dash-risk-low',medium:'ai-dash-risk-medium',high:'ai-dash-risk-high',none:'ai-dash-risk-none'};
+      riskEl.className='ai-dash-card-value '+(clsMap[risk]||'ai-dash-risk-none');
+      riskEl.textContent=risk==='none'?'No deadline':risk.charAt(0).toUpperCase()+risk.slice(1)+' risk';
+      detailEl.textContent=pred.deadlineRiskReason||(pred.bottleneckMember?`Bottleneck: ${pred.bottleneckMember}`:'');
+    } else {
+      riskEl.className='ai-dash-card-value ai-dash-risk-none';
+      riskEl.textContent='—';
+      detailEl.innerHTML=`<button onclick="triggerAIPredict()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;padding:0;text-decoration:underline">Run prediction</button>`;
+    }
+  }
+
+  // ── Team Health Score ──
+  const scored=window._aiScoreCache||null;
+  const healthEl=document.getElementById('ai-health-score');
+  const healthDetail=document.getElementById('ai-health-detail');
+  if(healthEl&&healthDetail){
+    if(scored&&scored.length){
+      const avg=Math.round(scored.reduce((s,m)=>s+(m.contributionScore||0),0)/scored.length);
+      healthEl.textContent=avg;
+      healthEl.style.color=avg>=75?'#34d399':avg>=50?'#fbbf24':'#f87171';
+      const top=scored.slice().sort((a,b)=>(b.contributionScore||0)-(a.contributionScore||0))[0];
+      healthDetail.textContent=`Top contributor: ${top?.name||'—'} (${top?.contributionScore||0})`;
+    } else {
+      healthEl.textContent='—';
+      healthDetail.textContent='AI-weighted average across all members';
+    }
+  }
+
+  // ── Active Anomalies ──
+  const anomalies=window._aiAnomaliesCache||[];
+  const anomCountEl=document.getElementById('ai-anomaly-count');
+  const anomDetailEl=document.getElementById('ai-anomaly-detail');
+  if(anomCountEl&&anomDetailEl){
+    const critical=anomalies.filter(a=>a.severity==='critical').length;
+    const warning =anomalies.filter(a=>a.severity==='warning').length;
+    anomCountEl.textContent=anomalies.length||'0';
+    anomCountEl.style.color=critical?'#f87171':warning?'#fbbf24':'var(--txt2)';
+    anomDetailEl.textContent=anomalies.length
+      ?`${critical} critical · ${warning} warning · ${anomalies.filter(a=>a.severity==='info').length} info`
+      :'No anomalies detected';
+  }
+}
+
+/* ══════════════════════════════════════════════
+   AI REPORT (generate, display, copy, print)
+══════════════════════════════════════════════ */
+let _aiReportText='';
+
+async function generateAIReport(){
+  if(!currentProject||window.FSB?.localDemo||!window.__FAIRSHARE_USE_REMOTE__){
+    toast('AI Report requires a real account and an open project.','error');return;
+  }
+  if(!isProjectLead(currentProject)){toast('Only project owners can generate AI reports.','error');return;}
+
+  openModal('modal-ai-report');
+  const content=document.getElementById('ai-report-content');
+  const copyBtn=document.getElementById('ai-report-copy-btn');
+  const pdfBtn =document.getElementById('ai-report-pdf-btn');
+  if(content){content.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--txt3)">Generating report… this may take 20–30 seconds.</div>';}
+  if(copyBtn)copyBtn.style.display='none';
+  if(pdfBtn) pdfBtn.style.display='none';
+
+  try{
+    let token='';
+    if(window.FSB?.client){
+      const {data:{session}}=await window.FSB.client.auth.getSession();
+      token=session?.access_token||'';
+    }
+    if(!token){toast('Sign in to generate AI reports.','error');closeModal('modal-ai-report');return;}
+    const base=(window.__FAIRSHARE__?.apiBase||'').replace(/\/$/,'');
+    const res=await fetch(`${base}/api/ai/report`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({projectId:currentProject.id}),
+    });
+    const j=await res.json();
+    if(!res.ok||!j.ok){toast(j.error||'Report generation failed.','error');closeModal('modal-ai-report');return;}
+    _aiReportText=j.report||'';
+    if(content){
+      content.innerHTML=`<div class="ai-report-md">${esc(_aiReportText)
+        .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+        .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+        .replace(/^### (.+)$/gm,'<h3>$3</h3>')
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/^- (.+)$/gm,'<li>$1</li>')
+      }</div>`;
+    }
+    if(copyBtn)copyBtn.style.display='inline-flex';
+    if(pdfBtn) pdfBtn.style.display='inline-flex';
+  }catch(e){
+    toast('Failed to generate report: '+e.message,'error');
+    closeModal('modal-ai-report');
+  }
+}
+
+function copyAIReport(){
+  if(!_aiReportText)return;
+  navigator.clipboard?.writeText(_aiReportText).then(()=>toast('Markdown copied to clipboard','success')).catch(()=>toast('Copy failed','error'));
+}
+
+function printAIReport(){
+  if(!_aiReportText||!currentProject)return;
+  const w=window.open('','_blank','width=800,height=700');
+  if(!w)return;
+  w.document.write(`<!DOCTYPE html><html><head><title>AI Report — ${esc(currentProject.name)}</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;color:#111;line-height:1.6}
+  h1{font-size:24px;border-bottom:2px solid #eee;padding-bottom:8px}h2{font-size:18px;margin-top:28px}
+  h3{font-size:14px;font-weight:700;margin-top:16px}pre,code{background:#f5f5f5;padding:2px 6px;border-radius:3px}
+  @media print{body{margin:20px}}</style></head><body>
+  <pre style="white-space:pre-wrap;font-family:inherit">${esc(_aiReportText)}</pre>
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),400);
 }
 
 /* ══════════════════════════════════════════════
@@ -4657,16 +5909,23 @@ window.refreshFairshareActivityUI=function(projectId){
   if(!currentProject||currentProject.id!==projectId)return;
   /* Full dashboard refresh so Live feed, contribution scores, and upcoming deadlines stay in sync for all members. */
   renderDashboard();
+  if(typeof window.scheduleAIContributionRefresh==='function')window.scheduleAIContributionRefresh();
   const actPg=document.getElementById('page-activity');
   if(actPg&&actPg.classList.contains('active'))renderActivityPage();
 };
 
 /** After remote graph reload (Broadcast or Realtime) — sync project pointer and all project-scoped UI. */
-window.refreshFairshareProjectUI=function(projectId){
+window.refreshFairshareProjectUI=function(projectId, eventPayload){
   if(!currentProject||currentProject.id!==projectId)return;
+  const prevMemberIds=new Set((currentProject.members||[]).map(m=>m.inviteUserId||m.id));
   const list=loadProjects();
   const p=list.find(x=>x.id===projectId);
   if(p)currentProject=p;
+  // Show a toast if a new member just joined (member_joined broadcast)
+  if(p&&eventPayload&&eventPayload.userId){
+    const newM=(p.members||[]).find(m=>(m.inviteUserId||m.id)===eventPayload.userId&&!prevMemberIds.has(m.inviteUserId||m.id));
+    if(newM)toast(`${newM.name||'A teammate'} just joined ${p.name}!`,'success');
+  }
   renderDashboard();
   renderTasks();
   if(typeof renderDocList==='function')renderDocList();
@@ -4679,6 +5938,7 @@ window.refreshFairshareTasksUI=function(projectId){
   if(!currentProject||currentProject.id!==projectId)return;
   renderTasks();
   renderDashboard();
+  if(typeof window.scheduleAIContributionRefresh==='function')window.scheduleAIContributionRefresh();
 };
 
 window.refreshFairshareDocumentsUI=function(projectId){
@@ -6245,50 +7505,180 @@ async function exportWordAndReportZip(){
 /* ══════════════════════════════════════════════
    CHAT
 ══════════════════════════════════════════════ */
+
+/* ── Realtime status dot (chat channel) ── */
+window._chatRealtimeStatus = function(state){
+  const dot = document.getElementById('chat-rt-dot');
+  if(!dot) return;
+  dot.className = 'chat-rt-dot ' + (state==='connected' ? 'connected' : 'disconnected');
+  dot.title = state==='connected' ? 'Real-time: connected' : 'Real-time: reconnecting…';
+  window.updateRTStatus('chat', state);
+};
+
+/* ── Global real-time health aggregator ─────────────────────────────────────
+ * Called by every subscription channel whenever its status changes.
+ * Aggregates all channel states into one dot: green = all OK, amber = any
+ * connecting, red = any error/disconnected, grey = no project open.
+ * ──────────────────────────────────────────────────────────────────────────*/
+(function(){
+  const _rtMap = Object.create(null); // channelId → 'connected' | 'connecting' | 'error'
+
+  function _supaStatusToState(status){
+    if(status==='SUBSCRIBED')                        return 'connected';
+    if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED') return 'error';
+    return 'connecting'; // JOINING, JOINING_TIMEOUT, etc.
+  }
+
+  function _renderDot(){
+    const dot = document.getElementById('rt-health-dot');
+    if(!dot) return;
+    const vals = Object.values(_rtMap);
+    if(!vals.length){ dot.className='rt-offline'; dot.title='Real-time: no project open'; return; }
+    if(vals.every(v=>v==='connected')){
+      dot.className='rt-ok'; dot.title='Real-time: all channels connected';
+    } else if(vals.some(v=>v==='error')){
+      dot.className='rt-err'; dot.title='Real-time: reconnecting…';
+    } else {
+      dot.className='rt-warn'; dot.title='Real-time: connecting…';
+    }
+  }
+
+  window.updateRTStatus = function(channelId, supaStatus){
+    _rtMap[channelId] = _supaStatusToState(supaStatus);
+    _renderDot();
+  };
+
+  /** Remove a single channel from the map (call when a channel is cleanly released). */
+  window.clearRTChannel = function(channelId){
+    delete _rtMap[channelId];
+    _renderDot();
+  };
+
+  window.clearRTStatus = function(){
+    for(const k in _rtMap) delete _rtMap[k];
+    _renderDot();
+  };
+})();
+
 function renderChatChannels(){
-  if(!currentProject)return;
-  document.getElementById('chat-channels').innerHTML=chatChannels.map(ch=>`
+  if(!currentProject) return;
+  document.getElementById('chat-channels').innerHTML = chatChannels.map(ch => `
     <div class="chat-channel ${ch===currentChatChannel?'active':''}" onclick="switchChatChannel('${ch}')">
       <span class="chat-channel-icon">#</span>
       <span>${ch}</span>
     </div>`).join('');
-  if(currentProject&&window.FSB&&window.FSB.enabled)window.FSB.startChatRealtime(currentProject.id,currentChatChannel);
   renderChatMessages();
+  if(currentProject && window.FSB && window.FSB.enabled){
+    window.FSB.startChatRealtime(currentProject.id, currentChatChannel);
+  }
 }
 
 function switchChatChannel(ch){
-  currentChatChannel=ch;
-  document.getElementById('chat-channel-name').textContent='# '+ch;
+  if(ch === currentChatChannel) return;
+  // Stop old subscription before switching
+  if(window.FSB && typeof window.FSB.stopChatRealtime === 'function') window.FSB.stopChatRealtime();
+  currentChatChannel = ch;
+  // Update channel name label (preserve dot element)
+  const nameEl = document.getElementById('chat-channel-name');
+  if(nameEl){
+    const dot = nameEl.querySelector('.chat-rt-dot');
+    nameEl.textContent = '# '+ch;
+    if(dot) nameEl.prepend(dot);
+  }
   renderChatChannels();
 }
 
-function renderChatMessages(){
-  if(!currentProject)return;
-  const msgs=STORE.get('chat_'+currentProject.id+'_'+currentChatChannel)||[];
-  const el=document.getElementById('chat-messages');
-  el.innerHTML=msgs.length?msgs.map(m=>{
-    const isOwn=m.userId===currentUser.id;
-    return`<div class="chat-msg ${isOwn?'chat-msg-own':''}">
-      ${!isOwn?`<div class="avatar ${getAvatarClass(m.userName)}" style="width:28px;height:28px;font-size:10px;flex-shrink:0">${getInitials(m.userName)}</div>`:''}
-      <div>
-        ${!isOwn?`<div style="font-size:11px;color:var(--txt3);margin-bottom:3px">${esc(m.userName)}</div>`:''}
-        <div class="chat-bubble">${formatChatText(m.text)}</div>
-        <div class="chat-msg-meta">${timeAgo(m.ts)}</div>
-      </div>
-    </div>`;
-  }).join(''):`<div class="empty"><div class="empty-icon">💬</div><div class="empty-text">No messages yet</div><div class="empty-sub">Start the conversation!</div></div>`;
-  el.scrollTop=el.scrollHeight;
+function buildChatMsgHtml(m){
+  const isOwn = m.userId === currentUser.id;
+  return `<div class="chat-msg ${isOwn?'chat-msg-own':''}" data-msg-id="${m.id}">
+    ${!isOwn?`<div class="avatar ${getAvatarClass(m.userName)}" style="width:28px;height:28px;font-size:10px;flex-shrink:0">${getInitials(m.userName)}</div>`:''}
+    <div>
+      ${!isOwn?`<div style="font-size:11px;color:var(--txt3);margin-bottom:3px">${esc(m.userName)}</div>`:''}
+      <div class="chat-bubble">${formatChatText(m.text)}</div>
+      <div class="chat-msg-meta">${timeAgo(m.ts)}</div>
+    </div>
+  </div>`;
 }
 
+function chatScrollIfAtBottom(el, force){
+  if(!el) return;
+  const nearBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) < 150;
+  if(force || nearBottom) el.scrollTo({top: el.scrollHeight, behavior: 'smooth'});
+}
+
+/* Full re-render (on channel switch or project open) */
+function renderChatMessages(){
+  if(!currentProject) return;
+  const msgs = STORE.get('chat_'+currentProject.id+'_'+currentChatChannel) || [];
+  const el = document.getElementById('chat-messages');
+  if(!el) return;
+  el.innerHTML = msgs.length
+    ? msgs.map(buildChatMsgHtml).join('')
+    : `<div class="empty"><div class="empty-icon">💬</div><div class="empty-text">No messages yet</div><div class="empty-sub">Start the conversation!</div></div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+/* Targeted append — called by the realtime subscription callback (no full re-render) */
+window.appendChatMsg = function(msg){
+  const el = document.getElementById('chat-messages');
+  if(!el) return;
+  // Deduplication: skip if already in DOM
+  if(el.querySelector('[data-msg-id="'+msg.id+'"]')) return;
+  // Remove empty-state placeholder if present
+  const empty = el.querySelector('.empty');
+  if(empty) empty.remove();
+  // Replace a temp/optimistic entry for this message if sender flushed it
+  const tmp = el.querySelector('[data-msg-id^="tmp_"]');
+  // (only replace if same text + user, i.e., our own optimistic bubble)
+  if(tmp && tmp.dataset.userId === msg.userId && tmp.dataset.msgText === msg.text){
+    tmp.setAttribute('data-msg-id', msg.id);
+    tmp.classList.remove('chat-msg-pending');
+    return;
+  }
+  el.insertAdjacentHTML('beforeend', buildChatMsgHtml(msg));
+  chatScrollIfAtBottom(el, false);
+};
+
 function sendChatMsg(){
-  const input=document.getElementById('chat-input');
-  const text=input.value.trim();
-  if(!text||!currentProject)return;
-  const msg={id:genId('msg'),userId:currentUser.id,userName:currentUser.name,text,ts:Date.now()};
-  let msgs=STORE.get('chat_'+currentProject.id+'_'+currentChatChannel)||[];
-  msgs.push(msg);STORE.set('chat_'+currentProject.id+'_'+currentChatChannel,msgs);
-  input.value='';input.style.height='auto';
-  renderChatMessages();
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text || !currentProject) return;
+
+  const tempId = 'tmp_' + Date.now();
+  const msg = {id:genId('msg'), userId:currentUser.id, userName:currentUser.name, text, ts:Date.now()};
+
+  // Persist to store (triggers flush to Supabase)
+  let msgs = STORE.get('chat_'+currentProject.id+'_'+currentChatChannel) || [];
+  msgs.push(msg);
+  STORE.set('chat_'+currentProject.id+'_'+currentChatChannel, msgs);
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Optimistic UI: append immediately with a temp ID so we can swap it later
+  const el = document.getElementById('chat-messages');
+  if(el){
+    const empty = el.querySelector('.empty');
+    if(empty) empty.remove();
+    const isOwn = true;
+    const tmpHtml = `<div class="chat-msg chat-msg-own chat-msg-pending" data-msg-id="${tempId}" data-user-id="${msg.userId}" data-msg-text="${msg.text.replace(/"/g,'&quot;')}">
+      <div>
+        <div class="chat-bubble">${formatChatText(msg.text)}</div>
+        <div class="chat-msg-meta">${timeAgo(msg.ts)}</div>
+      </div>
+    </div>`;
+    el.insertAdjacentHTML('beforeend', tmpHtml);
+    chatScrollIfAtBottom(el, true);
+
+    // When realtime confirms the real ID, upgrade the temp element
+    setTimeout(()=>{
+      const pending = el.querySelector('[data-msg-id="'+tempId+'"]');
+      if(pending){
+        pending.setAttribute('data-msg-id', msg.id);
+        pending.classList.remove('chat-msg-pending');
+      }
+    }, 2000);
+  }
 }
 
 let _fsDailyCall=null;
@@ -6481,6 +7871,8 @@ function renderReport(){
     document.getElementById('report-scores').innerHTML='<div class="empty" style="grid-column:1/-1;padding:40px"><div class="empty-icon">📊</div><div class="empty-text">Open a project first</div></div>';
     return;
   }
+  // Render the AI Dashboard top row whenever the analytics page is visited
+  if(typeof renderAIDashboard==='function')renderAIDashboard();
   const p=currentProject;
   const scores=computeScores();
   const tasks=STORE.get('tasks_'+p.id)||[];
@@ -7551,6 +8943,398 @@ window.addEventListener('storage',function(e){
     refreshActivityDisplays();
   }catch(_){}
 });
+</script>
+
+<!-- ══ FairShare AI Manager — floating widget ══════════════════════════════ -->
+<button id="fsai-btn" aria-label="Open FairShare AI Manager" title="FairShare AI Manager" onclick="fsaiToggle()" style="display:none">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6L17 21H7l1.3-6A7 7 0 0 1 5 9a7 7 0 0 1 7-7zm-1 8v2h2v-2h-2zm0-4v3h2V6h-2z"/>
+  </svg>
+  <span class="fsai-badge"></span>
+</button>
+
+<div id="fsai-panel" role="dialog" aria-label="FairShare AI Manager" aria-hidden="true">
+  <div class="fsai-head">
+    <div class="fsai-head-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6L17 21H7l1.3-6A7 7 0 0 1 5 9a7 7 0 0 1 7-7zm-1 8v2h2v-2h-2zm0-4v3h2V6h-2z"/></svg>
+    </div>
+    <div class="fsai-head-info">
+      <div class="fsai-head-title">FairShare AI Manager</div>
+      <div class="fsai-head-sub" id="fsai-status">Ask me anything about your project</div>
+    </div>
+    <button class="fsai-head-close" onclick="fsaiToggle()" aria-label="Close AI chat">✕</button>
+  </div>
+
+  <div class="fsai-messages" id="fsai-messages"></div>
+
+  <div class="fsai-foot">
+    <div class="fsai-suggestions" id="fsai-suggestions">
+      <button class="fsai-sug" onclick="fsaiSuggest(this)">Project overview</button>
+      <button class="fsai-sug" onclick="fsaiSuggest(this)">Overdue tasks</button>
+      <button class="fsai-sug" onclick="fsaiSuggest(this)">Who's doing the most?</button>
+      <button class="fsai-sug" onclick="fsaiSuggest(this)">Recent activity</button>
+    </div>
+    <div class="fsai-input-row">
+      <textarea
+        id="fsai-input"
+        class="fsai-input"
+        rows="1"
+        placeholder="Ask about tasks, team, deadlines…"
+        aria-label="Message FairShare AI"
+        onkeydown="fsaiKeydown(event)"
+        oninput="fsaiAutoResize(this)"
+      ></textarea>
+      <button class="fsai-send" id="fsai-send" onclick="fsaiSend()" disabled aria-label="Send message">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+      </button>
+    </div>
+    <button class="fsai-clear" onclick="fsaiClear()">Clear conversation</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   FairShare AI Manager — widget logic
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  const API_BASE = (window.__FAIRSHARE__?.apiBase || '').replace(/\/$/, '');
+  let _open     = false;
+  let _busy     = false;
+  let _history  = []; // [{role:'user'|'assistant', content:'...'}]
+  let _currentHistoryPid = null; // track which project's history is loaded
+
+  const HIST_PFX = 'fsai_chat_';
+  const HIST_MAX = 30; // max messages per project to store
+
+  function historyKey(pid){ return HIST_PFX + (pid || 'global'); }
+
+  function loadHistory(pid){
+    try{
+      const raw = localStorage.getItem(historyKey(pid));
+      return raw ? JSON.parse(raw) : [];
+    }catch{ return []; }
+  }
+
+  function saveHistory(pid, hist){
+    try{ localStorage.setItem(historyKey(pid), JSON.stringify(hist.slice(-HIST_MAX))); }catch{}
+  }
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const panel    = () => document.getElementById('fsai-panel');
+  const msgEl    = () => document.getElementById('fsai-messages');
+  const inputEl  = () => document.getElementById('fsai-input');
+  const sendBtn  = () => document.getElementById('fsai-send');
+  const statusEl = () => document.getElementById('fsai-status');
+  const sugEl    = () => document.getElementById('fsai-suggestions');
+
+  // ── Restore chat history for current project ──────────────────────────────
+  function restoreHistoryForProject(pid){
+    if(_currentHistoryPid === pid) return; // already loaded
+    _currentHistoryPid = pid;
+    _history = loadHistory(pid);
+
+    const el = msgEl();
+    if(!el) return;
+    el.innerHTML = '';
+    if(_history.length){
+      _history.forEach(m => fsaiRenderMsg(m.role === 'user' ? 'user' : 'ai', m.content));
+      // Show project context indicator at top
+      const ctx = document.createElement('div');
+      ctx.style.cssText = 'font-size:11px;color:var(--txt3);text-align:center;padding:4px 0 8px;border-bottom:1px solid var(--border);margin-bottom:8px';
+      ctx.textContent = '✦ Project context loaded — conversation history restored';
+      el.prepend(ctx);
+      fsaiScroll();
+    } else {
+      fsaiWelcome();
+    }
+  }
+
+  // ── Toggle open/close ─────────────────────────────────────────────────────
+  window.fsaiToggle = function(){
+    _open = !_open;
+    const p = panel();
+    p.classList.toggle('fsai-open', _open);
+    p.setAttribute('aria-hidden', String(!_open));
+    document.getElementById('fsai-btn').classList.remove('fsai-unread');
+    if(_open){
+      const pid = (typeof currentProject !== 'undefined' && currentProject?.id) || null;
+      if(pid) restoreHistoryForProject(pid);
+      else if(_history.length === 0) fsaiWelcome();
+      setTimeout(()=>{ const el=inputEl(); if(el)el.focus(); }, 220);
+    }
+  };
+
+  // ── Welcome message ───────────────────────────────────────────────────────
+  function fsaiWelcome(){
+    if(window.FSB?.localDemo){
+      fsaiAppend('ai','**FairShare AI Manager** is available on real accounts only.\n\nSign in with Google or email to get AI-powered insights about your projects, tasks, and team.');
+      return;
+    }
+    const proj = (typeof currentProject !== 'undefined' && currentProject) ? currentProject : null;
+    const name = proj ? proj.name || 'your project' : null;
+    const txt  = name
+      ? `Hi! I'm your FairShare AI Manager.\n\n📂 **Project context loaded: ${name}**\n\nAsk me about tasks, team contributions, deadlines, or anything else about this project.`
+      : `Hi! I'm your FairShare AI Manager.\n\nOpen a project first, then I can answer questions about tasks, team members, deadlines, and more.`;
+    fsaiAppend('ai', txt);
+  }
+
+  // Render a single message into the DOM without pushing to _history
+  function fsaiRenderMsg(role, content){
+    const el = msgEl();
+    if(!el) return;
+    const isAI = role === 'ai';
+    const div  = document.createElement('div');
+    div.className = 'fsai-msg ' + (isAI ? 'fsai-msg-ai' : 'fsai-msg-user');
+    div.innerHTML = isAI
+      ? `<div class="fsai-avatar">✦</div><div class="fsai-bubble fsai-bubble-ai">${fsaiMarkdown(content)}</div>`
+      : `<div class="fsai-bubble fsai-bubble-user">${esc(content)}</div>`;
+    el.appendChild(div);
+  }
+
+  // ── Suggestion chip clicked ───────────────────────────────────────────────
+  window.fsaiSuggest = function(btn){
+    const text = btn.textContent.trim();
+    if(inputEl()) inputEl().value = text;
+    fsaiSend();
+  };
+
+  // ── Auto-resize textarea ──────────────────────────────────────────────────
+  window.fsaiAutoResize = function(el){
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    sendBtn().disabled = !el.value.trim() || _busy;
+  };
+
+  // ── Enter to send (Shift+Enter = newline) ─────────────────────────────────
+  window.fsaiKeydown = function(e){
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); fsaiSend(); }
+  };
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  window.fsaiSend = async function(){
+    const el   = inputEl();
+    const text = (el?.value || '').trim();
+    if(!text || _busy) return;
+
+    // Demo mode — no real Supabase session
+    if(window.FSB?.localDemo){
+      fsaiAppend('ai','The AI Manager requires a **real FairShare account** — it cannot access demo data.\n\nSign in with Google or email to use this feature.');
+      if(el){ el.value=''; el.style.height='auto'; }
+      return;
+    }
+
+    // Must be signed in
+    const token  = await fsaiGetToken();
+    if(!token){
+      fsaiAppend('ai','Please **sign in to FairShare** first, then ask me anything about your project.');
+      if(el){ el.value=''; el.style.height='auto'; }
+      return;
+    }
+
+    el.value = '';
+    el.style.height = 'auto';
+    sendBtn().disabled = true;
+    if(sugEl()) sugEl().style.display = 'none';
+
+    _history.push({ role:'user', content:text });
+    fsaiAppend('user', text);
+    // Persist user message to per-project history immediately
+    const _sendPid = (typeof currentProject !== 'undefined' && currentProject?.id) || null;
+    if(_sendPid && !window.FSB?.localDemo) saveHistory(_sendPid, _history);
+    fsaiBusy(true);
+
+    const projId = (typeof currentProject !== 'undefined' && currentProject?.id) || null;
+
+    try {
+      const res = await fetch(API_BASE + '/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({ messages: _history.slice(-20), projectId: projId }),
+      });
+
+      if(!res.ok || !res.body){
+        throw new Error(`Server error ${res.status}: ${await res.text().catch(()=>'')}`);
+      }
+
+      const reader = res.body.getReader();
+      const dec    = new TextDecoder();
+      let   buf    = '';
+      let   aiText = '';
+      let   aiNode = null; // live bubble being streamed into
+
+      while(true){
+        const { done, value } = await reader.read();
+        if(done) break;
+        buf += dec.decode(value, { stream:true });
+        const lines = buf.split('\n');
+        buf = lines.pop(); // keep incomplete line
+
+        for(const line of lines){
+          if(!line.startsWith('data: ')) continue;
+          let evt;
+          try { evt = JSON.parse(line.slice(6)); } catch { continue; }
+
+          if(evt.type === 'delta'){
+            if(!aiNode) aiNode = fsaiStartStream();
+            aiText += evt.text;
+            fsaiUpdateStream(aiNode, aiText);
+          } else if(evt.type === 'tool_call'){
+            fsaiShowTool(evt.name);
+          } else if(evt.type === 'done'){
+            if(aiText) _history.push({ role:'assistant', content:aiText });
+            break;
+          } else if(evt.type === 'error'){
+            throw new Error(evt.message || 'Unknown error from AI.');
+          }
+        }
+      }
+
+      if(!aiText) fsaiAppend('ai', '_(No response — please try again.)_');
+
+    } catch(err){
+      fsaiAppend('ai', `Sorry, I ran into an error: **${err.message}**\n\nMake sure the server is running and \`OPENAI_API_KEY\` is set in your \`.env\` file.`);
+      _history.pop(); // remove failed user message
+    } finally {
+      fsaiBusy(false);
+      sendBtn().disabled = !(inputEl()?.value.trim());
+    }
+  };
+
+  // ── Clear conversation (also clears persisted history for current project) ─
+  window.fsaiClear = function(){
+    const pid = (typeof currentProject !== 'undefined' && currentProject?.id) || null;
+    _history = [];
+    _currentHistoryPid = pid; // mark as cleared for this project
+    if(pid && !window.FSB?.localDemo) saveHistory(pid, []);
+    if(msgEl()) msgEl().innerHTML = '';
+    if(sugEl()) sugEl().style.display = 'flex';
+    fsaiWelcome();
+  };
+
+  // ── Get Supabase session token ────────────────────────────────────────────
+  async function fsaiGetToken(){
+    try{
+      if(window.FSB?.client){
+        const { data:{ session } } = await window.FSB.client.auth.getSession();
+        return session?.access_token || '';
+      }
+    }catch(e){}
+    return '';
+  }
+
+  // ── Append a finished bubble + persist to history ────────────────────────
+  function fsaiAppend(role, text){
+    const el   = msgEl(); if(!el) return;
+    const user = role === 'user';
+    const div  = document.createElement('div');
+    div.className = 'fsai-msg ' + (user ? 'fsai-user' : 'fsai-ai');
+    div.innerHTML = `
+      <div class="fsai-avatar">${user ? '👤' : '✦'}</div>
+      <div class="fsai-bubble">${fsaiMarkdown(text)}</div>`;
+    el.appendChild(div);
+    fsaiScroll();
+    // Persist AI messages to per-project history
+    if(role === 'ai'){
+      const pid = (typeof currentProject !== 'undefined' && currentProject?.id) || null;
+      if(pid && !window.FSB?.localDemo){
+        _history.push({ role:'assistant', content:text });
+        saveHistory(pid, _history);
+      }
+    }
+    return div;
+  }
+
+  // ── Start a live streaming bubble ─────────────────────────────────────────
+  function fsaiStartStream(){
+    const el  = msgEl(); if(!el) return null;
+    const div = document.createElement('div');
+    div.className = 'fsai-msg fsai-ai';
+    div.innerHTML = `<div class="fsai-avatar">✦</div><div class="fsai-bubble"></div>`;
+    // Remove typing indicator if present
+    const typing = el.querySelector('.fsai-typing-wrap');
+    if(typing) typing.remove();
+    el.appendChild(div);
+    return div.querySelector('.fsai-bubble');
+  }
+
+  function fsaiUpdateStream(node, text){
+    if(!node) return;
+    node.innerHTML = fsaiMarkdown(text) + '<span style="opacity:.5;animation:fsai-pulse .7s infinite">▌</span>';
+    fsaiScroll();
+  }
+
+  // ── Show "calling tool" indicator ────────────────────────────────────────
+  function fsaiShowTool(name){
+    const el = msgEl(); if(!el) return;
+    // Remove old tool indicators
+    el.querySelectorAll('.fsai-tool-indicator').forEach(n=>n.remove());
+    const labels = {
+      getProjectOverview:   'Reading project overview…',
+      getTasks:             'Loading tasks…',
+      getTeamContributions: 'Calculating contributions…',
+      getActivityLog:       'Checking activity log…',
+      createTask:           'Creating task…',
+      draftAnnouncement:    'Drafting announcement…',
+    };
+    const wrap = document.createElement('div');
+    wrap.className = 'fsai-tool-indicator';
+    wrap.textContent = labels[name] || `Running ${name}…`;
+    el.appendChild(wrap);
+    fsaiScroll();
+  }
+
+  // ── Busy state (typing indicator) ────────────────────────────────────────
+  function fsaiBusy(on){
+    _busy = on;
+    const el = msgEl(); if(!el) return;
+    el.querySelectorAll('.fsai-typing-wrap,.fsai-tool-indicator').forEach(n=>n.remove());
+    if(on){
+      const w = document.createElement('div');
+      w.className = 'fsai-msg fsai-ai fsai-typing-wrap';
+      w.innerHTML = `<div class="fsai-avatar">✦</div>
+        <div class="fsai-bubble fsai-typing">
+          <div class="fsai-dot"></div><div class="fsai-dot"></div><div class="fsai-dot"></div>
+        </div>`;
+      el.appendChild(w);
+      fsaiScroll();
+      if(statusEl()) statusEl().textContent = 'Thinking…';
+    } else {
+      if(statusEl()) statusEl().textContent = 'Ask me anything about your project';
+    }
+  }
+
+  // ── Scroll to bottom ──────────────────────────────────────────────────────
+  function fsaiScroll(){
+    const el = msgEl();
+    if(el) el.scrollTop = el.scrollHeight;
+  }
+
+  // ── Minimal Markdown → HTML renderer ─────────────────────────────────────
+  function fsaiMarkdown(text){
+    return text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/`([^`]+)`/g,'<code>$1</code>')
+      .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+      .replace(/^[-*]\s+(.+)$/gm,'• $1')
+      .replace(/\n{2,}/g,'</p><p>')
+      .replace(/\n/g,'<br>')
+      .replace(/^(.+)$/,'<p>$1</p>');
+  }
+
+  // ── Enable send button when user types ───────────────────────────────────
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const el = inputEl();
+    if(el) el.addEventListener('input', ()=>{
+      if(sendBtn()) sendBtn().disabled = !el.value.trim() || _busy;
+    });
+  });
+
+})();
 </script>
 </body>
 </html>

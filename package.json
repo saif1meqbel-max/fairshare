@@ -9,11 +9,12 @@
     "test:ai": "node tests/ai-foundation.test.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.10",
     "@anthropic-ai/sdk": "^0.39.0",
+    "@supabase/supabase-js": "^2.47.10",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "openai": "^6.42.0",
     "stripe": "^17.5.0"
   }
 }

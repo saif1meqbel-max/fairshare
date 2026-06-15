@@ -6,6 +6,12 @@ import cors from 'cors';
 import Stripe from 'stripe';
 import Anthropic from '@anthropic-ai/sdk';
 import { registerOwnerRoutes } from './owner-dashboard.mjs';
+import aiChatRouter      from './ai-chat.mjs';
+import aiAssessRouter    from './ai-assess.mjs';
+import aiScoreRouter     from './ai-score.mjs';
+import aiPredictRouter   from './ai-predict.mjs';
+import aiAnomaliesRouter from './ai-anomalies.mjs';
+import aiReportRouter    from './ai-report.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
@@ -56,6 +62,14 @@ app.use(express.json({ limit: '2mb' }));
 
 /** Platform owner metrics — requires X-FairShare-Owner-Secret (see .env ADMIN_PANEL_SECRET) */
 registerOwnerRoutes(app, stripe);
+
+/** FairShare AI — all AI routes */
+app.use(aiChatRouter);
+app.use(aiAssessRouter);
+app.use(aiScoreRouter);
+app.use(aiPredictRouter);
+app.use(aiAnomaliesRouter);
+app.use(aiReportRouter);
 
 /** Claude — AI assistant (excerpt + mode → suggestion text) */
 app.post('/api/ai/suggest', async (req, res) => {

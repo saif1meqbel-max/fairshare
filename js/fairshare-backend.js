@@ -8,6 +8,48 @@
   /** When set, user chose “Try Demo” — keep STORE on localStorage so refresh stays signed in. */
   const LOCAL_MODE_KEY = 'fairshare_local_mode';
   const PREFIX = 'fs4_';
+  /** Separate prefix for the localStorage durability mirror (member projects backup). */
+  const BAK_PREFIX = 'fs4_bak_';
+
+  /** Write a value to the localStorage durability mirror for project lists. */
+  function bakWrite(k, v) {
+    if (!k.startsWith('projects_') && !k.startsWith('member_pids_')) return;
+    try { localStorage.setItem(BAK_PREFIX + k, JSON.stringify(v)); } catch (e) {}
+  }
+
+  /** Track a project ID that the signed-in user has opened as a member. */
+  function bakTrackMemberProject(uid, projectId) {
+    try {
+      const k = BAK_PREFIX + 'member_pids_' + uid;
+      const raw = localStorage.getItem(k);
+      const ids = raw ? JSON.parse(raw) : [];
+      if (!ids.includes(projectId)) { ids.push(projectId); localStorage.setItem(k, JSON.stringify(ids)); }
+    } catch (e) {}
+  }
+
+  /** Return the list of project IDs the user has opened as a member (from localStorage). */
+  function bakGetMemberProjects(uid) {
+    try {
+      const raw = localStorage.getItem(BAK_PREFIX + 'member_pids_' + uid);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  /**
+   * Merge projects fetched from Supabase with any extra ones stored in the localStorage mirror.
+   * Returns the deduplicated union. The Supabase copy wins for any project that appears in both.
+   */
+  function bakMerge(k, sbProjects) {
+    try {
+      const raw = localStorage.getItem(BAK_PREFIX + k);
+      if (!raw) return sbProjects;
+      const cached = JSON.parse(raw);
+      if (!Array.isArray(cached) || !cached.length) return sbProjects;
+      const sbIds = new Set((sbProjects || []).map((p) => p.id));
+      const extra = cached.filter((p) => p && p.id && !sbIds.has(p.id));
+      return [...(sbProjects || []), ...extra];
+    } catch (e) { return sbProjects; }
+  }
   const mem = Object.create(null);
   let sb = null;
   let remote = false;
@@ -99,6 +141,7 @@
 
   function memSet(k, v) {
     mem[k] = v === undefined ? null : JSON.parse(JSON.stringify(v));
+    bakWrite(k, mem[k]);   // mirror project writes to localStorage
     scheduleFlush();
   }
 
@@ -252,6 +295,8 @@
     if (ix >= 0) list[ix] = proj;
     else list.unshift(proj);
     mem[key] = list;
+    bakWrite(key, list);  // persist shared project for member so it survives refresh
+    if (viewerId) bakTrackMemberProject(viewerId, pid); // track this project ID independently
     return proj;
   }
 
@@ -337,7 +382,8 @@
           owner_id: r.owner_id,
         };
       });
-      mem['projects_' + uid] = projects;
+      // Merge localStorage durability backup so member projects survive refresh/sign-out
+      mem['projects_' + uid] = bakMerge('projects_' + uid, projects);
 
       if (sets?.score_config) mem['score_config'] = sets.score_config;
       mem['notifs_' + uid] = (nrows || []).map(rowNotif);
@@ -359,6 +405,20 @@
           console.warn('[FSB] invite project merge', nid, e);
         }
       }
+      if (need.length) bakWrite('projects_' + uid, mem['projects_' + uid] || []);
+
+      // Also recover via the member_pids index (handles projects where RLS is delayed)
+      const memberPids = bakGetMemberProjects(uid);
+      const haveNow = new Set((mem['projects_' + uid] || []).map((p) => p.id));
+      const stillNeed = memberPids.filter((id) => !haveNow.has(id));
+      for (const nid of stillNeed) {
+        try {
+          await loadProjectRowForSession(nid);
+        } catch (e) {
+          console.warn('[FSB] member_pids project merge', nid, e);
+        }
+      }
+      if (stillNeed.length) bakWrite('projects_' + uid, mem['projects_' + uid] || []);
 
       if (remote && sb) {
         const profForEnrich = mem['_prof_' + uid] || null;
@@ -461,9 +521,13 @@
           if (list.length > 50) list.length = 50;
           mem[key] = list;
           refreshNotifBadgeFromMem();
+          // Also refresh notifications panel if it is open
+          if (typeof window.renderNotifications === 'function') window.renderNotifications();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (typeof window.updateRTStatus === 'function') window.updateRTStatus('notifs', status);
+      });
   }
 
   function stopNotificationsRealtime() {
@@ -692,35 +756,56 @@
     };
   }
 
-  function releaseActivityChannel() {
+  function releaseActivityChannel(projectId) {
+    if (typeof window.clearRTChannel === 'function' && projectId) window.clearRTChannel('activity-' + projectId);
     if (activityChannel && sb) {
       sb.removeChannel(activityChannel);
       activityChannel = null;
     }
   }
 
-  function releaseTasksChannel() {
+  function releaseTasksChannel(projectId) {
+    if (typeof window.clearRTChannel === 'function' && projectId) window.clearRTChannel('tasks-' + projectId);
     if (tasksChannel && sb) {
       sb.removeChannel(tasksChannel);
       tasksChannel = null;
     }
   }
 
-  function releaseDocsChannel() {
+  function releaseDocsChannel(projectId) {
+    if (typeof window.clearRTChannel === 'function' && projectId) window.clearRTChannel('docs-' + projectId);
     if (docsChannel && sb) {
       sb.removeChannel(docsChannel);
       docsChannel = null;
     }
   }
 
-  function releaseProjectBroadcastChannel() {
+  function releaseProjectBroadcastChannel(projectId) {
+    if (typeof window.clearRTChannel === 'function' && projectId) window.clearRTChannel('broadcast-' + projectId);
     if (projectBroadcastChannel && sb) {
       sb.removeChannel(projectBroadcastChannel);
       projectBroadcastChannel = null;
     }
   }
 
-  /** Subscribe to Broadcast events so teammates’ saves trigger a full graph reload. */
+  /** Reload only the project row from Supabase so members[] stays fresh after a join. */
+  async function reloadProjectRow(projectId) {
+    if (!remote || !sb || !viewerId) return;
+    try {
+      const { data: row } = await sb.from('fs_projects').select('*').eq('id', projectId).maybeSingle();
+      if (!row) return;
+      const b = parseJsonBody(row.body);
+      const proj = { ...b, id: row.id, ownerId: b.ownerId || row.owner_id, owner_id: row.owner_id };
+      const key = 'projects_' + viewerId;
+      const list = Array.isArray(mem[key]) ? [...mem[key]] : [];
+      const ix = list.findIndex((p) => p.id === projectId);
+      if (ix >= 0) list[ix] = proj; else list.unshift(proj);
+      mem[key] = list;
+      bakWrite(key, list);
+    } catch (e) { console.warn('[FSB] reloadProjectRow', e); }
+  }
+
+  /** Subscribe to Broadcast events so teammates' saves trigger a full graph reload. */
   function subscribeProjectBroadcast(projectId) {
     if (!remote || !sb || !projectId) return;
     releaseProjectBroadcastChannel();
@@ -728,69 +813,91 @@
       .channel('fairshare-project-' + projectId, {
         config: { broadcast: { self: false } },
       })
+      .on('broadcast', { event: 'member_joined' }, async (msg) => {
+        // Reload project row first so members[] reflects the new joiner
+        await reloadProjectRow(projectId);
+        await loadProjectGraph([projectId]);
+        if (typeof window.refreshFairshareProjectUI === 'function') {
+          window.refreshFairshareProjectUI(projectId, msg?.payload);
+        }
+      })
+      .on('broadcast', { event: 'member_removed' }, (msg) => {
+        const removedId = msg?.payload?.removedUserId;
+        if (typeof window.onMemberRemovedFromProject === 'function') {
+          window.onMemberRemovedFromProject(projectId, removedId);
+        }
+      })
       .on('broadcast', { event: 'graph_refresh' }, async () => {
+        // Also reload project row on a generic graph_refresh so member changes propagate
+        await reloadProjectRow(projectId);
         await loadProjectGraph([projectId]);
         if (typeof window.refreshFairshareProjectUI === 'function') {
           window.refreshFairshareProjectUI(projectId);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (typeof window.updateRTStatus === 'function') window.updateRTStatus('broadcast-' + projectId, status);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setTimeout(() => {
+            releaseProjectBroadcastChannel(projectId);
+            subscribeProjectBroadcast(projectId);
+          }, 3000);
+        }
+      });
   }
 
   function subscribeTasksRealtime(projectId) {
     if (!remote || !sb || !projectId) return;
     releaseTasksChannel();
+    const CH = 'tasks-' + projectId;
+    let reconnectTimer = null;
+
+    async function reloadTasks() {
+      const { data, error } = await sb.from('fs_tasks').select('*').eq('project_id', projectId);
+      if (error) { console.warn('[FSB] tasks realtime reload', error.message || error); return; }
+      mem['tasks_' + projectId] = (data || []).map(rowTask);
+      if (typeof window.refreshFairshareTasksUI === 'function') window.refreshFairshareTasksUI(projectId);
+    }
+
     tasksChannel = sb
       .channel('fs-tasks-' + projectId)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'fs_tasks',
-          filter: 'project_id=eq.' + projectId,
-        },
-        async () => {
-          const { data, error } = await sb.from('fs_tasks').select('*').eq('project_id', projectId);
-          if (error) {
-            console.warn('[FSB] tasks realtime reload', error.message || error);
-            return;
-          }
-          mem['tasks_' + projectId] = (data || []).map(rowTask);
-          if (typeof window.refreshFairshareTasksUI === 'function') {
-            window.refreshFairshareTasksUI(projectId);
-          }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fs_tasks', filter: 'project_id=eq.' + projectId }, reloadTasks)
+      .subscribe((status) => {
+        if (typeof window.updateRTStatus === 'function') window.updateRTStatus(CH, status);
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(reconnectTimer);
+          void reloadTasks();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          reconnectTimer = setTimeout(() => { releaseTasksChannel(); subscribeTasksRealtime(projectId); }, 3000);
         }
-      )
-      .subscribe();
+      });
   }
 
   function subscribeDocumentsRealtime(projectId) {
     if (!remote || !sb || !projectId) return;
     releaseDocsChannel();
+    const CH = 'docs-' + projectId;
+    let reconnectTimer = null;
+
+    async function reloadDocs() {
+      const { data, error } = await sb.from('fs_documents').select('*').eq('project_id', projectId);
+      if (error) { console.warn('[FSB] documents realtime reload', error.message || error); return; }
+      mem['docs_' + projectId] = (data || []).map(rowDoc);
+      if (typeof window.refreshFairshareDocumentsUI === 'function') window.refreshFairshareDocumentsUI(projectId);
+    }
+
     docsChannel = sb
       .channel('fs-docs-' + projectId)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'fs_documents',
-          filter: 'project_id=eq.' + projectId,
-        },
-        async () => {
-          const { data, error } = await sb.from('fs_documents').select('*').eq('project_id', projectId);
-          if (error) {
-            console.warn('[FSB] documents realtime reload', error.message || error);
-            return;
-          }
-          mem['docs_' + projectId] = (data || []).map(rowDoc);
-          if (typeof window.refreshFairshareDocumentsUI === 'function') {
-            window.refreshFairshareDocumentsUI(projectId);
-          }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fs_documents', filter: 'project_id=eq.' + projectId }, reloadDocs)
+      .subscribe((status) => {
+        if (typeof window.updateRTStatus === 'function') window.updateRTStatus(CH, status);
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(reconnectTimer);
+          void reloadDocs();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          reconnectTimer = setTimeout(() => { releaseDocsChannel(); subscribeDocumentsRealtime(projectId); }, 3000);
         }
-      )
-      .subscribe();
+      });
   }
 
   function subscribeActivities(projectId) {
@@ -814,23 +921,20 @@
 
     void reloadActivitiesFromServer();
 
+    const ACT_CH = 'activity-' + projectId;
+    let actReconnectTimer = null;
+
     activityChannel = sb
       .channel('fs-activity-' + projectId)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'fs_activities',
-          filter: 'project_id=eq.' + projectId,
-        },
-        () => {
-          void reloadActivitiesFromServer();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fs_activities', filter: 'project_id=eq.' + projectId },
+        () => { void reloadActivitiesFromServer(); })
       .subscribe((status) => {
+        if (typeof window.updateRTStatus === 'function') window.updateRTStatus(ACT_CH, status);
         if (status === 'SUBSCRIBED') {
+          clearTimeout(actReconnectTimer);
           void reloadActivitiesFromServer();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          actReconnectTimer = setTimeout(() => { releaseActivityChannel(); subscribeActivities(projectId); }, 3000);
         }
       });
   }
@@ -841,6 +945,34 @@
       sb.removeChannel(chatChannel);
       chatChannel = null;
     }
+
+    let wasDisconnected = false;
+
+    function notifyStatus(s) {
+      if (typeof window._chatRealtimeStatus === 'function') window._chatRealtimeStatus(s);
+    }
+
+    async function refetchRecent() {
+      try {
+        const { data } = await sb
+          .from('fs_chat_messages')
+          .select('*')
+          .eq('project_id', projectId)
+          .eq('channel', channel)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (!data) return;
+        const msgs = data.reverse().map((row) => {
+          const o = rowChat(row);
+          return { id: o.id, userId: o.userId, userName: o.userName, text: o.text,
+                   ts: o.ts || (row.created_at ? new Date(row.created_at).getTime() : Date.now()) };
+        });
+        const key = 'chat_' + projectId + '_' + channel;
+        mem[key] = msgs;
+        if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
+      } catch (e) { console.warn('[FSB] refetchRecent', e); }
+    }
+
     chatChannel = sb
       .channel('fs-chat-' + projectId + '-' + channel)
       .on(
@@ -867,10 +999,19 @@
           if (list.some((x) => x.id === msg.id)) return;
           list.push(msg);
           mem[key] = list;
-          if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
+          if (typeof window.appendChatMsg === 'function') window.appendChatMsg(msg);
+          else if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          notifyStatus('connected');
+          if (wasDisconnected) { wasDisconnected = false; refetchRecent(); }
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          wasDisconnected = true;
+          notifyStatus('disconnected');
+        }
+      });
   }
 
   function userFromSession(session) {
@@ -1257,6 +1398,21 @@
       if (error) throw error;
       const r = data && typeof data === 'object' ? data : {};
       if (r.ok === false) throw new Error(r.error || 'Could not join project');
+      // Notify all project members (lead + peers) instantly that someone has joined
+      try {
+        const ch = sb.channel('fairshare-project-' + pid, { config: { broadcast: { self: false } } });
+        await new Promise((resolve) => {
+          const t = setTimeout(resolve, 4000);
+          ch.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              clearTimeout(t);
+              ch.send({ type: 'broadcast', event: 'member_joined', payload: { projectId: pid, userId: viewerId } })
+                .then(resolve).catch(resolve);
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { clearTimeout(t); resolve(); }
+          });
+        });
+        sb.removeChannel(ch);
+      } catch (e) { console.warn('[FSB] member_joined broadcast', e); }
       await hydrateSession(viewerId);
       return r;
     },
