@@ -19,7 +19,33 @@ const PORT = Number(process.env.PORT) || 3840;
 const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 
 const app = express();
-app.use(cors({ origin: true, credentials: true }));
+
+const ALLOWED_ORIGINS = [
+  'https://fairsharework.space',
+  'https://www.fairsharework.space',
+  // Vercel preview deployments
+  /^https:\/\/cursor-[a-z0-9]+-saif1meqbel-4035s-projects\.vercel\.app$/,
+  // Local development
+  'http://localhost:3840',
+  'http://localhost:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:3840',
+  'http://127.0.0.1:5500',
+];
+
+app.use(cors({
+  origin(origin, cb) {
+    // Allow server-to-server requests (no origin header) and matched origins
+    if (!origin) return cb(null, true);
+    const allowed = ALLOWED_ORIGINS.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    cb(allowed ? null : new Error(`CORS: origin ${origin} not allowed`), allowed);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 

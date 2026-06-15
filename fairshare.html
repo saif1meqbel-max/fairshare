@@ -11,9 +11,15 @@
    Microsoft Word/Excel/PowerPoint: embedding the real Office apps needs a Microsoft 365 tenant, user sign-in,
    and Office Online (iframe) or Microsoft Graph file APIs — not bundled here; export to .html/.csv or use OneDrive. */
 window.__FAIRSHARE__ = {
-  supabaseUrl: 'https://qhsnlsioqcdwjlycqsrs.supabase.co',
+  // ── Supabase (safe public keys — anon key only, never service role) ──────
+  supabaseUrl:     'https://qhsnlsioqcdwjlycqsrs.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoc25sc2lvcWNkd2pseWNxc3JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTg2MjUsImV4cCI6MjA5MDM3NDYyNX0.fVMXB3lcf2rMoXSJn_NzPOyjn_aBL1QXf_dtj06lXtI',
-  apiBase: 'https://fairshare-crw3.onrender.com',
+  // ── API server — auto-detects dev vs production ──────────────────────────
+  // Local dev:   http://localhost:3840  (run: npm start)
+  // Production:  https://fairshare-crw3.onrender.com
+  apiBase: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3840'
+    : 'https://fairshare-crw3.onrender.com',
 };
 </script>
 <link rel="icon" type="image/png" href="assets/fairshare-logo.png">
@@ -7724,7 +7730,7 @@ async function startVideoCall(){
       ph.querySelector('div:last-child').textContent='Daily SDK not loaded or no room URL returned.';
     }
   }catch(e){
-    if(ph)ph.querySelector('div:last-child').textContent='Could not reach API. Use npm start and open http://localhost:3840/fairshare.html';
+    if(ph)ph.querySelector('div:last-child').textContent='Could not reach the FairShare server. Please try again in a moment.';
   }
 }
 
