@@ -816,6 +816,58 @@
     } catch (e) { console.warn('[FSB] reloadProjectRow', e); }
   }
 
+  // ── Reconnect / refocus catch-up for the open project ──────────────────────
+  // Broadcast AND postgres_changes can miss events while a tab is backgrounded,
+  // the device sleeps, or the network drops without a clean CHANNEL_ERROR cycle
+  // (the classic "permanent desync until reload" on mobile / sleeping laptops).
+  // Whenever we regain visibility / focus / network / a fresh socket, we pull the
+  // authoritative state for the open project so a user is never left stale.
+  let _openProjectId = null;
+  let _resyncTimer = null;
+  let _resyncListenersAttached = false;
+  let _resyncInFlight = false;
+
+  async function resyncOpenProject(reason) {
+    if (!remote || !sb || !_openProjectId) return;
+    if (typeof document !== 'undefined' && document.hidden) return; // wait until visible
+    if (_resyncInFlight) return;
+    _resyncInFlight = true;
+    const pid = _openProjectId;
+    try {
+      await reloadProjectRow(pid);
+      await loadProjectGraph([pid]);
+      if (typeof window.refreshFairshareProjectUI === 'function')   window.refreshFairshareProjectUI(pid);
+      if (typeof window.refreshFairshareTasksUI === 'function')     window.refreshFairshareTasksUI(pid);
+      if (typeof window.refreshFairshareDocumentsUI === 'function') window.refreshFairshareDocumentsUI(pid);
+      if (typeof window.refreshFairshareActivityUI === 'function')  window.refreshFairshareActivityUI(pid);
+      if (typeof window.renderChatMessages === 'function')          window.renderChatMessages();
+    } catch (e) {
+      console.warn('[FSB] resyncOpenProject(' + reason + ')', e);
+    } finally {
+      _resyncInFlight = false;
+    }
+  }
+
+  function scheduleResync(reason) {
+    clearTimeout(_resyncTimer);
+    _resyncTimer = setTimeout(() => { resyncOpenProject(reason); }, 350);
+  }
+
+  function ensureResyncListeners() {
+    if (_resyncListenersAttached || typeof window === 'undefined') return;
+    _resyncListenersAttached = true;
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleResync('visible'); });
+    window.addEventListener('online', () => scheduleResync('online'));
+    window.addEventListener('focus',  () => scheduleResync('focus'));
+    // Re-sync when the realtime socket itself reconnects — covers silent reconnects
+    // where individual channels don't re-emit SUBSCRIBED.
+    try {
+      if (sb && sb.realtime && typeof sb.realtime.onOpen === 'function') {
+        sb.realtime.onOpen(() => scheduleResync('socket-open'));
+      }
+    } catch (e) {}
+  }
+
   /** Subscribe to fs_projects postgres_changes so project row updates (member list, name, deadline)
    *  are immediately picked up without relying solely on the Broadcast channel. */
   let projectsRealtimeChannel = null;
@@ -832,6 +884,13 @@
       )
       .subscribe((status) => {
         if (typeof window.updateRTStatus === 'function') window.updateRTStatus('project-row-' + projectId, status);
+        // Catch-up: pull the latest project row on every (re)subscribe so member/name/
+        // deadline changes missed during a disconnect are recovered.
+        if (status === 'SUBSCRIBED') {
+          reloadProjectRow(projectId).then(() => {
+            if (typeof window.refreshFairshareProjectUI === 'function') window.refreshFairshareProjectUI(projectId);
+          }).catch(() => {});
+        }
       });
   }
   function releaseProjectsRealtimeChannel(projectId) {
@@ -1662,11 +1721,15 @@
     },
 
     startProjectBroadcast(projectId) {
+      // Mark this as the open project and arm the reconnect/refocus catch-up.
+      _openProjectId = projectId;
+      ensureResyncListeners();
       subscribeProjectBroadcast(projectId);
       subscribeProjectsRealtime(projectId);
     },
 
     stopProjectBroadcast(projectId) {
+      if (_openProjectId === projectId) _openProjectId = null;
       releaseProjectBroadcastChannel(projectId);
       releaseProjectsRealtimeChannel(projectId);
     },
