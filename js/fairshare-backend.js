@@ -690,13 +690,21 @@
         const have = new Set((dbm || []).map((r) => r.id));
         for (const m of msgs) {
           if (have.has(m.id)) continue;
-          await sb.from('fs_chat_messages').insert({
+          // Capture the write result — never swallow a failed insert silently.
+          // (A swallowed RLS error here is why "sender sees the message but it
+          //  never persists / the recipient never receives it".)
+          const { error: chatErr } = await sb.from('fs_chat_messages').insert({
             id: m.id,
             project_id: pid,
             channel,
             body: { userId: m.userId, userName: m.userName, text: m.text, ts: m.ts },
           });
-          broadcastPids.add(pid);
+          if (chatErr) {
+            console.error('[FSB] fs_chat_messages insert FAILED', pid, channel, chatErr.message || chatErr);
+            if (typeof window.onChatSyncError === 'function') window.onChatSyncError(chatErr.message || String(chatErr));
+          } else {
+            broadcastPids.add(pid);
+          }
         }
       } else if (k.startsWith('notifs_')) {
         const uid = k.slice('notifs_'.length);
