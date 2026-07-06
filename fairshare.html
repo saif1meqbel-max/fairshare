@@ -3686,6 +3686,7 @@ textarea{resize:vertical;min-height:72px}
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="https://unpkg.com/@daily-co/daily-js"></script>
 <script src="js/fairshare-backend.js"></script>
 
@@ -5995,7 +5996,7 @@ window.refreshFairshareDocumentsUI=function(projectId){
       if(editor&&document.activeElement!==editor){
         const kind=docKindOf(updatedDoc);
         if(kind==='document'){
-          editor.innerHTML=updatedDoc.content||'';
+          editor.innerHTML=sanitizeDocHtml(updatedDoc.content||'');
         }
         if(titleEl&&document.activeElement!==titleEl)titleEl.value=updatedDoc.title||'';
         // Show a subtle toast so they know a teammate made a change
@@ -6564,6 +6565,26 @@ function sanitizeImportedHtml(html){
   return(d.innerHTML&&d.innerHTML.trim())?d.innerHTML:'<p>(empty)</p>';
 }
 
+/**
+ * C1 — Stored-XSS defense. Sanitize any rich-text/document HTML before it is
+ * rendered into the DOM or persisted. Uses DOMPurify (strips <script>, event
+ * handlers, javascript: URIs, etc.) while preserving legitimate formatting.
+ * Falls back to the hand-rolled sanitizer if DOMPurify failed to load.
+ * Applied at BOTH render and save, so no untrusted HTML path remains.
+ */
+function sanitizeDocHtml(html){
+  const raw=String(html==null?'':html);
+  if(window.DOMPurify&&typeof window.DOMPurify.sanitize==='function'){
+    return window.DOMPurify.sanitize(raw,{
+      USE_PROFILES:{html:true},
+      ADD_ATTR:['style','target','colspan','rowspan'],
+      FORBID_TAGS:['script','style','iframe','object','embed','form','base'],
+      ALLOW_DATA_ATTR:false
+    });
+  }
+  return sanitizeImportedHtml(raw); // safe fallback if CDN blocked
+}
+
 function plainTextToDocHtml(text){
   const t=String(text||'').trim();
   if(!t)return'<p></p>';
@@ -6713,7 +6734,7 @@ function openDoc(docId){
   setWorkspaceKind(kind);
   document.getElementById('doc-title-input').value=doc.title||'';
   if(kind==='document'){
-    document.getElementById('doc-editor').innerHTML=doc.content||'<p>Start writing…</p>';
+    document.getElementById('doc-editor').innerHTML=sanitizeDocHtml(doc.content||'<p>Start writing…</p>');
   }else if(kind==='slides'){
     deckSlideIndex=0;
     renderSlidesEditor(doc.slides);
@@ -6762,7 +6783,7 @@ function saveDoc(){
   let patch={title,lastEditedBy:currentUser.id,lastEditedAt:Date.now(),wordCounts:{...prev}};
 
   if(kind==='document'){
-    const content=document.getElementById('doc-editor').innerHTML;
+    const content=sanitizeDocHtml(document.getElementById('doc-editor').innerHTML);
     const wc=content.replace(/<[^>]+>/g,' ').trim().split(/\s+/).filter(Boolean).length;
     patch.content=content;
     patch._lastWc=wc;

@@ -199,20 +199,54 @@
    * Merge local rows with server before flush so one member cannot wipe another's tasks/docs/activity
    * with an empty or stale copy (local mem is per-tab).
    */
+  function tombKey(table, pid) { return '__del_' + table + '_' + pid; }
+  function tombSet(table, pid) {
+    const v = mem[tombKey(table, pid)];
+    return new Set(Array.isArray(v) ? v : []);
+  }
+
   async function mergeProjectChildRows(table, pid, locals, rowMapper) {
     const { data: remote, error } = await sb.from(table).select('*').eq('project_id', pid);
     if (error) console.warn('[FSB] merge fetch', table, pid, error.message || error);
+    const tombs = tombSet(table, pid);            // rows the user explicitly deleted
     const byId = Object.create(null);
     for (const r of remote || []) {
       const o = rowMapper(r);
-      if (o && o.id) byId[o.id] = o;
+      if (o && o.id && !tombs.has(o.id)) byId[o.id] = o;   // don't resurrect deleted rows
     }
     for (const t of locals || []) {
-      if (t && t.id) {
+      if (t && t.id && !tombs.has(t.id)) {
         byId[t.id] = byId[t.id] ? { ...byId[t.id], ...t, id: t.id, projectId: pid } : { ...t, projectId: pid };
       }
     }
     return Object.values(byId);
+  }
+
+  /**
+   * C2 — Non-destructive child-row sync. Replaces the old delete-then-reinsert.
+   * Upserts each row (conflict on id → row-level last-writer-wins), so a failed or
+   * partial write can NEVER destroy other rows or wipe a project. Deletions are
+   * explicit via tombstones recorded at delete time. Every write is checked + logged.
+   * @returns {Promise<boolean>} true iff all writes succeeded
+   */
+  async function syncChildRows(table, pid, rows, toRow) {
+    let ok = true;
+    const tk = tombKey(table, pid);
+    const tombs = Array.isArray(mem[tk]) ? mem[tk] : [];
+    if (tombs.length) {
+      const { error: delErr } = await sb.from(table).delete().in('id', tombs).eq('project_id', pid);
+      if (delErr) { ok = false; console.error('[FSB]', table, 'tombstone delete FAILED', pid, delErr.message || delErr); }
+      else mem[tk] = [];                          // clear only on confirmed success
+    }
+    if (rows && rows.length) {
+      const { error: upErr } = await sb.from(table).upsert(rows.map(toRow), { onConflict: 'id' });
+      if (upErr) {
+        ok = false;
+        console.error('[FSB]', table, 'upsert FAILED', pid, upErr.message || upErr);
+        if (typeof window.onSyncError === 'function') window.onSyncError(table, upErr.message || String(upErr));
+      }
+    }
+    return ok;
   }
 
   async function loadProjectGraph(pids) {
@@ -632,16 +666,9 @@
         if (!Array.isArray(tasks)) continue;
         const merged = await mergeProjectChildRows('fs_tasks', pid, tasks, rowTask);
         mem[k] = merged;
-        await sb.from('fs_tasks').delete().eq('project_id', pid);
-        if (merged.length) {
-          await sb.from('fs_tasks').insert(
-            merged.map((t) => ({
-              id: t.id,
-              project_id: pid,
-              body: stripForBody(t, ['id', 'projectId']),
-            }))
-          );
-        }
+        await syncChildRows('fs_tasks', pid, merged, (t) => ({
+          id: t.id, project_id: pid, body: stripForBody(t, ['id', 'projectId']),
+        }));
         broadcastPids.add(pid);
       } else if (k.startsWith('docs_')) {
         const pid = k.slice('docs_'.length);
@@ -649,16 +676,9 @@
         if (!Array.isArray(docs)) continue;
         const merged = await mergeProjectChildRows('fs_documents', pid, docs, rowDoc);
         mem[k] = merged;
-        await sb.from('fs_documents').delete().eq('project_id', pid);
-        if (merged.length) {
-          await sb.from('fs_documents').insert(
-            merged.map((d) => ({
-              id: d.id,
-              project_id: pid,
-              body: stripForBody(d, ['id', 'projectId']),
-            }))
-          );
-        }
+        await syncChildRows('fs_documents', pid, merged, (d) => ({
+          id: d.id, project_id: pid, body: stripForBody(d, ['id', 'projectId']),
+        }));
         broadcastPids.add(pid);
       } else if (k.startsWith('activity_')) {
         const pid = k.slice('activity_'.length);
@@ -666,17 +686,9 @@
         if (!Array.isArray(acts)) continue;
         const merged = await mergeProjectChildRows('fs_activities', pid, acts, rowAct);
         mem[k] = merged;
-        await sb.from('fs_activities').delete().eq('project_id', pid);
-        if (merged.length) {
-          await sb.from('fs_activities').insert(
-            merged.map((a) => ({
-              id: a.id,
-              project_id: pid,
-              body: stripForBody(a, ['id', 'projectId']),
-              created_ms: a.ts || Date.now(),
-            }))
-          );
-        }
+        await syncChildRows('fs_activities', pid, merged, (a) => ({
+          id: a.id, project_id: pid, body: stripForBody(a, ['id', 'projectId']), created_ms: a.ts || Date.now(),
+        }));
         broadcastPids.add(pid);
       } else if (k.startsWith('chat_')) {
         const rest = k.slice('chat_'.length);
@@ -724,27 +736,24 @@
           .sort((a, b) => (b.ts || 0) - (a.ts || 0))
           .slice(0, 50);
         mem[k] = notifs;
-        await sb.from('fs_notifications').delete().eq('user_id', viewerId);
+        // per-user notifications: upsert (non-destructive) + verified writes
         if (notifs.length) {
-          await sb.from('fs_notifications').insert(
-            notifs.map((n) => ({
-              id: n.id,
-              user_id: viewerId,
-              body: stripForBody(n, ['id']),
-            }))
+          const { error: nErr } = await sb.from('fs_notifications').upsert(
+            notifs.map((n) => ({ id: n.id, user_id: viewerId, body: stripForBody(n, ['id']) })),
+            { onConflict: 'id' }
           );
+          if (nErr) console.error('[FSB] fs_notifications upsert FAILED', nErr.message || nErr);
         }
       } else if (k.startsWith('ai_artifacts_')) {
         const pid = k.slice('ai_artifacts_'.length);
         const bundle = mem[k];
         if (!bundle || typeof bundle !== 'object') continue;
-        await sb.from('fs_ai_artifacts').delete().eq('project_id', pid).eq('feature', 'bundle');
-        await sb.from('fs_ai_artifacts').insert({
-          id: `aibundle_${pid}`,
-          project_id: pid,
-          feature: 'bundle',
-          body: { bundle, ts: Date.now() },
-        });
+        // single keyed bundle row → upsert (no destructive delete) + verified write
+        const { error: aiErr } = await sb.from('fs_ai_artifacts').upsert(
+          { id: `aibundle_${pid}`, project_id: pid, feature: 'bundle', body: { bundle, ts: Date.now() } },
+          { onConflict: 'id' }
+        );
+        if (aiErr) console.error('[FSB] fs_ai_artifacts upsert FAILED', pid, aiErr.message || aiErr);
         broadcastPids.add(pid);
       } else if (k === 'score_config') {
         const sc = mem[k];
@@ -1740,6 +1749,18 @@
       if (_openProjectId === projectId) _openProjectId = null;
       releaseProjectBroadcastChannel(projectId);
       releaseProjectsRealtimeChannel(projectId);
+    },
+
+    /** C2 — record an explicit deletion so the next flush removes the row from
+     *  the server (and the merge won't resurrect it). Tables: 'fs_tasks' |
+     *  'fs_documents' | 'fs_activities'. */
+    tombstoneRow(table, projectId, id) {
+      if (!table || !projectId || !id) return;
+      const k = '__del_' + table + '_' + projectId;
+      const arr = Array.isArray(mem[k]) ? mem[k] : [];
+      if (!arr.includes(id)) arr.push(id);
+      mem[k] = arr;
+      if (typeof scheduleFlush === 'function') scheduleFlush();
     },
 
     stopActivitiesRealtime() {

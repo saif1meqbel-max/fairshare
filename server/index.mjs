@@ -12,6 +12,7 @@ import aiScoreRouter     from './ai-score.mjs';
 import aiPredictRouter   from './ai-predict.mjs';
 import aiAnomaliesRouter from './ai-anomalies.mjs';
 import aiReportRouter    from './ai-report.mjs';
+import { createClient } from '@supabase/supabase-js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
@@ -53,6 +54,61 @@ const anthropic = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
+// ── H5: security headers on every API response ──────────────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+  next();
+});
+
+// ── C3: authenticate paid endpoints with a verified Supabase JWT ────────────
+const supabaseAuth = (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+  : null;
+
+async function requireAuth(req, res, next) {
+  try {
+    if (!supabaseAuth) return res.status(503).json({ error: 'Authentication not configured on server' });
+    const h = req.headers.authorization || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7).trim() : '';
+    if (!token) return res.status(401).json({ error: 'Authentication required' });
+    const { data, error } = await supabaseAuth.auth.getUser(token);
+    if (error || !data || !data.user) return res.status(401).json({ error: 'Invalid or expired session' });
+    req.user = data.user;            // available to downstream handlers
+    next();
+  } catch (e) {
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+}
+
+// ── C3: dependency-free per-user rate limiter (single-instance Render) ───────
+const _rlBuckets = new Map();
+setInterval(() => {                                  // periodic cleanup, no leak
+  const now = Date.now();
+  for (const [k, v] of _rlBuckets) if (now > v.resetAt) _rlBuckets.delete(k);
+}, 5 * 60_000).unref?.();
+
+function rateLimit({ windowMs = 60_000, max = 30 } = {}) {
+  return (req, res, next) => {
+    const id = (req.user && req.user.id) || req.ip || 'anon';
+    const key = `${id}:${windowMs}:${max}`;
+    const now = Date.now();
+    let b = _rlBuckets.get(key);
+    if (!b || now > b.resetAt) { b = { count: 0, resetAt: now + windowMs }; _rlBuckets.set(key, b); }
+    b.count++;
+    if (b.count > max) {
+      res.setHeader('Retry-After', Math.ceil((b.resetAt - now) / 1000));
+      return res.status(429).json({ error: 'Rate limit exceeded — please slow down.' });
+    }
+    next();
+  };
+}
+const aiLimiter = rateLimit({ windowMs: 60_000, max: 20 });       // 20 AI calls/min/user
+const billingLimiter = rateLimit({ windowMs: 60_000, max: 10 });  // 10 checkout/min/user
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
@@ -90,6 +146,13 @@ app.use(express.json({ limit: '2mb' }));
 registerOwnerRoutes(app, stripe);
 
 /** FairShare AI — all AI routes */
+// ── C3: gate all paid endpoints (AI, plagiarism, video, checkout) behind a
+//        verified Supabase JWT + per-user rate limiting. Registered BEFORE the
+//        routes below so it runs first. Public routes (health, stripe webhook,
+//        static frontend) are registered elsewhere and remain open.
+app.use(['/api/ai', '/api/plagiarism', '/api/video'], requireAuth, aiLimiter);
+app.use('/api/stripe/checkout', requireAuth, billingLimiter);
+
 app.use(aiChatRouter);
 app.use(aiAssessRouter);
 app.use(aiScoreRouter);
